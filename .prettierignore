@@ -1,0 +1,8 @@
+node_modules
+.next
+out
+programs
+programs-loan
+whitelabel-starter
+lib/idl/*.json
+tsconfig.tsbuildinfo

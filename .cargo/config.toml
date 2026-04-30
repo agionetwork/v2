@@ -1,0 +1,12 @@
+[target.bpfel-unknown-unknown]
+rustflags = [
+    "-C", "link-arg=-z",
+    "-C", "link-arg=notext",
+    "-C", "link-arg=-z",
+    "-C", "link-arg=stack-size=65536",
+    "-C", "link-arg=-export-dynamic",
+]
+
+[unstable]
+build-std = ["std", "panic_abort"]
+build-std-features = ["panic_abort"] 

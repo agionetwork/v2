@@ -1,0 +1,45 @@
+/* Dialect notification modal — platform blue theme overrides.
+ * Must be imported AFTER @dialectlabs/react-ui/index.css
+ * so these custom property values take precedence. */
+
+.dialect {
+  --dt-accent-brand: #3b82f6;
+  --dt-accent-success: #22c55e;
+  --dt-bg-brand: #dbeafe;
+  --dt-button-primary: #1e40af;
+  --dt-button-primary-hover: #1d4ed8;
+  --dt-button-primary-disabled: #93c5fd;
+  --dt-brand-transparent: #3b82f61a;
+  --dt-success-transparent: #22c55e1a;
+  --dt-input-checked: #3b82f6;
+  --dt-text-accent: #2563eb;
+  --dt-stroke-primary: #e2e8f0;
+}
+
+/* Ensure Dialect popover/modal renders above sticky header (z-50) */
+.dialect {
+  position: relative;
+  z-index: 100;
+}
+
+.dark .dialect,
+.dialect[data-theme="dark"] {
+  --dt-accent-brand: #60a5fa;
+  --dt-accent-success: #4ade80;
+  --dt-bg-brand: #1e3a8a;
+  --dt-bg-primary: #0f172a;
+  --dt-bg-secondary: #1e293b;
+  --dt-bg-tertiary: #334155;
+  --dt-button-primary: #3b82f6;
+  --dt-button-primary-hover: #60a5fa;
+  --dt-button-primary-disabled: #1e40af;
+  --dt-button-secondary: #1e3a8a;
+  --dt-button-secondary-hover: #1e40af;
+  --dt-brand-transparent: #60a5fa1a;
+  --dt-success-transparent: #4ade801a;
+  --dt-input-checked: #60a5fa;
+  --dt-input-primary: #1e40af;
+  --dt-stroke-primary: #1e293b;
+  --dt-text-accent: #60a5fa;
+  --dt-text-inverse: #0f172a;
+}

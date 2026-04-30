@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "installCommand": "npm install --legacy-peer-deps --force && npm install --save-dev --legacy-peer-deps typescript@^5.0.0 @types/react@^19 @types/react-dom@^19 @types/node@^20.0.0",
+  "buildCommand": "npm run build:vercel",
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  }
+} 

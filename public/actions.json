@@ -1,0 +1,8 @@
+{
+  "rules": [
+    { "pathPattern": "/api/actions/lend", "apiPath": "/api/actions/lend" },
+    { "pathPattern": "/api/actions/borrow", "apiPath": "/api/actions/borrow" },
+    { "pathPattern": "/api/actions/accept/*", "apiPath": "/api/actions/accept/*" },
+    { "pathPattern": "/api/actions/repay/*", "apiPath": "/api/actions/repay/*" }
+  ]
+}
