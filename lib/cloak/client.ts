@@ -17,14 +17,39 @@ import type {
 
 let sdkPromise: Promise<typeof import("@cloak.dev/sdk")> | null = null
 
+/**
+ * Cloak ships separate npm packages per network. The mainnet `@cloak.dev/sdk`
+ * is pinned to `CLOAK_PROGRAM_ID = zh1eL...` + relay `api.cloak.ag`.
+ * The devnet `@cloak.dev/sdk-devnet` is pinned to `Zc1k...` + `api.devnet.cloak.ag`
+ * and bundles a mock-USDC mint. We pick at runtime based on the configured RPC.
+ *
+ * Override at build time via `NEXT_PUBLIC_CLOAK_NETWORK = "devnet" | "mainnet"`.
+ * Default: `"devnet"` if `NEXT_PUBLIC_SOLANA_RPC_URL` looks like devnet, else mainnet.
+ */
+function resolveCloakNetwork(): "devnet" | "mainnet" {
+  const explicit = process.env.NEXT_PUBLIC_CLOAK_NETWORK
+  if (explicit === "devnet" || explicit === "mainnet") return explicit
+  const rpc = (process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "").toLowerCase()
+  if (rpc.includes("devnet")) return "devnet"
+  if (rpc.includes("testnet")) return "devnet"
+  if (rpc.includes("localhost") || rpc.includes("127.0.0.1")) return "devnet"
+  return "mainnet"
+}
+
 async function loadSdk() {
   if (!sdkPromise) {
-    sdkPromise = import("@cloak.dev/sdk").catch((err) => {
+    const network = resolveCloakNetwork()
+    sdkPromise = (
+      network === "devnet"
+        ? import("@cloak.dev/sdk-devnet")
+        : import("@cloak.dev/sdk")
+    ).catch((err) => {
       throw new Error(
-        `@cloak.dev/sdk failed to load. Make sure it is installed (\`pnpm add @cloak.dev/sdk\`). ` +
+        `Cloak SDK failed to load (${network}). Make sure the right package ` +
+          `is installed (\`pnpm add @cloak.dev/${network === "devnet" ? "sdk-devnet" : "sdk"}\`). ` +
           `Original error: ${err?.message ?? err}`,
       )
-    })
+    }) as Promise<typeof import("@cloak.dev/sdk")>
   }
   return sdkPromise
 }

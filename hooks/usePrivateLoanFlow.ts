@@ -89,9 +89,22 @@ export function usePrivateLoanFlow() {
       const stealthPublicKey: string = initBody.stealthPublicKey
       const stealthRecipient = new PublicKey(stealthPublicKey)
 
-      // Cloak SDK constant — imported via dynamic SDK loader path used by the
-      // wrapper. We need it here to set the SOL mint for the first round-trip.
-      const { NATIVE_SOL_MINT } = await import("@cloak.dev/sdk")
+      // NATIVE_SOL_MINT is the wSOL mint constant — same value across networks.
+      // We pull it from the devnet SDK so the bundle picks up exactly one Cloak
+      // package; the wrapper at lib/cloak/client.ts switches between
+      // `@cloak.dev/sdk` (mainnet) and `@cloak.dev/sdk-devnet` based on the RPC.
+      const cloakNetwork =
+        process.env.NEXT_PUBLIC_CLOAK_NETWORK ||
+        ((process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "")
+          .toLowerCase()
+          .match(/devnet|testnet|localhost|127\.0\.0\.1/)
+          ? "devnet"
+          : "mainnet")
+      const sdk =
+        cloakNetwork === "devnet"
+          ? await import("@cloak.dev/sdk-devnet")
+          : await import("@cloak.dev/sdk")
+      const { NATIVE_SOL_MINT } = sdk
 
       // Step 2 — fund stealth with SOL (fees + ATA rent for the Anchor create).
       onProgress?.("shield-sol")

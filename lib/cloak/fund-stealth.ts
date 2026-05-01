@@ -11,7 +11,10 @@ import type { CloakSignerContext } from "./client"
  * the unshield tx pays the stealth recipient out of the Cloak pool, so chain
  * analysis cannot directly link funder → stealth without correlating
  * pool-internal commitments. Privacy strength scales with pool depth and
- * timing jitter — both weak on devnet, strong on mainnet.
+ * timing jitter.
+ *
+ * Network: see `lib/cloak/client.ts` — the wrapper picks `@cloak.dev/sdk-devnet`
+ * when running on devnet RPC and `@cloak.dev/sdk` (mainnet) otherwise.
  */
 
 export interface FundStealthParams {

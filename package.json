@@ -18,6 +18,7 @@
   "dependencies": {
     "@bonfida/spl-name-service": "^3.0.19",
     "@cloak.dev/sdk": "^0.1.6",
+    "@cloak.dev/sdk-devnet": "0.1.5-devnet.1",
     "@coral-xyz/anchor": "^0.32.1",
     "@dialectlabs/react-sdk": "3.0.0-beta.7",
     "@dialectlabs/react-sdk-blockchain-solana": "^3.0.0-beta.7",
