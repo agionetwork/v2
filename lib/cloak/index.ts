@@ -13,3 +13,5 @@ export type {
   BaseTransactOptions,
   PrivateSwapOptions,
 } from "./client"
+export { fundStealthWallet } from "./fund-stealth"
+export type { FundStealthParams, FundStealthResult } from "./fund-stealth"
