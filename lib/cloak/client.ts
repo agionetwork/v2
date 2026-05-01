@@ -76,6 +76,43 @@ function defaultRelayUrl(network: "devnet" | "mainnet"): string {
   return network === "devnet" ? "https://api.devnet.cloak.ag" : "https://api.cloak.ag"
 }
 
+/**
+ * Build the SDK signing block for `transact`/`transfer`/`fullWithdraw` etc.
+ *
+ * The standalone helpers in @cloak.dev/sdk* accept either:
+ *   - `depositorKeypair: Keypair`     (Node / server-side flows)
+ *   - `signTransaction` + `depositorPublicKey` (browser wallet adapter)
+ *
+ * We pass through `walletPublicKey` separately because the SDK uses it for
+ * relay submissions when no depositor keypair is provided. Note: passing the
+ * raw wallet adapter via a `wallet` field is NOT a valid TransactOptions
+ * shape (that's only for the `CloakSDK` class constructor); the SDK throws
+ * "Deposits require depositorKeypair or signTransaction + depositorPublicKey"
+ * if we omit them.
+ */
+function buildSigningBlock(signing: CloakSignerContext) {
+  if (signing.depositorKeypair) {
+    return {
+      depositorKeypair: signing.depositorKeypair,
+      walletPublicKey: signing.walletPublicKey,
+      depositorPublicKey: signing.walletPublicKey,
+    }
+  }
+  const w = signing.wallet
+  if (!w?.signTransaction) {
+    throw new Error(
+      "Cloak signing requires either a Keypair (depositorKeypair) or a wallet adapter " +
+        "with `signTransaction`. Got: " + (w ? "wallet without signTransaction" : "no wallet"),
+    )
+  }
+  return {
+    signTransaction: w.signTransaction.bind(w),
+    signMessage: typeof w.signMessage === "function" ? w.signMessage.bind(w) : undefined,
+    depositorPublicKey: signing.walletPublicKey,
+    walletPublicKey: signing.walletPublicKey,
+  }
+}
+
 export interface CloakSignerContext {
   /** Public key the SDK should attribute fees to. */
   walletPublicKey: PublicKey
@@ -126,9 +163,7 @@ export async function shield(
       connection: signing.connection,
       programId,
       relayUrl: signing.relayUrl ?? defaultRelayUrl(resolveCloakNetwork()),
-      depositorKeypair: signing.depositorKeypair,
-      wallet: signing.wallet,
-      walletPublicKey: signing.walletPublicKey,
+      ...buildSigningBlock(signing),
       enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
       onProgress: signing.onProgress,
       onProofProgress: signing.onProofProgress,
@@ -159,9 +194,7 @@ export async function privateTransfer(
     connection: signing.connection,
     programId,
     relayUrl: signing.relayUrl ?? defaultRelayUrl(resolveCloakNetwork()),
-    depositorKeypair: signing.depositorKeypair,
-    wallet: signing.wallet,
-    walletPublicKey: signing.walletPublicKey,
+    ...buildSigningBlock(signing),
     enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
       onProgress: signing.onProgress,
       onProofProgress: signing.onProofProgress,
@@ -189,9 +222,7 @@ export async function unshield(
         connection: signing.connection,
         programId,
         relayUrl: signing.relayUrl ?? defaultRelayUrl(resolveCloakNetwork()),
-        depositorKeypair: signing.depositorKeypair,
-        wallet: signing.wallet,
-        walletPublicKey: signing.walletPublicKey,
+        ...buildSigningBlock(signing),
         enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
       onProgress: signing.onProgress,
       onProofProgress: signing.onProofProgress,
@@ -206,9 +237,7 @@ export async function unshield(
     connection: signing.connection,
     programId,
     relayUrl: signing.relayUrl ?? defaultRelayUrl(resolveCloakNetwork()),
-    depositorKeypair: signing.depositorKeypair,
-    wallet: signing.wallet,
-    walletPublicKey: signing.walletPublicKey,
+    ...buildSigningBlock(signing),
     enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
       onProgress: signing.onProgress,
       onProofProgress: signing.onProofProgress,
@@ -247,9 +276,7 @@ export async function privateSwap(
       connection: signing.connection,
       programId,
       relayUrl: signing.relayUrl ?? defaultRelayUrl(resolveCloakNetwork()),
-      depositorKeypair: signing.depositorKeypair,
-      wallet: signing.wallet,
-      walletPublicKey: signing.walletPublicKey,
+      ...buildSigningBlock(signing),
       enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
       onProgress: signing.onProgress,
       onProofProgress: signing.onProofProgress,
