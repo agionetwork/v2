@@ -19,8 +19,12 @@ export function middleware(request: NextRequest) {
     // unsafe-inline required: Next.js RSC emits inline scripts (self.__next_f.push)
     // that cannot carry nonce attributes. Without unsafe-inline they are blocked by CSP.
     isDev
-      ? `script-src 'self' 'unsafe-inline' 'unsafe-eval'`
-      : `script-src 'self' 'unsafe-inline'`,
+      ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:`
+      : `script-src 'self' 'unsafe-inline' blob:`,
+    // Cloak SDK (snarkjs) generates ZK proofs in a Web Worker spawned from a
+    // blob URL. Without `worker-src 'self' blob:` the worker is blocked and
+    // proof generation hangs around 30%.
+    `worker-src 'self' blob:`,
     // Styles need unsafe-inline for shadcn/tailwind inline style injection
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     `img-src 'self' data: https:`,
