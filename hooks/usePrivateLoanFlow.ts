@@ -116,6 +116,9 @@ export function usePrivateLoanFlow() {
           mint: NATIVE_SOL_MINT,
           amount: SOL_BUFFER_LAMPORTS,
           stealthRecipient,
+          onProgress: (status) => console.log("[cloak/shield-sol]", status),
+          onProofProgress: (pct) =>
+            console.log(`[cloak/shield-sol] proof ${pct.toFixed(1)}%`),
         })
       } catch (err: any) {
         throw new Error(`shield-sol failed: ${err?.message ?? err}`)
@@ -142,6 +145,9 @@ export function usePrivateLoanFlow() {
           mint: loanTokenMint,
           amount: loanTokenAmountRaw,
           stealthRecipient,
+          onProgress: (status) => console.log(`[cloak/shield-${loanTokenSymbol}]`, status),
+          onProofProgress: (pct) =>
+            console.log(`[cloak/shield-${loanTokenSymbol}] proof ${pct.toFixed(1)}%`),
         })
       } catch (err: any) {
         throw new Error(`shield-${loanTokenSymbol} failed: ${err?.message ?? err}`)

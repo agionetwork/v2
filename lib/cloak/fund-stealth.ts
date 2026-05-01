@@ -35,6 +35,10 @@ export interface FundStealthParams {
   delayMs?: number
   /** Override the relay URL. Rare. */
   relayUrl?: string
+  /** Status updates from the Cloak SDK (relay calls, signing, etc.). */
+  onProgress?: (status: string) => void
+  /** ZK proof generation progress 0-100. */
+  onProofProgress?: (percent: number) => void
 }
 
 export interface FundStealthResult {
@@ -55,6 +59,8 @@ export async function fundStealthWallet(params: FundStealthParams): Promise<Fund
     stealthRecipient,
     delayMs = 0,
     relayUrl,
+    onProgress,
+    onProofProgress,
   } = params
 
   if (!funderKeypair && !funderWallet) {
@@ -71,7 +77,13 @@ export async function fundStealthWallet(params: FundStealthParams): Promise<Fund
   // Cloak UTXO. The deposit is publicly visible (linked to funder).
   const shielded = await shield(
     { mint, amount },
-    { connection, ...signing, relayUrl },
+    {
+      connection,
+      ...signing,
+      relayUrl,
+      onProgress: onProgress ? (s) => onProgress(`shield: ${s}`) : undefined,
+      onProofProgress,
+    },
   )
 
   if (delayMs > 0) {
@@ -84,7 +96,13 @@ export async function fundStealthWallet(params: FundStealthParams): Promise<Fund
   // depth and timing analysis.
   const unshielded = await unshield(
     { inputUtxos: [shielded.utxo], mint, amount, toAddress: stealthRecipient },
-    { connection, ...signing, relayUrl },
+    {
+      connection,
+      ...signing,
+      relayUrl,
+      onProgress: onProgress ? (s) => onProgress(`unshield: ${s}`) : undefined,
+      onProofProgress,
+    },
   )
 
   return {

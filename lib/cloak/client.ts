@@ -93,6 +93,10 @@ export interface BaseTransactOptions extends CloakSignerContext {
   relayUrl?: string
   /** Disable viewing-key registration for one-shot flows that don't audit. */
   enforceViewingKeyRegistration?: boolean
+  /** Status updates (relay calls, signing). */
+  onProgress?: (status: string) => void
+  /** ZK proof generation progress 0-100. */
+  onProofProgress?: (percent: number) => void
 }
 
 // ---------------------------------------------------------------------------
@@ -126,6 +130,8 @@ export async function shield(
       wallet: signing.wallet,
       walletPublicKey: signing.walletPublicKey,
       enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
+      onProgress: signing.onProgress,
+      onProofProgress: signing.onProofProgress,
     } as any,
   )
   return {
@@ -157,6 +163,8 @@ export async function privateTransfer(
     wallet: signing.wallet,
     walletPublicKey: signing.walletPublicKey,
     enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
+      onProgress: signing.onProgress,
+      onProofProgress: signing.onProofProgress,
   })
   return { outputUtxos: result.outputUtxos, signature: result.signature }
 }
@@ -185,6 +193,8 @@ export async function unshield(
         wallet: signing.wallet,
         walletPublicKey: signing.walletPublicKey,
         enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
+      onProgress: signing.onProgress,
+      onProofProgress: signing.onProofProgress,
       } as any,
     )
     return {
@@ -200,6 +210,8 @@ export async function unshield(
     wallet: signing.wallet,
     walletPublicKey: signing.walletPublicKey,
     enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
+      onProgress: signing.onProgress,
+      onProofProgress: signing.onProofProgress,
   } as any)
   return { signature: (result as any).signature }
 }
@@ -239,6 +251,8 @@ export async function privateSwap(
       wallet: signing.wallet,
       walletPublicKey: signing.walletPublicKey,
       enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
+      onProgress: signing.onProgress,
+      onProofProgress: signing.onProofProgress,
     } as any,
   )
   return {
