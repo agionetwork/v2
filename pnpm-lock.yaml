@@ -50,6 +50,9 @@ importers:
       '@privy-io/node':
         specifier: ^0.9.0
         version: 0.9.0
+      '@pythnetwork/price-service-sdk':
+        specifier: 1.9.0
+        version: 1.9.0
       '@pythnetwork/pyth-solana-receiver':
         specifier: ^0.12.0
         version: 0.12.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -1095,6 +1098,10 @@ packages:
 
   '@pythnetwork/price-service-sdk@1.8.0':
     resolution: {integrity: sha512-tFZ1thj3Zja06DzPIX2dEWSi7kIfIyqreoywvw5NQ3Z1pl5OJHQGMEhxt6Li3UCGSp2ooYZS9wl8/8XfrfrNSA==}
+
+  '@pythnetwork/price-service-sdk@1.9.0':
+    resolution: {integrity: sha512-DX8N4VUqllyervqnCx/Z6Tjz130EcoczYYa96F1YjlbZf0rFyU8VCzX1yAf60q+b8EVcVFVeSkdzJTZD3n6+jQ==}
+    engines: {node: '>=22.14.0'}
 
   '@pythnetwork/pyth-solana-receiver@0.12.0':
     resolution: {integrity: sha512-wUfhb7q9213hkeknsOU1LTDzANYiiFMjHWjoyPXgfRqkq8Y0RnmbJsUSY7oUE3r8BsOudbmi6P2valerXXfr9w==}
@@ -6938,6 +6945,10 @@ snapshots:
   '@protobufjs/utf8@1.1.1': {}
 
   '@pythnetwork/price-service-sdk@1.8.0':
+    dependencies:
+      bn.js: 5.2.3
+
+  '@pythnetwork/price-service-sdk@1.9.0':
     dependencies:
       bn.js: 5.2.3
 
