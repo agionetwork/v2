@@ -178,11 +178,18 @@ export async function validateLoanTerms(params: {
     return `Debt amount ${params.debtAmount} ${params.debtToken} ($${debtValueUsd.toFixed(2)}) is below minimum $${MIN_DEBT_USD.toFixed(2)}.`
   }
 
-  // Collateral ratio check
+  // Collateral ratio check.
+  // We tolerate a small drift between the client's price snapshot and ours
+  // (server fetches Hermes/Pyth at validation time; client read minutes
+  // earlier). Without this, 150% on the slider becomes 149.6% on the server
+  // and the loan is wrongly rejected. The on-chain program still enforces
+  // its hard threshold against the freshly-posted Pyth oracle.
+  const PRICE_DRIFT_TOLERANCE_BPS = 100 // 1.0%
+  const tolerantMinRatio = effectiveMinRatio - PRICE_DRIFT_TOLERANCE_BPS / 100
   const collateralPrice = prices[params.collateralToken] ?? 1
   const collateralValueUsd = params.collateralAmount * collateralPrice
   const ratio = debtValueUsd > 0 ? (collateralValueUsd / debtValueUsd) * 100 : 0
-  if (ratio < effectiveMinRatio) {
+  if (ratio < tolerantMinRatio) {
     const minCollateral = (params.debtAmount * debtPrice * effectiveMinRatio) / (100 * collateralPrice)
     return (
       `Collateral ratio ${ratio.toFixed(1)}% is below protocol minimum of ${effectiveMinRatio}%. ` +

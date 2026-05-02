@@ -366,7 +366,11 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
     if (debtPrice <= 0 || collPrice <= 0) return
     const loanValueUSD = amount * debtPrice
     const requiredCollateralUSD = loanValueUSD * (pct / 100)
-    setCollateralAmount(Math.round((requiredCollateralUSD / collPrice) * 10000) / 10000)
+    // Round UP to 4 decimals so the displayed amount always meets or exceeds
+    // the requested percentage. Math.round was producing values like 0.0178
+    // when 0.0179 was needed to actually hit 150%, then the server saw 149.6%
+    // and rejected.
+    setCollateralAmount(Math.ceil((requiredCollateralUSD / collPrice) * 10000) / 10000)
   }
 
   // Calculate loan amount from explicit parameters
@@ -708,14 +712,8 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                 </Select>
               </div>
               {usePrivacy === "yes" && (
-                <div className="mt-2 p-3 rounded-md border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/30 text-xs space-y-1">
-                  <div className="font-semibold text-blue-700 dark:text-blue-300">Privacy mode (Cloak ZK)</div>
-                  <div className="flex justify-between"><span>Privacy premium</span><span>+0.5% origination fee</span></div>
-                  <div className="flex justify-between"><span>ZK proofs (3x)</span><span>~0.005 SOL</span></div>
-                  <div className="flex justify-between"><span>Relayer fees</span><span>~0.001 SOL</span></div>
-                  <div className="text-muted-foreground pt-1 border-t border-blue-200 dark:border-blue-900">
-                    Wallets hidden, amounts encrypted on-chain. Audit via viewing key.
-                  </div>
+                <div className="mt-2 text-xs text-muted-foreground italic">
+                  Cost breakdown shown on the confirm step.
                 </div>
               )}
             </div>
