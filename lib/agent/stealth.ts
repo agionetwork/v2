@@ -76,25 +76,38 @@ export async function signAndSendWithStealth(
   stealthPubkey: string,
   serializedTx: string,
 ): Promise<string> {
+  const t0 = Date.now()
   validateAgentTransaction(serializedTx)
 
   const walletId = await getStealthWalletId(stealthPubkey)
   if (!walletId) throw new Error(`Stealth wallet not found for ${stealthPubkey}`)
+  const tLookup = Date.now()
 
   const signResult = await getPrivy().wallets().solana().signTransaction(walletId, {
     transaction: serializedTx,
   })
+  const tSign = Date.now()
   const signedTxBytes = Buffer.from(signResult.signed_transaction, "base64")
   const connection = createConnection()
 
+  // skipPreflight: true — the Anchor program's MAX_PYTH_PRICE_AGE_SECS (60s)
+  // budget is tight; running preflight simulation BEFORE the actual submit
+  // adds ~5-15s of double work. Devnet RPC simulates either way at submission.
   const txHash = await connection.sendRawTransaction(signedTxBytes, {
-    skipPreflight: false,
-    preflightCommitment: "confirmed",
+    skipPreflight: true,
+    maxRetries: 5,
   })
+  const tSend = Date.now()
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed")
   await connection.confirmTransaction(
     { signature: txHash, blockhash, lastValidBlockHeight },
     "confirmed",
+  )
+  const tConfirm = Date.now()
+  console.log(
+    `[stealth/${stealthPubkey.slice(0, 6)}] signAndSendWithStealth ` +
+      `lookup=${tLookup - t0}ms sign=${tSign - tLookup}ms send=${tSend - tSign}ms ` +
+      `confirm=${tConfirm - tSend}ms total=${tConfirm - t0}ms`,
   )
   return txHash
 }

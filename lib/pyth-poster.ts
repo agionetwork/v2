@@ -227,6 +227,18 @@ export async function fetchHermesUpdates(feedIds: string[]): Promise<string[]> {
   const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
   if (!res.ok) throw new Error(`Hermes API ${res.status}`)
   const data = await res.json()
+  // Diagnostic: surface the oldest publish_time so we know how much of the
+  // program's MAX_PYTH_PRICE_AGE_SECS budget Hermes already spent for us.
+  if (data.parsed && Array.isArray(data.parsed)) {
+    const now = Math.floor(Date.now() / 1000)
+    const ages = data.parsed
+      .map((p: any) => (p?.price?.publish_time ? now - p.price.publish_time : -1))
+      .filter((a: number) => a >= 0)
+    if (ages.length) {
+      const maxAge = Math.max(...ages)
+      console.log(`[hermes] fetched ${ages.length} feeds; oldest publish_time = ${maxAge}s ago`)
+    }
+  }
   return data.binary?.data || []
 }
 
@@ -324,8 +336,10 @@ export async function postPriceUpdatesForMints(
   priceUpdateAccounts: Record<string, PublicKey>
   cleanup: () => Promise<void>
 }> {
+  const t0 = Date.now()
   // Fetch binary price data from Hermes
   const priceUpdateData = await fetchHermesUpdates(feedIds)
+  const tHermes = Date.now()
   if (!priceUpdateData.length) {
     throw new Error("Empty Hermes response — no price updates available")
   }
@@ -336,6 +350,7 @@ export async function postPriceUpdatesForMints(
     payerKeypair,
     priceUpdateData,
   )
+  const tBuild = Date.now()
 
   const computeBudgetIxs = [
     ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
@@ -363,6 +378,12 @@ export async function postPriceUpdatesForMints(
       })
       await connection.confirmTransaction(sig, "confirmed")
     }),
+  )
+  const tPost = Date.now()
+  console.log(
+    `[pyth-poster] postPriceUpdatesForMints feeds=${feedIds.length} ` +
+      `hermes=${tHermes - t0}ms build=${tBuild - tHermes}ms post=${tPost - tBuild}ms ` +
+      `total=${tPost - t0}ms`,
   )
 
   // Cleanup function: close PriceUpdateV2 accounts to reclaim rent
