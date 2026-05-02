@@ -90,25 +90,22 @@ export async function fundStealthWallet(params: FundStealthParams): Promise<Fund
     await new Promise((resolve) => setTimeout(resolve, delayMs))
   }
 
-  // Wait for the relay indexer to pick up our just-deposited commitment.
-  // Without this we hit "Local note commitment does not match relay tree at
-  // index N — note index is stale" when the unshield is fast enough that the
-  // relay's tree is still pre-deposit. We poll the relay's commitments list
-  // until it returns at least `commitmentIndex + 1` leaves OR until our
-  // commitment hex appears.
-  await waitForRelayCommitment({
-    relayUrl,
-    commitment: shielded.utxo?.commitment,
-    minIndex: shielded.commitmentIndex,
-    onProgress,
-  })
-
-  // Step 2 — unshield: spend the UTXO into the stealth wallet. From an
-  // observer's perspective, this looks like a withdrawal from the Cloak
-  // pool to a fresh address. The link to step 1 is broken modulo pool
-  // depth and timing analysis.
+  // Step 2 — unshield: spend the UTXO into the stealth wallet. We pass the
+  // cachedMerkleTree returned by the shield, so the SDK builds the spend
+  // proof from a tree that already has our commitment, no relay refetch
+  // needed. This sidesteps the "Local note commitment does not match relay
+  // tree" failures caused by relay sync lag.
+  //
+  // From an observer's perspective, this still looks like a withdrawal from
+  // the Cloak pool to a fresh address. Privacy strength is unaffected.
   const unshielded = await unshield(
-    { inputUtxos: [shielded.utxo], mint, amount, toAddress: stealthRecipient },
+    {
+      inputUtxos: [shielded.utxo],
+      mint,
+      amount,
+      toAddress: stealthRecipient,
+      cachedMerkleTree: shielded.merkleTree,
+    },
     {
       connection,
       ...signing,

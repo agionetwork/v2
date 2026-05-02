@@ -236,7 +236,7 @@ export interface BaseTransactOptions extends CloakSignerContext {
 export async function shield(
   opts: ShieldOptions,
   signing: BaseTransactOptions,
-): Promise<{ utxo: any; signature: string; commitmentIndex: number }> {
+): Promise<{ utxo: any; signature: string; commitmentIndex: number; merkleTree?: any }> {
   await ensureBufferPolyfill()
   const sdk = await loadSdk()
   const programId = signing.programId ?? sdk.CLOAK_PROGRAM_ID
@@ -266,6 +266,7 @@ export async function shield(
     utxo: result.outputUtxos[0],
     signature: (result as any).signature,
     commitmentIndex: (result as any).commitmentIndices?.[0] ?? -1,
+    merkleTree: (result as any).merkleTree,
   }
 }
 
@@ -302,41 +303,45 @@ export async function privateTransfer(
 // ---------------------------------------------------------------------------
 
 export async function unshield(
-  opts: UnshieldOptions & { inputUtxos: any[]; partialAmount?: bigint },
+  opts: UnshieldOptions & {
+    inputUtxos: any[]
+    partialAmount?: bigint
+    /**
+     * Cached MerkleTree from the deposit TransactResult. When provided, the
+     * SDK skips the relay refetch entirely and computes the spend proof
+     * locally — sidesteps the "Local note commitment does not match relay
+     * tree" race that hits when the relay's tree is briefly behind ours.
+     */
+    cachedMerkleTree?: any
+  },
   signing: BaseTransactOptions,
 ): Promise<{ signature: string; changeUtxos?: any[] }> {
   await ensureBufferPolyfill()
   const sdk = await loadSdk()
   const programId = signing.programId ?? sdk.CLOAK_PROGRAM_ID
+  const baseOpts = {
+    connection: signing.connection,
+    programId,
+    relayUrl: signing.relayUrl ?? defaultRelayUrl(resolveCloakNetwork()),
+    ...buildSigningBlock(signing),
+    enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
+    onProgress: signing.onProgress,
+    onProofProgress: signing.onProofProgress,
+    ...(opts.cachedMerkleTree ? { cachedMerkleTree: opts.cachedMerkleTree } : {}),
+  }
   if (opts.partialAmount && opts.partialAmount < opts.amount) {
     const result = await sdk.partialWithdraw(
       opts.inputUtxos,
       opts.toAddress,
       opts.partialAmount,
-      {
-        connection: signing.connection,
-        programId,
-        relayUrl: signing.relayUrl ?? defaultRelayUrl(resolveCloakNetwork()),
-        ...buildSigningBlock(signing),
-        enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
-      onProgress: signing.onProgress,
-      onProofProgress: signing.onProofProgress,
-      } as any,
+      baseOpts as any,
     )
     return {
       signature: (result as any).signature,
       changeUtxos: (result as any).outputUtxos,
     }
   }
-  const result = await sdk.fullWithdraw(opts.inputUtxos, opts.toAddress, {
-    connection: signing.connection,
-    programId,
-    relayUrl: signing.relayUrl ?? defaultRelayUrl(resolveCloakNetwork()),
-    ...buildSigningBlock(signing),
-    enforceViewingKeyRegistration: signing.enforceViewingKeyRegistration ?? false,
-      onProgress: signing.onProgress,
-      onProofProgress: signing.onProofProgress,
-  } as any)
+  const result = await sdk.fullWithdraw(opts.inputUtxos, opts.toAddress, baseOpts as any)
   return { signature: (result as any).signature }
 }
 
