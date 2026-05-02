@@ -93,35 +93,46 @@ export async function POST(req: NextRequest) {
     )
     const program = new Program(IDL as unknown as Idl, provider)
 
-    // Step 1: bot posts Pyth prices.
-    const { collateralPriceUpdate, debtPriceUpdate, cleanup } = await postPricesForTokens(
-      connection,
-      collateralTokenSymbol,
-      debtTokenSymbol,
-    )
-
-    let txHash: string
-    try {
-      // Step 2: build the loan tx with stealth as lender + feePayer.
-      const serializedTx = await buildCreateLendOfferTx(
+    // Two attempts: if the first fails with PriceFeedStale (program error
+    // 0x178e / code 6030), the Pyth post → stealth sign window crossed the
+    // 60s limit. Re-post fresh prices and retry once. Anything else bubbles up.
+    let txHash: string | undefined
+    let lastErr: any
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const { collateralPriceUpdate, debtPriceUpdate, cleanup } = await postPricesForTokens(
         connection,
-        program,
-        stealthPk,
-        {
-          debtTokenSymbol,
-          collateralTokenSymbol,
-          debtAmount,
-          collateralAmount,
-          duration,
-          apy,
-        },
-        { collateralPriceUpdate, debtPriceUpdate },
+        collateralTokenSymbol,
+        debtTokenSymbol,
       )
-      // Step 3: stealth signs + broadcasts.
-      txHash = await signAndSendWithStealth(stealthPublicKey, serializedTx)
-    } finally {
-      cleanup().catch(() => {})
+      try {
+        const serializedTx = await buildCreateLendOfferTx(
+          connection,
+          program,
+          stealthPk,
+          {
+            debtTokenSymbol,
+            collateralTokenSymbol,
+            debtAmount,
+            collateralAmount,
+            duration,
+            apy,
+          },
+          { collateralPriceUpdate, debtPriceUpdate },
+        )
+        txHash = await signAndSendWithStealth(stealthPublicKey, serializedTx)
+        break
+      } catch (err: any) {
+        lastErr = err
+        const msg = String(err?.message ?? err ?? "")
+        const isStale =
+          /PriceFeedStale/i.test(msg) || /0x178e/i.test(msg) || /price feed is too stale/i.test(msg)
+        if (!isStale || attempt === 2) throw err
+        console.warn(`[private-offer/create-lend] attempt ${attempt} stale price, retrying with fresh post`)
+      } finally {
+        cleanup().catch(() => {})
+      }
     }
+    if (!txHash) throw lastErr ?? new Error("create-lend failed without surfacing an error")
 
     return NextResponse.json({ success: true, txHash, stealthPublicKey })
   } catch (err: any) {

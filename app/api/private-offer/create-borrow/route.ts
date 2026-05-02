@@ -83,32 +83,45 @@ export async function POST(req: NextRequest) {
     )
     const program = new Program(IDL as unknown as Idl, provider)
 
-    const { collateralPriceUpdate, debtPriceUpdate, cleanup } = await postPricesForTokens(
-      connection,
-      collateralTokenSymbol,
-      debtTokenSymbol,
-    )
-
-    let txHash: string
-    try {
-      const serializedTx = await buildCreateBorrowRequestTx(
+    // Two attempts: PriceFeedStale (0x178e) means the post→sign window blew
+    // through the program's 60s budget. Re-post fresh prices and retry once.
+    let txHash: string | undefined
+    let lastErr: any
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const { collateralPriceUpdate, debtPriceUpdate, cleanup } = await postPricesForTokens(
         connection,
-        program,
-        stealthPk,
-        {
-          debtTokenSymbol,
-          collateralTokenSymbol,
-          debtAmount,
-          collateralAmount,
-          duration,
-          apy,
-        },
-        { collateralPriceUpdate, debtPriceUpdate },
+        collateralTokenSymbol,
+        debtTokenSymbol,
       )
-      txHash = await signAndSendWithStealth(stealthPublicKey, serializedTx)
-    } finally {
-      cleanup().catch(() => {})
+      try {
+        const serializedTx = await buildCreateBorrowRequestTx(
+          connection,
+          program,
+          stealthPk,
+          {
+            debtTokenSymbol,
+            collateralTokenSymbol,
+            debtAmount,
+            collateralAmount,
+            duration,
+            apy,
+          },
+          { collateralPriceUpdate, debtPriceUpdate },
+        )
+        txHash = await signAndSendWithStealth(stealthPublicKey, serializedTx)
+        break
+      } catch (err: any) {
+        lastErr = err
+        const msg = String(err?.message ?? err ?? "")
+        const isStale =
+          /PriceFeedStale/i.test(msg) || /0x178e/i.test(msg) || /price feed is too stale/i.test(msg)
+        if (!isStale || attempt === 2) throw err
+        console.warn(`[private-offer/create-borrow] attempt ${attempt} stale price, retrying with fresh post`)
+      } finally {
+        cleanup().catch(() => {})
+      }
     }
+    if (!txHash) throw lastErr ?? new Error("create-borrow failed without surfacing an error")
 
     return NextResponse.json({ success: true, txHash, stealthPublicKey })
   } catch (err: any) {

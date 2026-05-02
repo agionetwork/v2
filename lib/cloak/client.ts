@@ -335,20 +335,39 @@ export async function unshield(
     onProofProgress: signing.onProofProgress,
     ...(opts.cachedMerkleTree ? { cachedMerkleTree: opts.cachedMerkleTree } : {}),
   }
-  if (opts.partialAmount && opts.partialAmount < opts.amount) {
-    const result = await sdk.partialWithdraw(
-      opts.inputUtxos,
-      opts.toAddress,
-      opts.partialAmount,
-      baseOpts as any,
-    )
-    return {
-      signature: (result as any).signature,
-      changeUtxos: (result as any).outputUtxos,
+  // The Cloak SDK's relay submission can re-send the same signed tx (e.g.
+  // when its internal status poll races the relay's response). The second
+  // submission lands on Solana as 'This transaction has already been
+  // processed' — but the FIRST one actually succeeded and the funds are
+  // already where they need to be. Treat that specific message as success.
+  const handleAlreadyProcessed = (err: any): { signature: string } | null => {
+    const msg = (err?.message ?? String(err ?? "")).toLowerCase()
+    if (msg.includes("already been processed") || msg.includes("alreadyprocessed")) {
+      return { signature: "(already-processed)" }
     }
+    return null
   }
-  const result = await sdk.fullWithdraw(opts.inputUtxos, opts.toAddress, baseOpts as any)
-  return { signature: (result as any).signature }
+
+  try {
+    if (opts.partialAmount && opts.partialAmount < opts.amount) {
+      const result = await sdk.partialWithdraw(
+        opts.inputUtxos,
+        opts.toAddress,
+        opts.partialAmount,
+        baseOpts as any,
+      )
+      return {
+        signature: (result as any).signature,
+        changeUtxos: (result as any).outputUtxos,
+      }
+    }
+    const result = await sdk.fullWithdraw(opts.inputUtxos, opts.toAddress, baseOpts as any)
+    return { signature: (result as any).signature }
+  } catch (err) {
+    const swallowed = handleAlreadyProcessed(err)
+    if (swallowed) return swallowed
+    throw err
+  }
 }
 
 // ---------------------------------------------------------------------------
