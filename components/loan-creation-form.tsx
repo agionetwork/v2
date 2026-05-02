@@ -711,11 +711,6 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                   </SelectContent>
                 </Select>
               </div>
-              {usePrivacy === "yes" && (
-                <div className="mt-2 text-xs text-muted-foreground italic">
-                  Cost breakdown shown on the confirm step.
-                </div>
-              )}
             </div>
 
             <div className="space-y-1">
