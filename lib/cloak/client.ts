@@ -58,13 +58,61 @@ async function ensureBufferPolyfill() {
   console.warn(
     "[cloak] Buffer polyfill missing readBigInt64LE — replacing globalThis.Buffer with buffer@6.x",
   )
-  const { Buffer } = await import("buffer")
-  g.Buffer = Buffer
+  const mod: any = await import("buffer")
+  console.log("[cloak] imported buffer module:", {
+    keys: Object.keys(mod || {}),
+    bufferType: typeof mod?.Buffer,
+    hasFrom: typeof mod?.Buffer?.from,
+    sample: mod?.Buffer?.from?.("test"),
+    sampleProto: mod?.Buffer?.from?.("test") &&
+      Object.getOwnPropertyNames(Object.getPrototypeOf(mod.Buffer.from("test"))),
+  })
+  const PolyBuffer = mod.Buffer
+  if (!PolyBuffer || typeof PolyBuffer.from !== "function") {
+    throw new Error(
+      "import('buffer') did not return a usable Buffer constructor. " +
+        "Module shape: " + JSON.stringify(Object.keys(mod || {})),
+    )
+  }
+  g.Buffer = PolyBuffer
+  // If the bundler stripped the BigInt methods, monkey-patch them onto the
+  // prototype using the official feross/buffer implementation.
+  const proto = PolyBuffer.prototype
+  if (typeof proto.readBigInt64LE !== "function") {
+    console.warn("[cloak] PolyBuffer.prototype lacks readBigInt64LE — monkey-patching")
+    proto.readBigInt64LE = function readBigInt64LE(offset = 0) {
+      const lo =
+        (this[offset] | 0) |
+        ((this[offset + 1] | 0) << 8) |
+        ((this[offset + 2] | 0) << 16) |
+        ((this[offset + 3] | 0) << 24)
+      const hi =
+        ((this[offset + 4] | 0) >>> 0) +
+        ((this[offset + 5] | 0) << 8) +
+        ((this[offset + 6] | 0) << 16) +
+        ((this[offset + 7] | 0) << 24)
+      // hi is signed 32-bit; combine with low (unsigned 32-bit).
+      return (BigInt(hi) << BigInt(32)) | (BigInt(lo) & BigInt(0xffffffff))
+    }
+    proto.readBigUInt64LE = function readBigUInt64LE(offset = 0) {
+      const lo =
+        (this[offset] | 0) |
+        ((this[offset + 1] | 0) << 8) |
+        ((this[offset + 2] | 0) << 16) |
+        ((this[offset + 3] | 0) << 24)
+      const hi =
+        (this[offset + 4] | 0) +
+        ((this[offset + 5] | 0) << 8) +
+        ((this[offset + 6] | 0) << 16) +
+        ((this[offset + 7] | 0) << 24)
+      return (BigInt(hi >>> 0) << BigInt(32)) | (BigInt(lo) & BigInt(0xffffffff))
+    }
+  }
   // Verify the swap worked.
   const probe2 = (globalThis as any).Buffer?.from?.("")
   if (!probe2 || typeof probe2.readBigInt64LE !== "function") {
     throw new Error(
-      "Buffer polyfill failed: globalThis.Buffer was overwritten or readBigInt64LE is still missing.",
+      "Buffer polyfill failed even after monkey-patch: globalThis.Buffer.prototype.readBigInt64LE missing.",
     )
   }
   console.log("[cloak] Buffer polyfill installed (readBigInt64LE present)")
