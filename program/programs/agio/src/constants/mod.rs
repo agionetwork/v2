@@ -25,8 +25,12 @@ pub const DEFAULT_LIQUIDATION_THRESHOLD_BPS: u16 = 12_000;
 /// Split of excess collateral after liquidation (5000 = 50% to each side)
 pub const EXCESS_SPLIT_BPS: u16 = 5_000;
 
-/// Maximum age for Pyth price updates in seconds
-pub const MAX_PYTH_PRICE_AGE_SECS: u64 = 60;
+/// Maximum age for Pyth price updates in seconds. Generous 5-minute window
+/// because the private-offer flow inserts ~10-30s of Privy stealth-signing
+/// latency between the bot's Pyth post and the Anchor instruction's
+/// execution. 60s was too tight for that path. Public flows (user-signed)
+/// typically land in <15s and aren't affected by the larger window.
+pub const MAX_PYTH_PRICE_AGE_SECS: u64 = 300;
 
 /// Minimum loan duration in seconds (1 day = 86400s)
 pub const MIN_LOAN_DURATION: u64 = 86_400;

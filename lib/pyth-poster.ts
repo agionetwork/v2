@@ -363,8 +363,11 @@ export async function postPriceUpdatesForMints(
   // landed on-chain, the Pyth publish_time was too old and the program threw
   // PriceFeedStale (0x178e). Parallel cuts the post phase to ~one-confirm
   // round-trip regardless of feed count.
+  // Submit all price-update txs in parallel. Returns the confirmation
+  // promise so the caller can do something else (e.g. Privy stealth signing
+  // of the dependent tx) while we wait for the relay/RPC to confirm.
   const { blockhash } = await connection.getLatestBlockhash("confirmed")
-  await Promise.all(
+  const submitAndConfirm = Promise.all(
     pythResult.postInstructions.map(async (postIx, i) => {
       const tx = new Transaction()
       tx.add(...computeBudgetIxs)
@@ -379,6 +382,7 @@ export async function postPriceUpdatesForMints(
       await connection.confirmTransaction(sig, "confirmed")
     }),
   )
+  await submitAndConfirm
   const tPost = Date.now()
   console.log(
     `[pyth-poster] postPriceUpdatesForMints feeds=${feedIds.length} ` +
