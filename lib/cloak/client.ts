@@ -151,11 +151,20 @@ async function loadSdk() {
 
 /**
  * Default relay URL the wrapper passes to SDK calls. In browsers we route
- * through `/api/cloak-proxy/relay` (same origin, no CORS hassle). On the
- * server we hit the upstream relay directly.
+ * through `/api/cloak-proxy/relay` on the same origin (no CORS hassle).
+ *
+ * Returned as an *absolute* URL — the SDK does `new URL(relayUrl + ...)` in
+ * a few code paths (e.g. `buildMerkleTreeFromRelay`) and the URL constructor
+ * rejects relative inputs without a base ("not a valid URL"). Using
+ * `window.location.origin + path` keeps the proxy on our origin while
+ * giving the SDK something the URL constructor accepts.
+ *
+ * On the server we hit the upstream relay directly — no proxy needed.
  */
 function defaultRelayUrl(network: "devnet" | "mainnet"): string {
-  if (typeof window !== "undefined") return "/api/cloak-proxy/relay"
+  if (typeof window !== "undefined") {
+    return window.location.origin + "/api/cloak-proxy/relay"
+  }
   return network === "devnet" ? "https://api.devnet.cloak.ag" : "https://api.cloak.ag"
 }
 
