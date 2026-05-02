@@ -36,14 +36,34 @@ function resolveCloakNetwork(): "devnet" | "mainnet" {
   return "mainnet"
 }
 
+/**
+ * In the browser the SDK calls `Buffer.from(...).readBigInt64LE(0)` while
+ * building deposit transactions. next.config.mjs disables the auto Buffer
+ * polyfill (`buffer: false` in resolve.fallback), so the global Buffer
+ * (typically provided by other wallet libs) may be missing
+ * `readBigInt64LE`. The error surfaces as
+ *   "Relay returned an error: publicAmountBuffer.readBigInt64LE is not a function"
+ * Force the proper polyfill from the `buffer` npm package on globalThis the
+ * first time we touch the SDK in the browser.
+ */
+async function ensureBufferPolyfill() {
+  if (typeof window === "undefined") return
+  const g = globalThis as any
+  const probe = g.Buffer?.from?.("")
+  if (probe && typeof probe.readBigInt64LE === "function") return
+  const { Buffer } = await import("buffer")
+  g.Buffer = Buffer
+}
+
 async function loadSdk() {
   if (!sdkPromise) {
     const network = resolveCloakNetwork()
-    sdkPromise = (
-      network === "devnet"
-        ? import("@cloak.dev/sdk-devnet")
-        : import("@cloak.dev/sdk")
-    )
+    sdkPromise = ensureBufferPolyfill()
+      .then(async () => {
+        return network === "devnet"
+          ? ((await import("@cloak.dev/sdk-devnet")) as unknown as typeof import("@cloak.dev/sdk"))
+          : await import("@cloak.dev/sdk")
+      })
       .then((sdk) => {
         // Browser-side: route circuit fetches through our proxy. The S3 bucket
         // hosting Cloak's circuits has no CORS, so direct browser fetches fail
