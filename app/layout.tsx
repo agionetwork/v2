@@ -1,3 +1,6 @@
+// MUST be the first import — installs Buffer BigInt polyfills before any
+// other module captures globalThis.Buffer (see lib/buffer-polyfill.ts).
+import "@/lib/buffer-polyfill"
 import type { Metadata } from "next"
 import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
