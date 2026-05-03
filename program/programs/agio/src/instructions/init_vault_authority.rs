@@ -22,7 +22,6 @@ pub struct InitVaultAuthority<'info> {
     )]
     pub admin: Signer<'info>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn init_vault_authority<'info>(

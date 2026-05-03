@@ -81,7 +81,6 @@ pub struct RepayLoan<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn repay_loan<'info>(
@@ -94,7 +93,7 @@ pub fn repay_loan<'info>(
 
     let interest = loan
         .debt_amount
-        .checked_mul(loan.apy as u64)
+        .checked_mul(u64::from(loan.apy))
         .ok_or(AgioError::NumericalOverflowError)?
         .checked_mul(loan.duration)
         .ok_or(AgioError::NumericalOverflowError)?

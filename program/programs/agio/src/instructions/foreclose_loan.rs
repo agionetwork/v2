@@ -51,20 +51,22 @@ pub struct ForecloseLoan<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
-    pub clock: Sysvar<'info, Clock>,
 }
 
 pub fn foreclose_loan<'info>(ctx: Context<'_, '_, '_, 'info, ForecloseLoan<'info>>) -> Result<()> {
     let loan = &mut ctx.accounts.loan;
+    let clock = Clock::get()?;
 
     require!(loan.status == LoanStatus::Accepted as u8, AgioError::InvalidLoanStatus);
     let start = loan.start.ok_or(AgioError::MissingLoanStart)?;
     require!(
         start
-            .checked_add(loan.duration as i64)
+            .checked_add(
+                i64::try_from(loan.duration)
+                    .map_err(|_| AgioError::NumericalOverflowError)?,
+            )
             .ok_or(AgioError::NumericalOverflowError)?
-            <= ctx.accounts.clock.unix_timestamp,
+            <= clock.unix_timestamp,
         AgioError::LoanNotExpired
     );
 

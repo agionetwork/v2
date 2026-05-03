@@ -68,8 +68,6 @@ pub struct LiquidateLoan<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
-    pub clock: Sysvar<'info, Clock>,
 }
 
 pub fn liquidate_loan<'info>(
@@ -77,7 +75,7 @@ pub fn liquidate_loan<'info>(
 ) -> Result<()> {
     let loan = &ctx.accounts.loan;
     let vault_authority = &ctx.accounts.vault_authority;
-    let clock = &ctx.accounts.clock;
+    let clock = Clock::get()?;
 
     require!(
         loan.status == LoanStatus::Accepted as u8,
@@ -85,7 +83,13 @@ pub fn liquidate_loan<'info>(
     );
 
     let start = loan.start.ok_or(AgioError::MissingLoanStart)?;
-    let elapsed = (clock.unix_timestamp - start) as u64;
+    let elapsed = u64::try_from(
+        clock
+            .unix_timestamp
+            .checked_sub(start)
+            .ok_or(AgioError::NumericalOverflowError)?,
+    )
+    .map_err(|_| AgioError::NumericalOverflowError)?;
 
     // Read Pyth prices
     let collateral_feed_id = ctx.accounts.collateral_price_feed_config.feed_id;
@@ -93,7 +97,7 @@ pub fn liquidate_loan<'info>(
         .accounts
         .collateral_price_update
         .get_price_no_older_than_with_custom_verification_level(
-            &Clock::get()?,
+            &clock,
             MAX_PYTH_PRICE_AGE_SECS,
             &collateral_feed_id,
             VerificationLevel::Partial { num_signatures: 1 },
@@ -105,7 +109,7 @@ pub fn liquidate_loan<'info>(
         .accounts
         .debt_price_update
         .get_price_no_older_than_with_custom_verification_level(
-            &Clock::get()?,
+            &clock,
             MAX_PYTH_PRICE_AGE_SECS,
             &debt_feed_id,
             VerificationLevel::Partial { num_signatures: 1 },
@@ -121,13 +125,17 @@ pub fn liquidate_loan<'info>(
 
     // Calculate liquidation — only liquidatable when collateral value <= threshold
     // (typically 120% of debt). force=false: liquidation requires undercollateralization.
+    let collateral_price_u64 = u64::try_from(collateral_price_data.price)
+        .map_err(|_| AgioError::PriceFeedNegative)?;
+    let debt_price_u64 = u64::try_from(debt_price_data.price)
+        .map_err(|_| AgioError::PriceFeedNegative)?;
     let result = calculate_liquidation(
         loan.collateral_amount,
-        collateral_price_data.price as u64,
+        collateral_price_u64,
         collateral_price_data.exponent,
         ctx.accounts.collateral_price_feed_config.decimals,
         outstanding_debt,
-        debt_price_data.price as u64,
+        debt_price_u64,
         debt_price_data.exponent,
         ctx.accounts.debt_price_feed_config.decimals,
         vault_authority.liquidation_threshold_bps,

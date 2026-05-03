@@ -84,7 +84,6 @@ pub struct CreateBorrowOffer<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn create_borrow_offer<'info>(

@@ -32,7 +32,6 @@ pub struct InitVaultTokenAccount<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn init_vault_token_account<'info>(

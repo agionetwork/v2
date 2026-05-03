@@ -91,8 +91,6 @@ pub struct AcceptBorrowOffer<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
-    pub clock: Sysvar<'info, Clock>,
 }
 
 /// remaining_accounts layout (when fee > 0):
@@ -126,7 +124,7 @@ pub fn accept_borrow_offer<'info>(
     )?;
 
     loan.borrower = Some(ctx.accounts.borrower.key());
-    loan.start = Some(ctx.accounts.clock.unix_timestamp);
+    loan.start = Some(Clock::get()?.unix_timestamp);
     loan.status = LoanStatus::Accepted as u8;
 
     let signer_seeds: &[&[&[u8]]] = &[&[

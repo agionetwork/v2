@@ -9,19 +9,19 @@ pub fn calculate_outstanding_debt(
     apy: u8,
     elapsed_secs: u64,
 ) -> Result<u64> {
-    let interest = (debt_amount as u128)
-        .checked_mul(apy as u128)
+    let interest = u128::from(debt_amount)
+        .checked_mul(u128::from(apy))
         .ok_or(AgioError::NumericalOverflowError)?
-        .checked_mul(elapsed_secs as u128)
+        .checked_mul(u128::from(elapsed_secs))
         .ok_or(AgioError::NumericalOverflowError)?
-        .checked_div(APY_DIVISOR as u128)
+        .checked_div(u128::from(APY_DIVISOR))
         .ok_or(AgioError::NumericalOverflowError)?;
 
-    let total = (debt_amount as u128)
+    let total = u128::from(debt_amount)
         .checked_add(interest)
         .ok_or(AgioError::NumericalOverflowError)?;
 
-    Ok(total as u64)
+    u64::try_from(total).map_err(|_| AgioError::NumericalOverflowError.into())
 }
 
 /// Result of liquidation calculation
@@ -82,10 +82,10 @@ pub fn calculate_liquidation(
     //
     // Then: liquidatable if collateral_value * BPS_DIVISOR <= debt_value * threshold_bps
 
-    let col_amt = collateral_amount as u128;
-    let col_price = collateral_price as u128;
-    let debt_amt = outstanding_debt as u128;
-    let d_price = debt_price as u128;
+    let col_amt = u128::from(collateral_amount);
+    let col_price = u128::from(collateral_price);
+    let debt_amt = u128::from(outstanding_debt);
+    let d_price = u128::from(debt_price);
 
     // For the comparison, we need to normalize exponents.
     // price_value = amount * price * 10^(-decimals) * 10^(expo) in USD
@@ -96,13 +96,27 @@ pub fn calculate_liquidation(
     // USD_debt = outstanding_debt * debt_price * 10^(debt_expo - debt_decimals)
     //
     // To compare without fractions, shift by the more negative combined exponent.
-    let col_combined = collateral_expo as i64 - collateral_decimals as i64;
-    let debt_combined = debt_expo as i64 - debt_decimals as i64;
+    let col_combined = i64::from(collateral_expo)
+        .checked_sub(i64::from(collateral_decimals))
+        .ok_or(AgioError::NumericalOverflowError)?;
+    let debt_combined = i64::from(debt_expo)
+        .checked_sub(i64::from(debt_decimals))
+        .ok_or(AgioError::NumericalOverflowError)?;
 
     // Shift both to eliminate the more negative exponent
     let shift = col_combined.min(debt_combined);
-    let col_shift = (col_combined - shift) as u32;
-    let debt_shift = (debt_combined - shift) as u32;
+    let col_shift = u32::try_from(
+        col_combined
+            .checked_sub(shift)
+            .ok_or(AgioError::NumericalOverflowError)?,
+    )
+    .map_err(|_| AgioError::NumericalOverflowError)?;
+    let debt_shift = u32::try_from(
+        debt_combined
+            .checked_sub(shift)
+            .ok_or(AgioError::NumericalOverflowError)?,
+    )
+    .map_err(|_| AgioError::NumericalOverflowError)?;
 
     let col_value = col_amt
         .checked_mul(col_price)
@@ -118,10 +132,10 @@ pub fn calculate_liquidation(
 
     // Liquidatable if: col_value * BPS_DIVISOR <= debt_value * threshold_bps
     let lhs = col_value
-        .checked_mul(BPS_DIVISOR as u128)
+        .checked_mul(u128::from(BPS_DIVISOR))
         .ok_or(AgioError::NumericalOverflowError)?;
     let rhs = debt_value
-        .checked_mul(threshold_bps as u128)
+        .checked_mul(u128::from(threshold_bps))
         .ok_or(AgioError::NumericalOverflowError)?;
 
     let is_liquidatable = force_liquidation || lhs <= rhs;
@@ -166,18 +180,21 @@ pub fn calculate_liquidation(
         .ok_or(AgioError::NumericalOverflowError)?;
 
     // Cap at collateral_amount (if debt exceeds collateral value)
-    let debt_in_collateral = debt_in_collateral_128.min(col_amt) as u64;
+    let debt_in_collateral = u64::try_from(debt_in_collateral_128.min(col_amt))
+        .map_err(|_| AgioError::NumericalOverflowError)?;
 
     let excess_collateral = collateral_amount
         .checked_sub(debt_in_collateral)
         .unwrap_or(0);
 
     // Split excess 50/50
-    let lender_excess = (excess_collateral as u128)
-        .checked_mul(EXCESS_SPLIT_BPS as u128)
+    let lender_excess_u128 = u128::from(excess_collateral)
+        .checked_mul(u128::from(EXCESS_SPLIT_BPS))
         .ok_or(AgioError::NumericalOverflowError)?
-        .checked_div(BPS_DIVISOR as u128)
-        .ok_or(AgioError::NumericalOverflowError)? as u64;
+        .checked_div(u128::from(BPS_DIVISOR))
+        .ok_or(AgioError::NumericalOverflowError)?;
+    let lender_excess = u64::try_from(lender_excess_u128)
+        .map_err(|_| AgioError::NumericalOverflowError)?;
 
     let treasury_excess = excess_collateral
         .checked_sub(lender_excess)

@@ -19,6 +19,7 @@ pub enum PrivateStatus {
     PrivateLender = 2,
 }
 
+#[derive(InitSpace)]
 #[account]
 pub struct Loan {
     pub version: u8,

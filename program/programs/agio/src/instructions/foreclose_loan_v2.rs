@@ -84,8 +84,6 @@ pub struct ForecloseLoanV2<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
-    pub clock: Sysvar<'info, Clock>,
 }
 
 pub fn foreclose_loan_v2<'info>(
@@ -93,7 +91,7 @@ pub fn foreclose_loan_v2<'info>(
 ) -> Result<()> {
     let loan = &ctx.accounts.loan;
     let vault_authority = &ctx.accounts.vault_authority;
-    let clock = &ctx.accounts.clock;
+    let clock = Clock::get()?;
 
     // 1. Verify loan is expired
     require!(
@@ -103,7 +101,10 @@ pub fn foreclose_loan_v2<'info>(
     let start = loan.start.ok_or(AgioError::MissingLoanStart)?;
     require!(
         start
-            .checked_add(loan.duration as i64)
+            .checked_add(
+                i64::try_from(loan.duration)
+                    .map_err(|_| AgioError::NumericalOverflowError)?,
+            )
             .ok_or(AgioError::NumericalOverflowError)?
             <= clock.unix_timestamp,
         AgioError::LoanNotExpired
@@ -115,7 +116,7 @@ pub fn foreclose_loan_v2<'info>(
         .accounts
         .collateral_price_update
         .get_price_no_older_than_with_custom_verification_level(
-            &Clock::get()?,
+            &clock,
             MAX_PYTH_PRICE_AGE_SECS,
             &collateral_feed_id,
             VerificationLevel::Partial { num_signatures: 1 },
@@ -127,7 +128,7 @@ pub fn foreclose_loan_v2<'info>(
         .accounts
         .debt_price_update
         .get_price_no_older_than_with_custom_verification_level(
-            &Clock::get()?,
+            &clock,
             MAX_PYTH_PRICE_AGE_SECS,
             &debt_feed_id,
             VerificationLevel::Partial { num_signatures: 1 },
@@ -138,20 +139,30 @@ pub fn foreclose_loan_v2<'info>(
     require!(debt_price_data.price > 0, AgioError::PriceFeedNegative);
 
     // 3. Calculate outstanding debt (full term interest for expired loans)
-    let elapsed = (clock.unix_timestamp - start) as u64;
+    let elapsed = u64::try_from(
+        clock
+            .unix_timestamp
+            .checked_sub(start)
+            .ok_or(AgioError::NumericalOverflowError)?,
+    )
+    .map_err(|_| AgioError::NumericalOverflowError)?;
     let outstanding_debt = calculate_outstanding_debt(loan.debt_amount, loan.apy, elapsed)?;
 
     // 4. Calculate collateral split using oracle prices.
     // Force liquidation: expired loans must distribute collateral regardless of
     // the collateral/debt ratio. Without force=true, healthy expired loans hit
     // the !is_liquidatable branch and the lender receives nothing (BUG-030).
+    let collateral_price_u64 = u64::try_from(collateral_price_data.price)
+        .map_err(|_| AgioError::PriceFeedNegative)?;
+    let debt_price_u64 = u64::try_from(debt_price_data.price)
+        .map_err(|_| AgioError::PriceFeedNegative)?;
     let result = calculate_liquidation(
         loan.collateral_amount,
-        collateral_price_data.price as u64,
+        collateral_price_u64,
         collateral_price_data.exponent,
         ctx.accounts.collateral_price_feed_config.decimals,
         outstanding_debt,
-        debt_price_data.price as u64,
+        debt_price_u64,
         debt_price_data.exponent,
         ctx.accounts.debt_price_feed_config.decimals,
         BPS_DIVISOR as u16,
