@@ -18,6 +18,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { WalletConnectModal } from "@/components/wallet-connect-modal"
+import { DevnetFaucetButton } from "@/components/devnet-faucet-button"
 import { toast } from "sonner"
 import { useLoans } from "@/hooks/useLoans"
 import { calculatePoints, formatPoints, type TokenPrices } from "@/lib/points"
@@ -216,6 +217,8 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
               <span className="text-yellow-400 text-xs font-bold">PTS</span>
             </div>
           )}
+
+          {isConnected && <DevnetFaucetButton />}
 
           <Button
             variant="ghost"
