@@ -72,12 +72,12 @@ const t: Record<Lang, {
     step3Label: "Repaid",
     step3Desc: "borrower pays principal + full-term interest. Collateral returned.",
     step4Label: "Foreclosed",
-    step4Desc: "collateral ratio drops below 130%. Lender seizes collateral.",
+    step4Desc: "collateral ratio drops below 120%. Lender seizes collateral.",
     collateralTitle: "Collateral & Pyth Oracles",
     offerCreation: "Offer creation:",
     acceptance: "Acceptance: minimum",
     foreclosureTrigger: "Foreclosure trigger: ratio falls",
-    collateralDesc: "Prices come from Pyth Network. Before every collateral-sensitive operation (accept, foreclose), the client fetches signed price attestations from Pyth Hermes and posts them on-chain via post_update_atomic. The program rejects stale prices.",
+    collateralDesc: "Prices come from Pyth Network. Before every collateral-sensitive operation (accept, foreclose), the client fetches signed price attestations from Pyth Hermes and posts them on-chain via post_update_atomic. The program rejects prices older than 5 minutes (MAX_PYTH_PRICE_AGE_SECS = 300).",
     interestTitle: "Interest",
     interestDesc: "Full-term interest is charged regardless of early repayment. A 30-day loan repaid on day 10 still pays 30 days of interest. This gives lenders predictable yield.",
     feesTitle: "Fees",
@@ -115,12 +115,12 @@ const t: Record<Lang, {
     step3Label: "Pagado",
     step3Desc: "el prestatario paga principal + intereses del plazo completo. Se devuelve la garantía.",
     step4Label: "Ejecutado",
-    step4Desc: "el ratio de garantía cae por debajo del 130%. El prestamista confisca la garantía.",
+    step4Desc: "el ratio de garantía cae por debajo del 120%. El prestamista confisca la garantía.",
     collateralTitle: "Garantía y Oráculos Pyth",
     offerCreation: "Creación de oferta:",
     acceptance: "Aceptación: mínimo",
     foreclosureTrigger: "Activación de ejecución: el ratio cae",
-    collateralDesc: "Los precios provienen de Pyth Network. Antes de cada operación sensible a la garantía (aceptar, ejecutar), el cliente obtiene atestaciones de precios firmadas de Pyth Hermes y las publica on-chain vía post_update_atomic. El programa rechaza precios obsoletos.",
+    collateralDesc: "Los precios provienen de Pyth Network. Antes de cada operación sensible a la garantía (aceptar, ejecutar), el cliente obtiene atestaciones de precios firmadas de Pyth Hermes y las publica on-chain vía post_update_atomic. El programa rechaza precios con más de 5 minutos (MAX_PYTH_PRICE_AGE_SECS = 300).",
     interestTitle: "Intereses",
     interestDesc: "Se cobran los intereses del plazo completo independientemente del pago anticipado. Un préstamo de 30 días pagado el día 10 sigue pagando 30 días de intereses. Esto da a los prestamistas un rendimiento predecible.",
     feesTitle: "Comisiones",
@@ -158,12 +158,12 @@ const t: Record<Lang, {
     step3Label: "Pago",
     step3Desc: "mutuário paga principal + juros do prazo completo. Garantia devolvida.",
     step4Label: "Executado",
-    step4Desc: "taxa de garantia cai abaixo de 130%. O credor confisca a garantia.",
+    step4Desc: "taxa de garantia cai abaixo de 120%. O credor confisca a garantia.",
     collateralTitle: "Garantia e Oráculos Pyth",
     offerCreation: "Criação de oferta:",
     acceptance: "Aceitação: mínimo",
     foreclosureTrigger: "Gatilho de execução: a taxa cai",
-    collateralDesc: "Os preços vêm da Pyth Network. Antes de cada operação sensível à garantia (aceitar, executar), o cliente obtém atestações de preços assinadas do Pyth Hermes e as publica on-chain via post_update_atomic. O programa rejeita preços obsoletos.",
+    collateralDesc: "Os preços vêm da Pyth Network. Antes de cada operação sensível à garantia (aceitar, executar), o cliente obtém atestações de preços assinadas do Pyth Hermes e as publica on-chain via post_update_atomic. O programa rejeita preços com mais de 5 minutos (MAX_PYTH_PRICE_AGE_SECS = 300).",
     interestTitle: "Juros",
     interestDesc: "Os juros do prazo completo são cobrados independentemente do pagamento antecipado. Um empréstimo de 30 dias pago no dia 10 ainda paga 30 dias de juros. Isso dá aos credores um rendimento previsível.",
     feesTitle: "Taxas",
@@ -201,12 +201,12 @@ const t: Record<Lang, {
     step3Label: "已偿还",
     step3Desc: "借款人支付本金 + 全期利息。抵押品返还。",
     step4Label: "已清算",
-    step4Desc: "抵押率降至 130% 以下。出借方没收抵押品。",
+    step4Desc: "抵押率降至 120% 以下。出借方没收抵押品。",
     collateralTitle: "抵押品与 Pyth 预言机",
     offerCreation: "创建报价：",
     acceptance: "接受：最低",
     foreclosureTrigger: "清算触发：比率降至",
-    collateralDesc: "价格来自 Pyth Network。在每次抵押品敏感操作（接受、清算）之前，客户端从 Pyth Hermes 获取签名价格证明并通过 post_update_atomic 发布到链上。程序会拒绝过期价格。",
+    collateralDesc: "价格来自 Pyth Network。在每次抵押品敏感操作（接受、清算）之前，客户端从 Pyth Hermes 获取签名价格证明并通过 post_update_atomic 发布到链上。程序会拒绝超过 5 分钟的价格（MAX_PYTH_PRICE_AGE_SECS = 300）。",
     interestTitle: "利息",
     interestDesc: "无论是否提前还款，均按全期收取利息。30 天贷款在第 10 天偿还仍需支付 30 天利息。这为出借方提供了可预测的收益。",
     feesTitle: "费用",
@@ -294,7 +294,7 @@ export default function CoreConceptsPage() {
         <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
           <li>{s.offerCreation} <strong>150% &ndash; 300%</strong></li>
           <li>{s.acceptance} <strong>130%</strong> (on-chain enforced)</li>
-          <li>{s.foreclosureTrigger} <strong>below 130%</strong></li>
+          <li>{s.foreclosureTrigger} <strong>below 120%</strong></li>
         </ul>
       </div>
       <p>

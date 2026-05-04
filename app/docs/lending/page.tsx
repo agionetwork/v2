@@ -64,7 +64,7 @@ const t: Record<Lang, {
     returns: "Returns",
     returnsExample: "Example: 1,000 USDC at 12% APY for 30 days = ~9.86 USDC interest.",
     foreclosure: "Foreclosure",
-    foreclosureDesc: "If the borrower\u2019s collateral ratio drops below 130%, you can foreclose and seize the collateral. Fresh Pyth prices are posted on-chain to verify the under-collateralization before the program allows it.",
+    foreclosureDesc: "If the borrower\u2019s collateral ratio drops below 120%, you can foreclose and seize the collateral. Fresh Pyth prices are posted on-chain to verify the under-collateralization before the program allows it.",
   },
   es: {
     title: "Préstamos",
@@ -96,7 +96,7 @@ const t: Record<Lang, {
     returns: "Rendimientos",
     returnsExample: "Ejemplo: 1.000 USDC al 12% APY por 30 días = ~9,86 USDC de interés.",
     foreclosure: "Ejecución",
-    foreclosureDesc: "Si el ratio de garantía del prestatario cae por debajo del 130%, puedes ejecutar y confiscar la garantía. Se publican precios Pyth actualizados on-chain para verificar la sub-colateralización antes de que el programa lo permita.",
+    foreclosureDesc: "Si el ratio de garantía del prestatario cae por debajo del 120%, puedes ejecutar y confiscar la garantía. Se publican precios Pyth actualizados on-chain para verificar la sub-colateralización antes de que el programa lo permita.",
   },
   pt: {
     title: "Empréstimos",
@@ -128,7 +128,7 @@ const t: Record<Lang, {
     returns: "Retornos",
     returnsExample: "Exemplo: 1.000 USDC a 12% APY por 30 dias = ~9,86 USDC de juros.",
     foreclosure: "Execução",
-    foreclosureDesc: "Se a taxa de garantia do mutuário cair abaixo de 130%, você pode executar e confiscar a garantia. Preços Pyth atualizados são publicados on-chain para verificar a sub-colateralização antes que o programa permita.",
+    foreclosureDesc: "Se a taxa de garantia do mutuário cair abaixo de 120%, você pode executar e confiscar a garantia. Preços Pyth atualizados são publicados on-chain para verificar a sub-colateralização antes que o programa permita.",
   },
   zh: {
     title: "出借",
@@ -160,7 +160,7 @@ const t: Record<Lang, {
     returns: "收益",
     returnsExample: "示例：1,000 USDC，12% APY，30 天 = 约 9.86 USDC 利息。",
     foreclosure: "清算",
-    foreclosureDesc: "如果借款人的抵押率降至 130% 以下，您可以清算并没收抵押品。清算前会在链上发布最新的 Pyth 价格以验证抵押不足。",
+    foreclosureDesc: "如果借款人的抵押率降至 120% 以下，您可以清算并没收抵押品。清算前会在链上发布最新的 Pyth 价格以验证抵押不足。",
   },
 }
 
