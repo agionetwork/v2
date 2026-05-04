@@ -44,8 +44,10 @@ const t: Record<Lang, {
   mcpStdioConfigHint: string
   mcpStep2: string
   mcpStep2Hint: string
-  mcpStep3: string
-  mcpStep3Hint: string
+  x402Lead: string
+  callATool: string
+  callAToolLead: string
+  callAToolPaidNote: string
   whenSkill: string
   whenSkillDesc: string
   whenSkillSteps: string[]
@@ -93,8 +95,10 @@ const t: Record<Lang, {
     mcpStdioConfigHint: "Then point your MCP config at the bridge script:",
     mcpStep2: "2. Test the connection",
     mcpStep2Hint: "Run this from your terminal to enumerate the 37 tools and confirm the endpoint works:",
-    mcpStep3: "3. Call a tool",
-    mcpStep3Hint: "Pick one from the catalog below and invoke it with tools/call. For paid tools (create-agent, swap-tokens), build a Solana payment transaction and pass it as paymentProof — see x402 Protocol below.",
+    x402Lead: "x402 turns a Solana payment into authentication. The wallet that signs the transaction fee proves ownership — no API keys, no OAuth. Reads are free; writes that touch funds (create-agent, swap-tokens) require a payment attached as paymentProof on the same JSON-RPC call.",
+    callATool: "Call a tool",
+    callAToolLead: "With the connection up, invoke any tool by sending a tools/call JSON-RPC request. Pick a tool name from the catalogs below, pass its arguments, and you get a structured response back.",
+    callAToolPaidNote: "For paid tools, build a Solana payment transaction (see x402 Protocol above) and attach it as paymentProof in the params. On devnet, set DEVNET_FREE_TOOLS=true to skip payment with API-key auth.",
     whenSkill: "Install the Skill when",
     whenSkillDesc: "You are using an MCP-capable AI agent and want zero-config integration. Just give the agent a one-line prompt pointing at https://agio.network/skill.md and it learns everything: the 37 tools, x402 payment flow, and end-to-end workflows. No clone, no path setup, no JSON config.",
     whenSkillSteps: [
@@ -146,8 +150,10 @@ const t: Record<Lang, {
     mcpStdioConfigHint: "Luego apunta tu config MCP al script puente:",
     mcpStep2: "2. Prueba la conexión",
     mcpStep2Hint: "Ejecuta esto en tu terminal para enumerar las 37 herramientas y confirmar que el endpoint funciona:",
-    mcpStep3: "3. Llama a una herramienta",
-    mcpStep3Hint: "Elige una del catálogo abajo e invócala con tools/call. Para herramientas pagas (create-agent, swap-tokens), construye una transacción Solana de pago y pásala como paymentProof — ver Protocolo x402 abajo.",
+    x402Lead: "x402 convierte un pago Solana en autenticación. La wallet que firma la tarifa de transacción demuestra la propiedad — sin API keys, sin OAuth. Las lecturas son gratis; las escrituras que tocan fondos (create-agent, swap-tokens) requieren un pago adjunto como paymentProof en la misma llamada JSON-RPC.",
+    callATool: "Llama a una herramienta",
+    callAToolLead: "Con la conexión activa, invoca cualquier herramienta enviando una solicitud JSON-RPC tools/call. Elige un nombre de herramienta de los catálogos abajo, pasa sus argumentos y obtienes una respuesta estructurada.",
+    callAToolPaidNote: "Para herramientas pagas, construye una transacción Solana de pago (ver Protocolo x402 arriba) y adjúntala como paymentProof en los params. En devnet, define DEVNET_FREE_TOOLS=true para saltar el pago con autenticación por API key.",
     whenSkill: "Instala la Skill cuando",
     whenSkillDesc: "Usas un agente IA compatible con MCP y quieres integración sin configuración. Solo dale al agente un prompt de una línea apuntando a https://agio.network/skill.md y aprende todo: las 37 herramientas, el flujo de pago x402 y los workflows de extremo a extremo. Sin clonar, sin configurar paths, sin JSON.",
     whenSkillSteps: [
@@ -199,8 +205,10 @@ const t: Record<Lang, {
     mcpStdioConfigHint: "Depois aponte sua config MCP para o script ponte:",
     mcpStep2: "2. Teste a conexão",
     mcpStep2Hint: "Rode isto no terminal para enumerar as 37 ferramentas e confirmar que o endpoint funciona:",
-    mcpStep3: "3. Chame uma ferramenta",
-    mcpStep3Hint: "Escolha uma do catálogo abaixo e invoque com tools/call. Para ferramentas pagas (create-agent, swap-tokens), construa uma transação Solana de pagamento e passe como paymentProof — ver Protocolo x402 abaixo.",
+    x402Lead: "x402 transforma um pagamento Solana em autenticação. A wallet que assina a taxa da transação prova a propriedade — sem API keys, sem OAuth. Leituras são gratuitas; escritas que tocam fundos (create-agent, swap-tokens) exigem um pagamento anexado como paymentProof na mesma chamada JSON-RPC.",
+    callATool: "Chame uma ferramenta",
+    callAToolLead: "Com a conexão ativa, invoque qualquer ferramenta enviando uma requisição JSON-RPC tools/call. Escolha um nome de ferramenta dos catálogos abaixo, passe seus argumentos e receba uma resposta estruturada.",
+    callAToolPaidNote: "Para ferramentas pagas, construa uma transação Solana de pagamento (ver Protocolo x402 acima) e anexe como paymentProof nos params. No devnet, defina DEVNET_FREE_TOOLS=true para pular o pagamento com autenticação por API key.",
     whenSkill: "Instale a Skill quando",
     whenSkillDesc: "Você usa um agente IA compatível com MCP e quer integração sem configuração. Basta dar ao agente um prompt de uma linha apontando para https://agio.network/skill.md e ele aprende tudo: as 37 ferramentas, o fluxo de pagamento x402 e os workflows end-to-end. Sem clone, sem configurar paths, sem JSON.",
     whenSkillSteps: [
@@ -252,8 +260,10 @@ const t: Record<Lang, {
     mcpStdioConfigHint: "然后将 MCP 配置指向桥接脚本：",
     mcpStep2: "2. 测试连接",
     mcpStep2Hint: "在终端中运行以下命令枚举 37 个工具并确认端点正常：",
-    mcpStep3: "3. 调用工具",
-    mcpStep3Hint: "从下方目录选择一个，用 tools/call 调用。对于付费工具（create-agent、swap-tokens），构建 Solana 支付交易并作为 paymentProof 传递 — 请参见下方 x402 协议。",
+    x402Lead: "x402 将 Solana 支付转化为身份验证。签名交易手续费的钱包即证明所有权 — 无需 API key，无需 OAuth。读取免费；触及资金的写操作（create-agent、swap-tokens）需在同一 JSON-RPC 调用中附加 paymentProof 作为支付凭证。",
+    callATool: "调用工具",
+    callAToolLead: "连接建立后，通过发送 tools/call JSON-RPC 请求来调用任何工具。从下方目录选择一个工具名称，传入其参数，即可获得结构化响应。",
+    callAToolPaidNote: "对于付费工具，构建一笔 Solana 支付交易（参见上方 x402 协议）并作为 paymentProof 附加在 params 中。在 devnet 上，设置 DEVNET_FREE_TOOLS=true 即可使用 API key 验证跳过支付。",
     whenSkill: "何时安装 Skill",
     whenSkillDesc: "您使用支持 MCP 的 AI 代理并希望零配置集成。只需给代理一个指向 https://agio.network/skill.md 的单行提示，它就能学会一切：37 个工具、x402 支付流程和端到端工作流。无需克隆、无需配置路径、无需 JSON。",
     whenSkillSteps: [
@@ -315,6 +325,15 @@ cd agio-private-lending && pnpm install`
   -H "Content-Type: application/json" \\
   -H "Accept: application/json, text/event-stream" \\
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`
+  const toolsCallExample = `{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "list-loans",
+    "arguments": { "status": "active", "limit": 10 }
+  }
+}`
 
   return (
     <>
@@ -363,16 +382,30 @@ cd agio-private-lending && pnpm install`
           </div>
 
           <div className="text-sm font-semibold mb-2">{s.mcpStep2}</div>
-          <div className="rounded-md bg-background/60 border border-border/40 p-3 mb-4">
+          <div className="rounded-md bg-background/60 border border-border/40 p-3">
             <p className="text-xs text-muted-foreground mb-2">{s.mcpStep2Hint}</p>
             <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto"><code>{curlTest}</code></pre>
             <CopyButton text={curlTest} />
           </div>
-
-          <div className="text-sm font-semibold mb-2">{s.mcpStep3}</div>
-          <p className="text-xs text-muted-foreground">{s.mcpStep3Hint}</p>
         </div>
       </div>
+
+      <h2>{s.x402Protocol}</h2>
+      <p>{s.x402Lead}</p>
+      <ul>
+        <li><strong>{s.antiReplay}</strong></li>
+        <li><strong>{s.rateLimiting}</strong></li>
+        <li><strong>{s.dynamicPricing}</strong></li>
+        <li><strong>{s.devnetMode}</strong>: <code>DEVNET_FREE_TOOLS=true</code> bypasses payment with API key auth</li>
+      </ul>
+
+      <h2>{s.callATool}</h2>
+      <p>{s.callAToolLead}</p>
+      <div className="not-prose my-4">
+        <pre className="text-xs bg-background/80 border border-border/40 rounded p-3 overflow-x-auto"><code>{toolsCallExample}</code></pre>
+        <CopyButton text={toolsCallExample} />
+      </div>
+      <p>{s.callAToolPaidNote}</p>
 
       <h2>{s.freeTools}</h2>
       <div className="not-prose my-4 overflow-x-auto">
@@ -470,13 +503,6 @@ cd agio-private-lending && pnpm install`
         </table>
       </div>
 
-      <h2>{s.x402Protocol}</h2>
-      <ul>
-        <li><strong>{s.antiReplay}</strong></li>
-        <li><strong>{s.rateLimiting}</strong></li>
-        <li><strong>{s.dynamicPricing}</strong></li>
-        <li><strong>{s.devnetMode}</strong>: <code>DEVNET_FREE_TOOLS=true</code> bypasses payment with API key auth</li>
-      </ul>
     </>
   )
 }
