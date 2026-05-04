@@ -102,9 +102,11 @@ docker-dev.sh
 # Scripts (needed for build)
 # scripts/
 
-# Documentation (keep README)
+# Documentation (keep README and skill files served from public/)
 *.md
 !README.md
+!public/skill.md
+!public/skill/*.md
 
 # Lock files (keep package-lock.json)
 yarn.lock
