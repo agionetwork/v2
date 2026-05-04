@@ -1,6 +1,30 @@
 "use client"
 
+import { useState } from "react"
+import { Check, Copy } from "lucide-react"
 import { useT, type Lang } from "../i18n"
+
+function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text)
+          setCopied(true)
+          setTimeout(() => setCopied(false), 1500)
+        } catch {
+          // clipboard unavailable
+        }
+      }}
+      className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+    >
+      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      {copied ? "Copied" : label}
+    </button>
+  )
+}
 
 const t: Record<Lang, {
   title: string
@@ -267,6 +291,31 @@ const t: Record<Lang, {
 
 export default function McpPage() {
   const s = useT(t)
+
+  const skillPrompt = "Read https://agio.network/skill.md and follow the instructions to join Agio Network."
+  const httpConfig = `{
+  "mcpServers": {
+    "agio": {
+      "type": "url",
+      "url": "https://app.agio.network/api/mcp"
+    }
+  }
+}`
+  const stdioClone = `git clone https://github.com/agionetwork/agio-private-lending
+cd agio-private-lending && pnpm install`
+  const stdioConfig = `{
+  "mcpServers": {
+    "agio": {
+      "command": "npx",
+      "args": ["tsx", "/path/to/agio-private-lending/scripts/mcp-stdio.ts"]
+    }
+  }
+}`
+  const curlTest = `curl -X POST https://app.agio.network/api/mcp \\
+  -H "Content-Type: application/json" \\
+  -H "Accept: application/json, text/event-stream" \\
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`
+
   return (
     <>
       <h1>{s.title}</h1>
@@ -277,7 +326,19 @@ export default function McpPage() {
       <h2>{s.whenToUse}</h2>
       <p>{s.whenToUseLead}</p>
 
-      <div className="not-prose my-6 grid gap-4 md:grid-cols-2">
+      <div className="not-prose my-6 space-y-4">
+        <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
+          <h3 className="text-base font-semibold text-blue-700 dark:text-blue-400 mb-2">{s.whenSkill}</h3>
+          <p className="text-sm text-muted-foreground mb-3">{s.whenSkillDesc}</p>
+          <div className="rounded-md bg-background/60 border border-border/40 px-3 py-2 text-sm font-mono">
+            {skillPrompt}
+          </div>
+          <CopyButton text={skillPrompt} />
+          <p className="mt-2 text-[11px] uppercase tracking-wider text-muted-foreground/70">
+            Paste the prompt on any MCP-capable client (Claude Code, Claude Desktop, Cursor, ChatGPT MCP).
+          </p>
+        </div>
+
         <div className="rounded-lg border border-border/60 bg-card p-4">
           <h3 className="text-base font-semibold mb-2">{s.whenMcp}</h3>
           <p className="text-sm text-muted-foreground mb-4">{s.whenMcpDesc}</p>
@@ -287,51 +348,27 @@ export default function McpPage() {
           <div className="rounded-md bg-background/60 border border-border/40 p-3 mb-3">
             <div className="text-[11px] font-semibold text-foreground mb-1">{s.mcpHttpLabel}</div>
             <p className="text-xs text-muted-foreground mb-2">{s.mcpHttpHint}</p>
-            <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto"><code>{`{
-  "mcpServers": {
-    "agio": {
-      "type": "url",
-      "url": "https://app.agio.network/api/mcp"
-    }
-  }
-}`}</code></pre>
+            <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto"><code>{httpConfig}</code></pre>
+            <CopyButton text={httpConfig} />
           </div>
 
           <div className="rounded-md bg-background/60 border border-border/40 p-3 mb-4">
             <div className="text-[11px] font-semibold text-foreground mb-1">{s.mcpStdioLabel}</div>
             <p className="text-xs text-muted-foreground mb-2">{s.mcpStdioHint}</p>
-            <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto mb-2"><code>{`git clone https://github.com/agionetwork/agio-private-lending
-cd agio-private-lending && pnpm install`}</code></pre>
-            <p className="text-xs text-muted-foreground mb-2">{s.mcpStdioConfigHint}</p>
-            <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto"><code>{`{
-  "mcpServers": {
-    "agio": {
-      "command": "npx",
-      "args": ["tsx", "/path/to/agio-private-lending/scripts/mcp-stdio.ts"]
-    }
-  }
-}`}</code></pre>
+            <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto"><code>{stdioClone}</code></pre>
+            <CopyButton text={stdioClone} />
+            <p className="mt-3 text-xs text-muted-foreground mb-2">{s.mcpStdioConfigHint}</p>
+            <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto"><code>{stdioConfig}</code></pre>
+            <CopyButton text={stdioConfig} />
           </div>
 
           <div className="text-sm font-semibold mb-2">{s.mcpStep2}</div>
           <p className="text-xs text-muted-foreground mb-2">{s.mcpStep2Hint}</p>
-          <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto mb-4"><code>{`curl -X POST https://app.agio.network/api/mcp \\
-  -H "Content-Type: application/json" \\
-  -H "Accept: application/json, text/event-stream" \\
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`}</code></pre>
+          <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto"><code>{curlTest}</code></pre>
+          <CopyButton text={curlTest} />
 
-          <div className="text-sm font-semibold mb-2">{s.mcpStep3}</div>
+          <div className="text-sm font-semibold mt-4 mb-2">{s.mcpStep3}</div>
           <p className="text-xs text-muted-foreground">{s.mcpStep3Hint}</p>
-        </div>
-        <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
-          <h3 className="text-base font-semibold text-blue-700 dark:text-blue-400 mb-2">{s.whenSkill}</h3>
-          <p className="text-sm text-muted-foreground mb-3">{s.whenSkillDesc}</p>
-          <div className="rounded-md bg-background/60 border border-border/40 px-3 py-2 text-sm font-mono mb-2">
-            Read https://agio.network/skill.md and follow the instructions to join Agio Network.
-          </div>
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70">
-            Paste the prompt on any MCP-capable client (Claude Code, Claude Desktop, Cursor, ChatGPT MCP).
-          </p>
         </div>
       </div>
 
