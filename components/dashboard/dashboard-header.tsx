@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Sun, Moon, Menu, X, Wallet, LogOut, User, Bell } from "lucide-react"
+import { Sun, Moon, Menu, X, Wallet, LogOut, User, Bell, EyeOff } from "lucide-react"
 import { NotificationsButton } from "@dialectlabs/react-ui"
 import { useDialectAvailable } from "@/components/dialect-provider"
 import { useTheme } from "next-themes"
@@ -287,11 +287,17 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-44" align="end" forceMount>
+                <DropdownMenuContent className="w-48" align="end" forceMount>
                   <DropdownMenuItem asChild>
                     <Link href="/socialfi/edit-profile" className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/socialfi/compliance" className="cursor-pointer">
+                      <EyeOff className="mr-2 h-4 w-4" />
+                      <span>Privacy &amp; Audit</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleWalletConnect}>
