@@ -47,7 +47,7 @@ const t: Record<Lang, {
   localDevDesc: string
 }> = {
   en: {
-    title: "MCP Integration",
+    title: "AI Integration",
     lead: "37-tool Model Context Protocol server that lets any AI assistant interact with Agio programmatically. Paid tools use x402 USDC payments as auth.",
     agentSkill: "External agents: install our skill",
     agentSkillDesc: "If your agent supports Claude Agent SDK skills, install the agio-network skill so it auto-discovers this MCP and knows how to call every tool. The skill ships with progressive-disclosure docs (top-8 quick reference + full 37-tool catalog + x402 payment flow + end-to-end workflows).",
@@ -57,10 +57,8 @@ const t: Record<Lang, {
     whenMcp: "Use MCP directly when",
     whenMcpDesc: "You are writing custom code that calls Agio programmatically. You handle the JSON-RPC envelope, manage state, and decide which tools to call.",
     whenMcpSteps: [
-      "Send POST requests to https://app.agio.network/api/mcp with Accept: application/json, text/event-stream",
       "Run tools/list to enumerate the 37 tools, then tools/call with name and arguments",
-      "For paid tools (create-agent, swap-tokens), build a Solana payment transaction and pass it as paymentProof. See the x402 Protocol section below",
-      "Optional: use scripts/mcp-stdio.ts as a stdio bridge for Claude Desktop (see Local Development below)",
+      "For paid tools (create-agent, swap-tokens), build a Solana payment transaction and pass it as paymentProof — see the x402 Protocol section below",
     ],
     whenSkill: "Install the Skill when",
     whenSkillDesc: "You are using an MCP-capable AI agent and want zero-config integration. Just give the agent a one-line prompt pointing at https://agio.network/skill.md and it learns everything: the 37 tools, x402 payment flow, and end-to-end workflows. No clone, no path setup, no JSON config.",
@@ -100,7 +98,7 @@ const t: Record<Lang, {
     localDevDesc: "For Claude Desktop or other local MCP clients, use the stdio transport wrapper:",
   },
   es: {
-    title: "Integración MCP",
+    title: "Integración IA",
     lead: "Servidor del Protocolo de Contexto de Modelo con 37 herramientas que permite a cualquier asistente IA interactuar con Agio programáticamente. Las herramientas de pago usan pagos x402 USDC como autenticación.",
     agentSkill: "Agentes externos: instala nuestra skill",
     agentSkillDesc: "Si tu agente soporta skills del Claude Agent SDK, instala la skill agio-network para que descubra automáticamente este MCP y sepa cómo llamar cada herramienta. La skill incluye documentación con divulgación progresiva (referencia de las 8 herramientas principales + catálogo completo de 37 + flujo de pago x402 + workflows de extremo a extremo).",
@@ -110,10 +108,8 @@ const t: Record<Lang, {
     whenMcp: "Usa MCP directamente cuando",
     whenMcpDesc: "Escribes código que llama a Agio programáticamente. Tú gestionas el sobre JSON-RPC, mantienes estado y decides qué herramientas llamar.",
     whenMcpSteps: [
-      "Envía POST a https://app.agio.network/api/mcp con Accept: application/json, text/event-stream",
       "Ejecuta tools/list para enumerar las 37 herramientas, luego tools/call con name y arguments",
-      "Para herramientas pagas (create-agent, swap-tokens), construye una transacción Solana de pago y pásala como paymentProof. Ver la sección Protocolo x402 más abajo",
-      "Opcional: usa scripts/mcp-stdio.ts como puente stdio para Claude Desktop (ver Desarrollo Local más abajo)",
+      "Para herramientas pagas (create-agent, swap-tokens), construye una transacción Solana de pago y pásala como paymentProof — ver la sección Protocolo x402 más abajo",
     ],
     whenSkill: "Instala la Skill cuando",
     whenSkillDesc: "Usas un agente IA compatible con MCP y quieres integración sin configuración. Solo dale al agente un prompt de una línea apuntando a https://agio.network/skill.md y aprende todo: las 37 herramientas, el flujo de pago x402 y los workflows de extremo a extremo. Sin clonar, sin configurar paths, sin JSON.",
@@ -153,7 +149,7 @@ const t: Record<Lang, {
     localDevDesc: "Para Claude Desktop u otros clientes MCP locales, usa el wrapper de transporte stdio:",
   },
   pt: {
-    title: "Integração MCP",
+    title: "Integração IA",
     lead: "Servidor do Protocolo de Contexto de Modelo com 37 ferramentas que permite a qualquer assistente IA interagir com o Agio programaticamente. Ferramentas pagas usam pagamentos x402 USDC como autenticação.",
     agentSkill: "Agentes externos: instale nossa skill",
     agentSkillDesc: "Se seu agente suporta skills do Claude Agent SDK, instale a skill agio-network para ele descobrir automaticamente esse MCP e saber como chamar cada ferramenta. A skill vem com documentação progressive-disclosure (referência das 8 principais + catálogo completo de 37 + fluxo de pagamento x402 + workflows end-to-end).",
@@ -163,10 +159,8 @@ const t: Record<Lang, {
     whenMcp: "Use MCP diretamente quando",
     whenMcpDesc: "Você escreve código que chama a Agio programaticamente. Você gerencia o envelope JSON-RPC, mantém estado e decide quais ferramentas chamar.",
     whenMcpSteps: [
-      "Envie POST para https://app.agio.network/api/mcp com Accept: application/json, text/event-stream",
       "Rode tools/list para enumerar as 37 ferramentas, depois tools/call com name e arguments",
-      "Para ferramentas pagas (create-agent, swap-tokens), construa uma transação Solana de pagamento e passe como paymentProof. Veja a seção Protocolo x402 abaixo",
-      "Opcional: use scripts/mcp-stdio.ts como ponte stdio para Claude Desktop (ver Desenvolvimento Local abaixo)",
+      "Para ferramentas pagas (create-agent, swap-tokens), construa uma transação Solana de pagamento e passe como paymentProof — veja a seção Protocolo x402 abaixo",
     ],
     whenSkill: "Instale a Skill quando",
     whenSkillDesc: "Você usa um agente IA compatível com MCP e quer integração sem configuração. Basta dar ao agente um prompt de uma linha apontando para https://agio.network/skill.md e ele aprende tudo: as 37 ferramentas, o fluxo de pagamento x402 e os workflows end-to-end. Sem clone, sem configurar paths, sem JSON.",
@@ -206,7 +200,7 @@ const t: Record<Lang, {
     localDevDesc: "Para Claude Desktop ou outros clientes MCP locais, use o wrapper de transporte stdio:",
   },
   zh: {
-    title: "MCP 集成",
+    title: "AI 集成",
     lead: "37 工具模型上下文协议服务器，让任何 AI 助手都能以编程方式与 Agio 交互。付费工具使用 x402 USDC 支付作为身份验证。",
     agentSkill: "外部代理: 安装我们的 skill",
     agentSkillDesc: "如果您的代理支持 Claude Agent SDK skills，请安装 agio-network skill，以便它自动发现此 MCP 并知道如何调用每个工具。该 skill 附带渐进式披露文档（前 8 个工具快速参考 + 完整 37 工具目录 + x402 支付流程 + 端到端工作流）。",
@@ -216,10 +210,8 @@ const t: Record<Lang, {
     whenMcp: "何时直接使用 MCP",
     whenMcpDesc: "您编写以编程方式调用 Agio 的代码。您管理 JSON-RPC 信封，维护状态，并决定调用哪些工具。",
     whenMcpSteps: [
-      "向 https://app.agio.network/api/mcp 发送 POST 请求，带 Accept: application/json, text/event-stream",
       "运行 tools/list 枚举 37 个工具，然后用 name 和 arguments 调用 tools/call",
-      "对于付费工具（create-agent、swap-tokens），构建 Solana 支付交易并作为 paymentProof 传递。请参见下面的 x402 协议部分",
-      "可选：使用 scripts/mcp-stdio.ts 作为 Claude Desktop 的 stdio 桥接（请参见下面的本地开发）",
+      "对于付费工具（create-agent、swap-tokens），构建 Solana 支付交易并作为 paymentProof 传递 — 请参见下面的 x402 协议部分",
     ],
     whenSkill: "何时安装 Skill",
     whenSkillDesc: "您使用支持 MCP 的 AI 代理并希望零配置集成。只需给代理一个指向 https://agio.network/skill.md 的单行提示，它就能学会一切：37 个工具、x402 支付流程和端到端工作流。无需克隆、无需配置路径、无需 JSON。",
@@ -276,6 +268,21 @@ export default function McpPage() {
         <div className="rounded-lg border border-border/60 bg-card p-4">
           <h3 className="text-base font-semibold mb-2">{s.whenMcp}</h3>
           <p className="text-sm text-muted-foreground mb-3">{s.whenMcpDesc}</p>
+
+          <div className="rounded-md bg-background/60 border border-border/40 px-3 py-2 mb-2">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">{s.endpoint}</div>
+            <code className="text-sm break-all">POST https://app.agio.network/api/mcp</code>
+            <div className="mt-1 text-xs text-muted-foreground">
+              Accept: <code>application/json, text/event-stream</code>
+            </div>
+          </div>
+
+          <div className="rounded-md bg-background/60 border border-border/40 px-3 py-2 mb-3">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">{s.localDev}</div>
+            <code className="text-sm">npx ts-node scripts/mcp-stdio.ts</code>
+            <div className="mt-1 text-xs text-muted-foreground">{s.localDevDesc}</div>
+          </div>
+
           <ol className="text-sm pl-5 list-decimal space-y-1 text-muted-foreground">
             {s.whenMcpSteps.map((step, i) => (
               <li key={i}>{step}</li>
@@ -292,16 +299,6 @@ export default function McpPage() {
             Paste the prompt on any MCP-capable client (Claude Code, Claude Desktop, Cursor, ChatGPT MCP).
           </p>
         </div>
-      </div>
-
-      <h2>{s.endpoint}</h2>
-      <div className="not-prose my-4 rounded-lg border border-border/60 bg-card p-4">
-        <code className="text-sm">POST /api/mcp</code>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {s.endpointDesc}
-          <br />
-          Headers: <code>Content-Type: application/json</code>, <code>Accept: application/json, text/event-stream</code>
-        </p>
       </div>
 
       <h2>{s.freeTools}</h2>
@@ -407,14 +404,6 @@ export default function McpPage() {
         <li><strong>{s.dynamicPricing}</strong></li>
         <li><strong>{s.devnetMode}</strong>: <code>DEVNET_FREE_TOOLS=true</code> bypasses payment with API key auth</li>
       </ul>
-
-      <h2>{s.localDev}</h2>
-      <p>
-        {s.localDevDesc}
-      </p>
-      <div className="not-prose my-4 rounded-lg border border-border/60 bg-card p-4">
-        <code className="text-sm">npx ts-node scripts/mcp-stdio.ts</code>
-      </div>
     </>
   )
 }

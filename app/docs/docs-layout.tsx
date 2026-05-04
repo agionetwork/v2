@@ -14,7 +14,7 @@ const NAV: Record<Lang, { title: string; items: { title: string; href: string }[
     { title: "Privacy", items: [{ title: "Private Mode", href: "/docs/private-mode" }, { title: "Exclusive Counterparty", href: "/docs/exclusive-counterparty" }] },
     { title: "Tokenomics", items: [{ title: "$agioSOL", href: "/docs/agiosol" }] },
     { title: "Features", items: [{ title: "Auto Loan", href: "/docs/lending-bot" }, { title: "AI Agents", href: "/docs/agents" }] },
-    { title: "Developers", items: [{ title: "MCP Integration", href: "/docs/mcp" }, { title: "Security & Risk", href: "/docs/security" }] },
+    { title: "Developers", items: [{ title: "AI Integration", href: "/docs/mcp" }, { title: "Security & Risk", href: "/docs/security" }] },
   ],
   es: [
     { title: "Inicio", items: [{ title: "Introducción", href: "/docs" }, { title: "Inicio Rápido", href: "/docs/getting-started" }] },
@@ -22,7 +22,7 @@ const NAV: Record<Lang, { title: string; items: { title: string; href: string }[
     { title: "Privacidad", items: [{ title: "Modo Privado", href: "/docs/private-mode" }, { title: "Contraparte Exclusiva", href: "/docs/exclusive-counterparty" }] },
     { title: "Tokenomics", items: [{ title: "$agioSOL", href: "/docs/agiosol" }] },
     { title: "Funciones", items: [{ title: "Auto Loan", href: "/docs/lending-bot" }, { title: "Agentes IA", href: "/docs/agents" }] },
-    { title: "Desarrolladores", items: [{ title: "Integración MCP", href: "/docs/mcp" }, { title: "Seguridad y Riesgo", href: "/docs/security" }] },
+    { title: "Desarrolladores", items: [{ title: "Integración IA", href: "/docs/mcp" }, { title: "Seguridad y Riesgo", href: "/docs/security" }] },
   ],
   pt: [
     { title: "Início", items: [{ title: "Introdução", href: "/docs" }, { title: "Início Rápido", href: "/docs/getting-started" }] },
@@ -30,7 +30,7 @@ const NAV: Record<Lang, { title: string; items: { title: string; href: string }[
     { title: "Privacidade", items: [{ title: "Modo Privado", href: "/docs/private-mode" }, { title: "Contraparte Exclusiva", href: "/docs/exclusive-counterparty" }] },
     { title: "Tokenomics", items: [{ title: "$agioSOL", href: "/docs/agiosol" }] },
     { title: "Recursos", items: [{ title: "Auto Loan", href: "/docs/lending-bot" }, { title: "Agentes IA", href: "/docs/agents" }] },
-    { title: "Desenvolvedores", items: [{ title: "Integração MCP", href: "/docs/mcp" }, { title: "Segurança e Risco", href: "/docs/security" }] },
+    { title: "Desenvolvedores", items: [{ title: "Integração IA", href: "/docs/mcp" }, { title: "Segurança e Risco", href: "/docs/security" }] },
   ],
   zh: [
     { title: "开始", items: [{ title: "简介", href: "/docs" }, { title: "快速开始", href: "/docs/getting-started" }] },
@@ -38,7 +38,7 @@ const NAV: Record<Lang, { title: string; items: { title: string; href: string }[
     { title: "隐私", items: [{ title: "私密模式", href: "/docs/private-mode" }, { title: "独家对手方", href: "/docs/exclusive-counterparty" }] },
     { title: "Tokenomics", items: [{ title: "$agioSOL", href: "/docs/agiosol" }] },
     { title: "功能", items: [{ title: "Auto Loan", href: "/docs/lending-bot" }, { title: "AI 代理", href: "/docs/agents" }] },
-    { title: "开发者", items: [{ title: "MCP 集成", href: "/docs/mcp" }, { title: "安全与风险", href: "/docs/security" }] },
+    { title: "开发者", items: [{ title: "AI 集成", href: "/docs/mcp" }, { title: "安全与风险", href: "/docs/security" }] },
   ],
 }
 
