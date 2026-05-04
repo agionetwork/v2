@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 
-// Order: Solana, Superteam, Privy, Tapestry, x402
+// Order: Solana, Superteam, Privy, Tapestry, Cloak, x402
 // Images are trimmed (no transparent padding) so object-fit works accurately
 // scale: per-logo size tweak (1 = default BOX bounds, <1 = smaller)
 const partners = [
@@ -10,6 +10,7 @@ const partners = [
   { name: "Superteam Brasil", logo: "/ecosystem/superteam-brasil.png", w: 497, h: 80, scale: 1 },
   { name: "Privy", logo: "/ecosystem/privy.png", w: 1304, h: 298, scale: 0.78 },
   { name: "Tapestry", logo: "/ecosystem/tapestry.png", w: 1496, h: 582, scale: 1 },
+  { name: "Cloak", logo: "/ecosystem/cloak.svg", w: 1738, h: 473, scale: 0.85 },
   { name: "x402", logo: "/ecosystem/x402.png", w: 389, h: 152, scale: 0.78 },
 ]
 
