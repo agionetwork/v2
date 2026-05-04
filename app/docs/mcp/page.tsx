@@ -12,12 +12,19 @@ const t: Record<Lang, {
   whenToUseLead: string
   whenMcp: string
   whenMcpDesc: string
-  whenMcpSteps: string[]
+  mcpStep1: string
+  mcpHttpLabel: string
+  mcpHttpHint: string
+  mcpStdioLabel: string
+  mcpStdioHint: string
+  mcpStdioConfigHint: string
+  mcpStep2: string
+  mcpStep2Hint: string
+  mcpStep3: string
+  mcpStep3Hint: string
   whenSkill: string
   whenSkillDesc: string
   whenSkillSteps: string[]
-  endpoint: string
-  endpointDesc: string
   freeTools: string
   thTool: string
   thDescription: string
@@ -43,8 +50,6 @@ const t: Record<Lang, {
   rateLimiting: string
   dynamicPricing: string
   devnetMode: string
-  localDev: string
-  localDevDesc: string
 }> = {
   en: {
     title: "AI Integration",
@@ -55,11 +60,17 @@ const t: Record<Lang, {
     whenToUse: "Choose your integration",
     whenToUseLead: "Two ways to interact with Agio. Pick MCP if you are writing your own client and want full control over JSON-RPC calls. Pick the Skill if you are using an MCP-capable AI agent (Claude Code, Claude Desktop, Cursor) and want it to discover, learn, and use Agio automatically with zero glue code.",
     whenMcp: "Use MCP directly when",
-    whenMcpDesc: "You are writing custom code that calls Agio programmatically. You handle the JSON-RPC envelope, manage state, and decide which tools to call.",
-    whenMcpSteps: [
-      "Run tools/list to enumerate the 37 tools, then tools/call with name and arguments",
-      "For paid tools (create-agent, swap-tokens), build a Solana payment transaction and pass it as paymentProof — see the x402 Protocol section below",
-    ],
+    whenMcpDesc: "You want to wire Agio into your own MCP client (Claude Desktop, Cursor, ChatGPT MCP) or call the JSON-RPC endpoint from custom code. Follow the steps below.",
+    mcpStep1: "1. Configure your MCP client",
+    mcpHttpLabel: "HTTP (recommended)",
+    mcpHttpHint: "Works with Claude Desktop, Cursor, ChatGPT MCP, and any HTTP-capable client. Paste this into your MCP config file:",
+    mcpStdioLabel: "STDIO bridge (legacy clients only)",
+    mcpStdioHint: "Use this only if your client cannot speak HTTP. First clone and install the repo:",
+    mcpStdioConfigHint: "Then point your MCP config at the bridge script:",
+    mcpStep2: "2. Test the connection",
+    mcpStep2Hint: "Run this from your terminal to enumerate the 37 tools and confirm the endpoint works:",
+    mcpStep3: "3. Call a tool",
+    mcpStep3Hint: "Pick one from the catalog below and invoke it with tools/call. For paid tools (create-agent, swap-tokens), build a Solana payment transaction and pass it as paymentProof — see x402 Protocol below.",
     whenSkill: "Install the Skill when",
     whenSkillDesc: "You are using an MCP-capable AI agent and want zero-config integration. Just give the agent a one-line prompt pointing at https://agio.network/skill.md and it learns everything: the 37 tools, x402 payment flow, and end-to-end workflows. No clone, no path setup, no JSON config.",
     whenSkillSteps: [
@@ -67,8 +78,6 @@ const t: Record<Lang, {
       "Paste this prompt: \"Read https://agio.network/skill.md and follow the instructions to join Agio Network.\"",
       "The agent fetches the skill, learns the 37 tools and the x402 payment flow, then is ready to interact with Agio.",
     ],
-    endpoint: "Endpoint",
-    endpointDesc: "Stateless, Web Standard Streamable HTTP transport. Compatible with any MCP client.",
     freeTools: "Free Tools (Read-Only)",
     thTool: "Tool",
     thDescription: "Description",
@@ -94,8 +103,6 @@ const t: Record<Lang, {
     rateLimiting: "Rate limiting: 1 request per wallet per 60s",
     dynamicPricing: "Dynamic pricing: tool prices configurable via Redis",
     devnetMode: "Devnet mode",
-    localDev: "Local Development",
-    localDevDesc: "For Claude Desktop or other local MCP clients, use the stdio transport wrapper:",
   },
   es: {
     title: "Integración IA",
@@ -106,11 +113,17 @@ const t: Record<Lang, {
     whenToUse: "Elige tu integración",
     whenToUseLead: "Dos formas de interactuar con Agio. Elige MCP si escribes tu propio cliente y quieres control total sobre las llamadas JSON-RPC. Elige la Skill si usas un agente IA compatible con MCP (Claude Code, Claude Desktop, Cursor) y quieres que descubra, aprenda y use Agio automáticamente sin código de pegamento.",
     whenMcp: "Usa MCP directamente cuando",
-    whenMcpDesc: "Escribes código que llama a Agio programáticamente. Tú gestionas el sobre JSON-RPC, mantienes estado y decides qué herramientas llamar.",
-    whenMcpSteps: [
-      "Ejecuta tools/list para enumerar las 37 herramientas, luego tools/call con name y arguments",
-      "Para herramientas pagas (create-agent, swap-tokens), construye una transacción Solana de pago y pásala como paymentProof — ver la sección Protocolo x402 más abajo",
-    ],
+    whenMcpDesc: "Quieres conectar Agio en tu propio cliente MCP (Claude Desktop, Cursor, ChatGPT MCP) o llamar al endpoint JSON-RPC desde código personalizado. Sigue los pasos abajo.",
+    mcpStep1: "1. Configura tu cliente MCP",
+    mcpHttpLabel: "HTTP (recomendado)",
+    mcpHttpHint: "Funciona con Claude Desktop, Cursor, ChatGPT MCP y cualquier cliente compatible con HTTP. Pega esto en tu archivo de configuración MCP:",
+    mcpStdioLabel: "Puente STDIO (solo clientes legacy)",
+    mcpStdioHint: "Úsalo solo si tu cliente no soporta HTTP. Primero clona e instala el repo:",
+    mcpStdioConfigHint: "Luego apunta tu config MCP al script puente:",
+    mcpStep2: "2. Prueba la conexión",
+    mcpStep2Hint: "Ejecuta esto en tu terminal para enumerar las 37 herramientas y confirmar que el endpoint funciona:",
+    mcpStep3: "3. Llama a una herramienta",
+    mcpStep3Hint: "Elige una del catálogo abajo e invócala con tools/call. Para herramientas pagas (create-agent, swap-tokens), construye una transacción Solana de pago y pásala como paymentProof — ver Protocolo x402 abajo.",
     whenSkill: "Instala la Skill cuando",
     whenSkillDesc: "Usas un agente IA compatible con MCP y quieres integración sin configuración. Solo dale al agente un prompt de una línea apuntando a https://agio.network/skill.md y aprende todo: las 37 herramientas, el flujo de pago x402 y los workflows de extremo a extremo. Sin clonar, sin configurar paths, sin JSON.",
     whenSkillSteps: [
@@ -118,8 +131,6 @@ const t: Record<Lang, {
       "Pega este prompt: \"Read https://agio.network/skill.md and follow the instructions to join Agio Network.\"",
       "El agente descarga la skill, aprende las 37 herramientas y el flujo de pago x402, y queda listo para interactuar con Agio.",
     ],
-    endpoint: "Endpoint",
-    endpointDesc: "Transporte HTTP Streamable estándar web sin estado. Compatible con cualquier cliente MCP.",
     freeTools: "Herramientas Gratuitas (Solo Lectura)",
     thTool: "Herramienta",
     thDescription: "Descripción",
@@ -145,8 +156,6 @@ const t: Record<Lang, {
     rateLimiting: "Límite de tasa: 1 solicitud por wallet cada 60s",
     dynamicPricing: "Precios dinámicos: precios de herramientas configurables vía Redis",
     devnetMode: "Modo Devnet",
-    localDev: "Desarrollo Local",
-    localDevDesc: "Para Claude Desktop u otros clientes MCP locales, usa el wrapper de transporte stdio:",
   },
   pt: {
     title: "Integração IA",
@@ -157,11 +166,17 @@ const t: Record<Lang, {
     whenToUse: "Escolha sua integração",
     whenToUseLead: "Duas formas de interagir com a Agio. Escolha MCP se você está escrevendo seu próprio cliente e quer controle total sobre as chamadas JSON-RPC. Escolha a Skill se está usando um agente IA compatível com MCP (Claude Code, Claude Desktop, Cursor) e quer que ele descubra, aprenda e use a Agio automaticamente sem código de cola.",
     whenMcp: "Use MCP diretamente quando",
-    whenMcpDesc: "Você escreve código que chama a Agio programaticamente. Você gerencia o envelope JSON-RPC, mantém estado e decide quais ferramentas chamar.",
-    whenMcpSteps: [
-      "Rode tools/list para enumerar as 37 ferramentas, depois tools/call com name e arguments",
-      "Para ferramentas pagas (create-agent, swap-tokens), construa uma transação Solana de pagamento e passe como paymentProof — veja a seção Protocolo x402 abaixo",
-    ],
+    whenMcpDesc: "Você quer plugar a Agio no seu próprio cliente MCP (Claude Desktop, Cursor, ChatGPT MCP) ou chamar o endpoint JSON-RPC de código próprio. Siga os passos abaixo.",
+    mcpStep1: "1. Configure seu cliente MCP",
+    mcpHttpLabel: "HTTP (recomendado)",
+    mcpHttpHint: "Funciona com Claude Desktop, Cursor, ChatGPT MCP e qualquer cliente compatível com HTTP. Cole isto no seu arquivo de config MCP:",
+    mcpStdioLabel: "Ponte STDIO (apenas clientes legacy)",
+    mcpStdioHint: "Use só se seu cliente não suporta HTTP. Primeiro clone e instale o repo:",
+    mcpStdioConfigHint: "Depois aponte sua config MCP para o script ponte:",
+    mcpStep2: "2. Teste a conexão",
+    mcpStep2Hint: "Rode isto no terminal para enumerar as 37 ferramentas e confirmar que o endpoint funciona:",
+    mcpStep3: "3. Chame uma ferramenta",
+    mcpStep3Hint: "Escolha uma do catálogo abaixo e invoque com tools/call. Para ferramentas pagas (create-agent, swap-tokens), construa uma transação Solana de pagamento e passe como paymentProof — ver Protocolo x402 abaixo.",
     whenSkill: "Instale a Skill quando",
     whenSkillDesc: "Você usa um agente IA compatível com MCP e quer integração sem configuração. Basta dar ao agente um prompt de uma linha apontando para https://agio.network/skill.md e ele aprende tudo: as 37 ferramentas, o fluxo de pagamento x402 e os workflows end-to-end. Sem clone, sem configurar paths, sem JSON.",
     whenSkillSteps: [
@@ -169,8 +184,6 @@ const t: Record<Lang, {
       "Cole este prompt: \"Read https://agio.network/skill.md and follow the instructions to join Agio Network.\"",
       "O agente baixa a skill, aprende as 37 ferramentas e o fluxo de pagamento x402, e fica pronto para interagir com a Agio.",
     ],
-    endpoint: "Endpoint",
-    endpointDesc: "Transporte HTTP Streamable padrão web sem estado. Compatível com qualquer cliente MCP.",
     freeTools: "Ferramentas Gratuitas (Somente Leitura)",
     thTool: "Ferramenta",
     thDescription: "Descrição",
@@ -196,8 +209,6 @@ const t: Record<Lang, {
     rateLimiting: "Limite de taxa: 1 solicitação por wallet a cada 60s",
     dynamicPricing: "Preços dinâmicos: preços das ferramentas configuráveis via Redis",
     devnetMode: "Modo Devnet",
-    localDev: "Desenvolvimento Local",
-    localDevDesc: "Para Claude Desktop ou outros clientes MCP locais, use o wrapper de transporte stdio:",
   },
   zh: {
     title: "AI 集成",
@@ -208,11 +219,17 @@ const t: Record<Lang, {
     whenToUse: "选择您的集成方式",
     whenToUseLead: "与 Agio 交互的两种方式。如果您正在编写自己的客户端并希望完全控制 JSON-RPC 调用，请选择 MCP。如果您使用支持 MCP 的 AI 代理（Claude Code、Claude Desktop、Cursor）并希望它自动发现、学习和使用 Agio，无需粘合代码，请选择 Skill。",
     whenMcp: "何时直接使用 MCP",
-    whenMcpDesc: "您编写以编程方式调用 Agio 的代码。您管理 JSON-RPC 信封，维护状态，并决定调用哪些工具。",
-    whenMcpSteps: [
-      "运行 tools/list 枚举 37 个工具，然后用 name 和 arguments 调用 tools/call",
-      "对于付费工具（create-agent、swap-tokens），构建 Solana 支付交易并作为 paymentProof 传递 — 请参见下面的 x402 协议部分",
-    ],
+    whenMcpDesc: "您想将 Agio 接入自己的 MCP 客户端（Claude Desktop、Cursor、ChatGPT MCP），或从自定义代码调用 JSON-RPC 端点。请按以下步骤操作。",
+    mcpStep1: "1. 配置您的 MCP 客户端",
+    mcpHttpLabel: "HTTP（推荐）",
+    mcpHttpHint: "适用于 Claude Desktop、Cursor、ChatGPT MCP 以及任何支持 HTTP 的客户端。将以下内容粘贴到您的 MCP 配置文件中：",
+    mcpStdioLabel: "STDIO 桥接（仅限旧版客户端）",
+    mcpStdioHint: "仅在您的客户端不支持 HTTP 时使用。先克隆并安装仓库：",
+    mcpStdioConfigHint: "然后将 MCP 配置指向桥接脚本：",
+    mcpStep2: "2. 测试连接",
+    mcpStep2Hint: "在终端中运行以下命令枚举 37 个工具并确认端点正常：",
+    mcpStep3: "3. 调用工具",
+    mcpStep3Hint: "从下方目录选择一个，用 tools/call 调用。对于付费工具（create-agent、swap-tokens），构建 Solana 支付交易并作为 paymentProof 传递 — 请参见下方 x402 协议。",
     whenSkill: "何时安装 Skill",
     whenSkillDesc: "您使用支持 MCP 的 AI 代理并希望零配置集成。只需给代理一个指向 https://agio.network/skill.md 的单行提示，它就能学会一切：37 个工具、x402 支付流程和端到端工作流。无需克隆、无需配置路径、无需 JSON。",
     whenSkillSteps: [
@@ -220,8 +237,6 @@ const t: Record<Lang, {
       "粘贴此提示：\"Read https://agio.network/skill.md and follow the instructions to join Agio Network.\"",
       "代理获取 skill，学习 37 个工具和 x402 支付流程，然后即可与 Agio 交互。",
     ],
-    endpoint: "端点",
-    endpointDesc: "无状态 Web 标准流式 HTTP 传输。兼容任何 MCP 客户端。",
     freeTools: "免费工具（只读）",
     thTool: "工具",
     thDescription: "说明",
@@ -247,8 +262,6 @@ const t: Record<Lang, {
     rateLimiting: "速率限制::每个钱包每 60 秒 1 个请求",
     dynamicPricing: "动态定价::工具价格可通过 Redis 配置",
     devnetMode: "Devnet 模式",
-    localDev: "本地开发",
-    localDevDesc: "对于 Claude Desktop 或其他本地 MCP 客户端，使用 stdio 传输包装器：",
   },
 }
 
@@ -267,27 +280,48 @@ export default function McpPage() {
       <div className="not-prose my-6 grid gap-4 md:grid-cols-2">
         <div className="rounded-lg border border-border/60 bg-card p-4">
           <h3 className="text-base font-semibold mb-2">{s.whenMcp}</h3>
-          <p className="text-sm text-muted-foreground mb-3">{s.whenMcpDesc}</p>
+          <p className="text-sm text-muted-foreground mb-4">{s.whenMcpDesc}</p>
 
-          <div className="rounded-md bg-background/60 border border-border/40 px-3 py-2 mb-2">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">{s.endpoint}</div>
-            <code className="text-sm break-all">POST https://app.agio.network/api/mcp</code>
-            <div className="mt-1 text-xs text-muted-foreground">
-              Accept: <code>application/json, text/event-stream</code>
-            </div>
+          <div className="text-sm font-semibold mb-2">{s.mcpStep1}</div>
+
+          <div className="rounded-md bg-background/60 border border-border/40 p-3 mb-3">
+            <div className="text-[11px] font-semibold text-foreground mb-1">{s.mcpHttpLabel}</div>
+            <p className="text-xs text-muted-foreground mb-2">{s.mcpHttpHint}</p>
+            <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto"><code>{`{
+  "mcpServers": {
+    "agio": {
+      "type": "url",
+      "url": "https://app.agio.network/api/mcp"
+    }
+  }
+}`}</code></pre>
           </div>
 
-          <div className="rounded-md bg-background/60 border border-border/40 px-3 py-2 mb-3">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">{s.localDev}</div>
-            <code className="text-sm">npx ts-node scripts/mcp-stdio.ts</code>
-            <div className="mt-1 text-xs text-muted-foreground">{s.localDevDesc}</div>
+          <div className="rounded-md bg-background/60 border border-border/40 p-3 mb-4">
+            <div className="text-[11px] font-semibold text-foreground mb-1">{s.mcpStdioLabel}</div>
+            <p className="text-xs text-muted-foreground mb-2">{s.mcpStdioHint}</p>
+            <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto mb-2"><code>{`git clone https://github.com/agionetwork/agio-private-lending
+cd agio-private-lending && pnpm install`}</code></pre>
+            <p className="text-xs text-muted-foreground mb-2">{s.mcpStdioConfigHint}</p>
+            <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto"><code>{`{
+  "mcpServers": {
+    "agio": {
+      "command": "npx",
+      "args": ["tsx", "/path/to/agio-private-lending/scripts/mcp-stdio.ts"]
+    }
+  }
+}`}</code></pre>
           </div>
 
-          <ol className="text-sm pl-5 list-decimal space-y-1 text-muted-foreground">
-            {s.whenMcpSteps.map((step, i) => (
-              <li key={i}>{step}</li>
-            ))}
-          </ol>
+          <div className="text-sm font-semibold mb-2">{s.mcpStep2}</div>
+          <p className="text-xs text-muted-foreground mb-2">{s.mcpStep2Hint}</p>
+          <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto mb-4"><code>{`curl -X POST https://app.agio.network/api/mcp \\
+  -H "Content-Type: application/json" \\
+  -H "Accept: application/json, text/event-stream" \\
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`}</code></pre>
+
+          <div className="text-sm font-semibold mb-2">{s.mcpStep3}</div>
+          <p className="text-xs text-muted-foreground">{s.mcpStep3Hint}</p>
         </div>
         <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
           <h3 className="text-base font-semibold text-blue-700 dark:text-blue-400 mb-2">{s.whenSkill}</h3>
