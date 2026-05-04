@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CircleDollarSign, Users, UserPlus, Sparkles, Loader2, ArrowRight, Clock, Bot, Wallet, Search } from "lucide-react"
+import { CircleDollarSign, Users, UserPlus, Sparkles, Loader2, ArrowRight, Clock, Wallet, Search } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
@@ -26,14 +26,12 @@ import { FriendRequests } from "@/components/socialfi/friend-requests"
 import { FriendSuggestions } from "@/components/socialfi/friend-suggestions"
 import { CommunityProfiles } from "@/components/socialfi/community-profiles"
 import { FavouriteProfiles } from "@/components/socialfi/favourite-profiles"
-import { AgentPanel } from "@/components/agent/agent-panel"
 
-type NavItem = "feed" | "network" | "agent"
+type NavItem = "feed" | "network"
 
 const NAV_ITEMS: { key: NavItem; label: string; icon: typeof CircleDollarSign }[] = [
   { key: "feed", label: "Offers", icon: CircleDollarSign },
   { key: "network", label: "Network", icon: Users },
-  { key: "agent", label: "Bot", icon: Bot },
 ]
 
 function SidebarProfileCard({ profile }: { profile: TapestryProfileResponse }) {
@@ -307,7 +305,6 @@ export default function SocialFiPageClient() {
               {networkFilter === "requests" && <FriendRequests />}
             </>
           )}
-          {activeNav === "agent" && <AgentPanel />}
         </main>
 
         {/* Right Sidebar - Network Suggestions & Stats */}

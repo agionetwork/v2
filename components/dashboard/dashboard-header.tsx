@@ -174,6 +174,14 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
             Social
           </Link>
           <Link
+            href="/auto-loan"
+            className={`transition-colors hover:text-white/80 ${
+              pathname === "/auto-loan" ? "text-white" : "text-white/60"
+            }`}
+          >
+            Auto-Loan
+          </Link>
+          <Link
             href="/borrow-lend"
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
@@ -323,6 +331,7 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
           {[
             { href: "/dashboard", label: "Dashboard" },
             { href: "/socialfi", label: "Social" },
+            { href: "/auto-loan", label: "Auto-Loan" },
             { href: "/borrow-lend", label: "Borrow / Lend" },
             { href: "/loan-offers", label: "Loan Offers" },
             { href: "/socialfi/leaderboard", label: "Leaderboard" },
