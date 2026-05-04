@@ -1,6 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit, rateLimitHeaders, getClientKey } from '@/lib/api-ratelimit'
 
-export function middleware(request: NextRequest) {
+const API_RATE_LIMIT = 60
+const API_RATE_WINDOW_SECONDS = 60
+const RATE_LIMIT_ENFORCE = process.env.RATE_LIMIT_ENFORCE === 'true'
+
+export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname
+
+  // Apply rate-limit headers to public REST API routes (not MCP — it has its
+  // own per-wallet limiter via x402-verify, not Actions — those are signed,
+  // not /api/admin and /api/cron — server-only).
+  if (
+    path.startsWith('/api/') &&
+    !path.startsWith('/api/mcp') &&
+    !path.startsWith('/api/actions') &&
+    !path.startsWith('/api/admin') &&
+    !path.startsWith('/api/cron')
+  ) {
+    const clientKey = getClientKey(request)
+    const result = await rateLimit(`api:${clientKey}`, API_RATE_LIMIT, API_RATE_WINDOW_SECONDS)
+    const headers = rateLimitHeaders(result)
+
+    if (result.exceeded && RATE_LIMIT_ENFORCE) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded.', retryAfter: result.reset },
+        {
+          status: 429,
+          headers: { ...headers, 'Retry-After': String(Math.max(1, result.reset - Math.floor(Date.now() / 1000))) },
+        },
+      )
+    }
+
+    const apiResponse = NextResponse.next()
+    Object.entries(headers).forEach(([k, v]) => apiResponse.headers.set(k, v))
+    return apiResponse
+  }
+
   // Skip CSP for MCP endpoint (JSON-RPC, not browser requests)
   if (
     request.nextUrl.pathname.startsWith('/api/mcp') ||
