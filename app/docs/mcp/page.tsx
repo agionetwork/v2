@@ -363,11 +363,13 @@ cd agio-private-lending && pnpm install`
           </div>
 
           <div className="text-sm font-semibold mb-2">{s.mcpStep2}</div>
-          <p className="text-xs text-muted-foreground mb-2">{s.mcpStep2Hint}</p>
-          <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto"><code>{curlTest}</code></pre>
-          <CopyButton text={curlTest} />
+          <div className="rounded-md bg-background/60 border border-border/40 p-3 mb-4">
+            <p className="text-xs text-muted-foreground mb-2">{s.mcpStep2Hint}</p>
+            <pre className="text-xs bg-background/80 border border-border/40 rounded p-2 overflow-x-auto"><code>{curlTest}</code></pre>
+            <CopyButton text={curlTest} />
+          </div>
 
-          <div className="text-sm font-semibold mt-4 mb-2">{s.mcpStep3}</div>
+          <div className="text-sm font-semibold mb-2">{s.mcpStep3}</div>
           <p className="text-xs text-muted-foreground">{s.mcpStep3Hint}</p>
         </div>
       </div>
