@@ -208,9 +208,9 @@ export default function LendingBotPage() {
 
       <h2>{s.security}</h2>
       <ul>
-        <li><strong>{s.secNonCustodial}</strong> — {s.secNonCustodialDesc}</li>
-        <li><strong>{s.secAllowlist}</strong> — {s.secAllowlistDesc}</li>
-        <li><strong>{s.secUserControls}</strong> — {s.secUserControlsDesc}</li>
+        <li><strong>{s.secNonCustodial}</strong>: {s.secNonCustodialDesc}</li>
+        <li><strong>{s.secAllowlist}</strong>: {s.secAllowlistDesc}</li>
+        <li><strong>{s.secUserControls}</strong>: {s.secUserControlsDesc}</li>
       </ul>
 
       <h2>{s.activation}</h2>

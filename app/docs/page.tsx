@@ -8,7 +8,7 @@ const t: Record<Lang, {
   cards: { title: string; desc: string }[];
   solves: string; solvesText: string; solvesList: string[];
   arch: string; archRows: [string, string][];
-  tokens: string; tokenRows: [string, string, string][];
+  tokens: string; tokensDesc: string;
   program: string; programText: string;
 }> = {
   en: {
@@ -39,7 +39,7 @@ const t: Record<Lang, {
       ["Notifications", "Dialect (email, in-app, Telegram)"],
     ],
     tokens: "Supported Tokens",
-    tokenRows: [["USDC", "Debt / Lending", "SPL Token"], ["EURC", "Debt / Lending", "Token-2022"], ["SOL (wSOL)", "Collateral", "Native / SPL (auto-wrapped)"]],
+    tokensDesc: "Agio supports any SPL token (including Token-2022) on the Solana network. Devnet today runs USDC, EURC, and SOL (auto-wrapped to wSOL). On mainnet, the same architecture opens the door for community-minted assets like xStocks, $GOLD, or $agioSOL: any token can serve as debt or collateral once it has a Pyth price feed.",
     program: "Program",
     programText: "Program ID: AbvKH8U9B5y8HFNdAbErDo8nsFhFLHRk32HLzPD4GeXX (devnet). Built with Anchor. Key PDAs: Loan (per-offer state), VaultAuthority (collateral escrow + treasury), PriceFeedConfig (Pyth oracle cache per mint).",
   },
@@ -71,7 +71,7 @@ const t: Record<Lang, {
       ["Notificaciones", "Dialect (email, in-app, Telegram)"],
     ],
     tokens: "Tokens Soportados",
-    tokenRows: [["USDC", "Deuda / Préstamo", "SPL Token"], ["EURC", "Deuda / Préstamo", "Token-2022"], ["SOL (wSOL)", "Colateral", "Native / SPL (auto-wrapped)"]],
+    tokensDesc: "Agio soporta cualquier token SPL (incluyendo Token-2022) en la red Solana. Devnet hoy corre USDC, EURC y SOL (envuelto automáticamente a wSOL). En mainnet, la misma arquitectura abre la puerta a activos minteados por la comunidad como xStocks, $GOLD o $agioSOL: cualquier token puede servir como deuda o colateral una vez que tenga un price feed de Pyth.",
     program: "Programa",
     programText: "Program ID: AbvKH8U9B5y8HFNdAbErDo8nsFhFLHRk32HLzPD4GeXX (devnet). Construido con Anchor. PDAs principales: Loan (estado por oferta), VaultAuthority (custodia de colateral + tesorería), PriceFeedConfig (caché de oráculos Pyth por mint).",
   },
@@ -103,7 +103,7 @@ const t: Record<Lang, {
       ["Notificações", "Dialect (email, in-app, Telegram)"],
     ],
     tokens: "Tokens Suportados",
-    tokenRows: [["USDC", "Dívida / Empréstimo", "SPL Token"], ["EURC", "Dívida / Empréstimo", "Token-2022"], ["SOL (wSOL)", "Colateral", "Native / SPL (auto-wrapped)"]],
+    tokensDesc: "A Agio aceita qualquer token SPL (incluindo Token-2022) na rede Solana. A devnet hoje roda USDC, EURC e SOL (convertido automaticamente para wSOL). Na mainnet, a mesma arquitetura abre a porta para ativos cunhados pela comunidade como xStocks, $GOLD ou $agioSOL: qualquer token pode servir como dívida ou colateral assim que tiver um price feed do Pyth.",
     program: "Programa",
     programText: "Program ID: AbvKH8U9B5y8HFNdAbErDo8nsFhFLHRk32HLzPD4GeXX (devnet). Construído com Anchor. PDAs principais: Loan (estado por oferta), VaultAuthority (custódia de colateral + tesouraria), PriceFeedConfig (cache de oráculos Pyth por mint).",
   },
@@ -135,7 +135,7 @@ const t: Record<Lang, {
       ["通知", "Dialect（邮件、应用内、Telegram）"],
     ],
     tokens: "支持的代币",
-    tokenRows: [["USDC", "债务 / 出借", "SPL Token"], ["EURC", "债务 / 出借", "Token-2022"], ["SOL (wSOL)", "抵押品", "Native / SPL（自动包装）"]],
+    tokensDesc: "Agio 支持 Solana 网络上的任何 SPL 代币（包括 Token-2022）。devnet 目前运行 USDC、EURC 和 SOL（自动包装为 wSOL）。在主网上，同样的架构为社区铸造的资产打开了大门，如 xStocks、$GOLD 或 $agioSOL：任何代币只要拥有 Pyth 价格源，都可以作为债务或抵押品。",
     program: "程序",
     programText: "Program ID: AbvKH8U9B5y8HFNdAbErDo8nsFhFLHRk32HLzPD4GeXX (devnet)。使用 Anchor 构建。关键 PDA：Loan（每笔报价状态）、VaultAuthority（抵押品托管 + 国库）、PriceFeedConfig（每个 mint 的 Pyth 预言机缓存）。",
   },
@@ -174,16 +174,7 @@ export default function IntroductionPage() {
       </div>
 
       <h2>{c.tokens}</h2>
-      <div className="not-prose my-4 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead><tr className="border-b border-border text-left"><th className="pb-2 font-medium">Token</th><th className="pb-2 font-medium">Role</th><th className="pb-2 font-medium">Standard</th></tr></thead>
-          <tbody className="text-muted-foreground">
-            {c.tokenRows.map(([token, role, std]) => (
-              <tr key={token} className="border-b border-border/40"><td className="py-2">{token}</td><td>{role}</td><td>{std}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <p>{c.tokensDesc}</p>
 
       <h2>{c.program}</h2>
       <p>{c.programText}</p>
