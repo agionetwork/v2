@@ -110,7 +110,7 @@ The HTTP endpoint is the right choice for any non-local agent. STDIO is mainly f
 | `create-agent` | $0.10 USDC (x402) | Spin up a Privy-managed autonomous agent wallet. Returns API key + agent pubkey. |
 | `swap-tokens` | 0.05% volume (x402) | Jupiter-routed token swap. Useful before lending/borrowing to obtain the right token. |
 
-**Full 37-tool catalog with parameters and return shapes:** [references/tools.md](references/tools.md).
+**Full 37-tool catalog with parameters and return shapes:** [https://agio.network/skill/tools.md](https://agio.network/skill/tools.md).
 
 ## x402 payment for paid tools
 
@@ -122,13 +122,13 @@ Everything else is free. The 1% origination fee mentioned for lending tools is c
 
 When you call a paid tool **without** a `paymentProof`, the server returns a `PaymentRequirement` JSON describing 3 acceptable token options (USDC / EURC / SOL with live Jupiter quotes). You build a Solana transfer transaction targeting the listed `recipientTokenAccount`, sign it, base64-encode, and resubmit the tool call with `paymentProof: "<base64-tx>"`.
 
-The flow + a complete TypeScript example using the helpers in [`lib/mcp/x402-client.ts`](https://github.com/agionetwork/agio-private-lending/blob/main/lib/mcp/x402-client.ts) is in [references/x402-payment.md](references/x402-payment.md). Anti-replay (SHA-256 hash, 24h Redis TTL) and settlement timing are documented there too.
+The flow + a complete TypeScript example using the helpers in [`lib/mcp/x402-client.ts`](https://github.com/agionetwork/agio-private-lending/blob/main/lib/mcp/x402-client.ts) is in [https://agio.network/skill/x402-payment.md](https://agio.network/skill/x402-payment.md). Anti-replay (SHA-256 hash, 24h Redis TTL) and settlement timing are documented there too.
 
 **Devnet shortcut:** if the server is configured with `DEVNET_FREE_TOOLS=true` and the RPC URL contains `devnet`, paid tools become free — pass `wallet` instead of `paymentProof`. Useful for iterating before mainnet.
 
 ## Common workflows
 
-Three end-to-end recipes are in [references/workflows.md](references/workflows.md):
+Three end-to-end recipes are in [https://agio.network/skill/workflows.md](https://agio.network/skill/workflows.md):
 
 1. **Browse and accept a loan** — `list-loans` → `get-loan` → `accept-lend-offer` (or `accept-borrow-request`).
 2. **Create autonomous agent** — `create-agent` → `fund-agent-wallet` → `configure-agent` → `activate-agent` → poll `get-agent-status`.
@@ -182,6 +182,6 @@ When working on devnet:
 
 Read these only when needed — `SKILL.md` covers the 80% case:
 
-- [references/tools.md](references/tools.md) — full 37-tool catalog with parameters, return shapes, and per-tool notes.
-- [references/x402-payment.md](references/x402-payment.md) — x402 payment flow, transaction structure, anti-replay, settlement, full TypeScript example.
-- [references/workflows.md](references/workflows.md) — end-to-end recipes for browse-accept, autonomous agent setup, and full lender lifecycle.
+- [https://agio.network/skill/tools.md](https://agio.network/skill/tools.md) — full 37-tool catalog with parameters, return shapes, and per-tool notes.
+- [https://agio.network/skill/x402-payment.md](https://agio.network/skill/x402-payment.md) — x402 payment flow, transaction structure, anti-replay, settlement, full TypeScript example.
+- [https://agio.network/skill/workflows.md](https://agio.network/skill/workflows.md) — end-to-end recipes for browse-accept, autonomous agent setup, and full lender lifecycle.

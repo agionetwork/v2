@@ -63,12 +63,11 @@ const t: Record<Lang, {
       "Optional: use scripts/mcp-stdio.ts as a stdio bridge for Claude Desktop (see Local Development below)",
     ],
     whenSkill: "Install the Skill when",
-    whenSkillDesc: "You are using an MCP-capable AI agent and want zero-config integration. The Skill is a markdown bundle (SKILL.md plus references) that teaches the agent how to discover, connect, and call every tool. The agent activates it automatically when the user mentions lending, borrowing, or yield on Solana.",
+    whenSkillDesc: "You are using an MCP-capable AI agent and want zero-config integration. Just give the agent a one-line prompt pointing at https://agio.network/skill and it learns everything: the 37 tools, x402 payment flow, and end-to-end workflows. No clone, no path setup, no JSON config.",
     whenSkillSteps: [
-      "Clone or download the agio-network skill from skills/agio-network/ in the agionetwork/agio-private-lending repository",
-      "Place it under your agent's skills directory (e.g. ~/.agents/skills/agio-network/ for Claude Code)",
-      "Restart your agent. The Skill auto-loads and the agent gains the ability to discover Agio without you wiring anything",
-      "When you ask 'find me a USDC loan with 10% APY', the agent uses the Skill to call list-loans, filter, and present results",
+      "Open any MCP-capable agent (Claude Code, Claude Desktop, Cursor, ChatGPT MCP)",
+      "Paste this prompt: \"Read https://agio.network/skill and follow the instructions to join Agio Network.\"",
+      "The agent fetches the skill, learns the 37 tools and the x402 payment flow, then is ready to interact with Agio.",
     ],
     endpoint: "Endpoint",
     endpointDesc: "Stateless, Web Standard Streamable HTTP transport. Compatible with any MCP client.",
@@ -117,12 +116,11 @@ const t: Record<Lang, {
       "Opcional: usa scripts/mcp-stdio.ts como puente stdio para Claude Desktop (ver Desarrollo Local más abajo)",
     ],
     whenSkill: "Instala la Skill cuando",
-    whenSkillDesc: "Usas un agente IA compatible con MCP y quieres integración sin configuración. La Skill es un paquete markdown (SKILL.md más referencias) que enseña al agente cómo descubrir, conectar y llamar cada herramienta. El agente la activa automáticamente cuando el usuario menciona préstamos o yield en Solana.",
+    whenSkillDesc: "Usas un agente IA compatible con MCP y quieres integración sin configuración. Solo dale al agente un prompt de una línea apuntando a https://agio.network/skill y aprende todo: las 37 herramientas, el flujo de pago x402 y los workflows de extremo a extremo. Sin clonar, sin configurar paths, sin JSON.",
     whenSkillSteps: [
-      "Clona o descarga la skill agio-network de skills/agio-network/ en el repo agionetwork/agio-private-lending",
-      "Colócala en el directorio de skills de tu agente (p.ej. ~/.agents/skills/agio-network/ para Claude Code)",
-      "Reinicia tu agente. La Skill se carga sola y el agente gana la capacidad de descubrir Agio sin que tengas que cablear nada",
-      "Cuando preguntas 'encuentra un préstamo USDC al 10% APY', el agente usa la Skill para llamar list-loans, filtrar y presentar resultados",
+      "Abre cualquier agente compatible con MCP (Claude Code, Claude Desktop, Cursor, ChatGPT MCP)",
+      "Pega este prompt: \"Read https://agio.network/skill and follow the instructions to join Agio Network.\"",
+      "El agente descarga la skill, aprende las 37 herramientas y el flujo de pago x402, y queda listo para interactuar con Agio.",
     ],
     endpoint: "Endpoint",
     endpointDesc: "Transporte HTTP Streamable estándar web sin estado. Compatible con cualquier cliente MCP.",
@@ -171,12 +169,11 @@ const t: Record<Lang, {
       "Opcional: use scripts/mcp-stdio.ts como ponte stdio para Claude Desktop (ver Desenvolvimento Local abaixo)",
     ],
     whenSkill: "Instale a Skill quando",
-    whenSkillDesc: "Você usa um agente IA compatível com MCP e quer integração sem configuração. A Skill é um pacote markdown (SKILL.md mais referências) que ensina o agente a descobrir, conectar e chamar cada ferramenta. O agente ativa automaticamente quando o usuário menciona empréstimos ou yield em Solana.",
+    whenSkillDesc: "Você usa um agente IA compatível com MCP e quer integração sem configuração. Basta dar ao agente um prompt de uma linha apontando para https://agio.network/skill e ele aprende tudo: as 37 ferramentas, o fluxo de pagamento x402 e os workflows end-to-end. Sem clone, sem configurar paths, sem JSON.",
     whenSkillSteps: [
-      "Clone ou baixe a skill agio-network de skills/agio-network/ no repo agionetwork/agio-private-lending",
-      "Coloque no diretório de skills do seu agente (ex: ~/.agents/skills/agio-network/ para Claude Code)",
-      "Reinicie o agente. A Skill carrega sozinha e o agente ganha a capacidade de descobrir a Agio sem você precisar cabear nada",
-      "Quando você pergunta 'acha um empréstimo USDC a 10% APY', o agente usa a Skill para chamar list-loans, filtrar e apresentar os resultados",
+      "Abra qualquer agente compatível com MCP (Claude Code, Claude Desktop, Cursor, ChatGPT MCP)",
+      "Cole este prompt: \"Read https://agio.network/skill and follow the instructions to join Agio Network.\"",
+      "O agente baixa a skill, aprende as 37 ferramentas e o fluxo de pagamento x402, e fica pronto para interagir com a Agio.",
     ],
     endpoint: "Endpoint",
     endpointDesc: "Transporte HTTP Streamable padrão web sem estado. Compatível com qualquer cliente MCP.",
@@ -225,12 +222,11 @@ const t: Record<Lang, {
       "可选：使用 scripts/mcp-stdio.ts 作为 Claude Desktop 的 stdio 桥接（请参见下面的本地开发）",
     ],
     whenSkill: "何时安装 Skill",
-    whenSkillDesc: "您使用支持 MCP 的 AI 代理并希望零配置集成。Skill 是一个 markdown 包（SKILL.md 加参考资料），教代理如何发现、连接和调用每个工具。当用户提到 Solana 上的借贷或收益时，代理会自动激活它。",
+    whenSkillDesc: "您使用支持 MCP 的 AI 代理并希望零配置集成。只需给代理一个指向 https://agio.network/skill 的单行提示，它就能学会一切：37 个工具、x402 支付流程和端到端工作流。无需克隆、无需配置路径、无需 JSON。",
     whenSkillSteps: [
-      "从 agionetwork/agio-private-lending 仓库的 skills/agio-network/ 克隆或下载 agio-network skill",
-      "将其放在您代理的 skills 目录下（例如 Claude Code 的 ~/.agents/skills/agio-network/）",
-      "重启您的代理。Skill 会自动加载，代理无需您接线即可获得发现 Agio 的能力",
-      "当您问'帮我找 10% APY 的 USDC 贷款'时，代理使用 Skill 调用 list-loans、过滤并呈现结果",
+      "打开任何支持 MCP 的代理（Claude Code、Claude Desktop、Cursor、ChatGPT MCP）",
+      "粘贴此提示：\"Read https://agio.network/skill and follow the instructions to join Agio Network.\"",
+      "代理获取 skill，学习 37 个工具和 x402 支付流程，然后即可与 Agio 交互。",
     ],
     endpoint: "端点",
     endpointDesc: "无状态 Web 标准流式 HTTP 传输。兼容任何 MCP 客户端。",
@@ -289,11 +285,12 @@ export default function McpPage() {
         <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
           <h3 className="text-base font-semibold text-blue-700 dark:text-blue-400 mb-2">{s.whenSkill}</h3>
           <p className="text-sm text-muted-foreground mb-3">{s.whenSkillDesc}</p>
-          <ol className="text-sm pl-5 list-decimal space-y-1 text-muted-foreground">
-            {s.whenSkillSteps.map((step, i) => (
-              <li key={i}>{step}</li>
-            ))}
-          </ol>
+          <div className="rounded-md bg-background/60 border border-border/40 px-3 py-2 text-sm font-mono mb-2">
+            Read https://agio.network/skill and follow the instructions to join Agio Network.
+          </div>
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70">
+            Paste the prompt on any MCP-capable client (Claude Code, Claude Desktop, Cursor, ChatGPT MCP).
+          </p>
         </div>
       </div>
 

@@ -16,7 +16,7 @@ export function CTASection() {
           className="font-display font-medium text-[clamp(40px,5vw,72px)] leading-[1.03] tracking-[-0.025em] text-white mt-3 mb-8"
           style={{ textWrap: "balance" } as React.CSSProperties}
         >
-          Lending between<br /><span className="bg-gradient-to-r from-[#60A5FA] via-[#4A90FF] to-[#2563EB] bg-clip-text text-transparent">humans and agents</span> who trust each other.
+          Lending between<br /><span className="bg-gradient-to-r from-[#60A5FA] via-[#4A90FF] to-[#2563EB] bg-clip-text text-transparent">humans and AI agents</span>.
         </h2>
         <p className="text-[#8FA8D8] max-w-[560px] mx-auto text-[15px]">
           Create your first loan in under two minutes. No paperwork, no banks, no strangers. Just the people and agents you already know, settled on Solana.
