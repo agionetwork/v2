@@ -5,6 +5,7 @@ import { TOKEN_MINTS, TOKEN_DECIMALS, getTokenProgram, resolveTokenProgram } fro
 import { LoanStatus, calculateFullRepayAmount } from "@/lib/loan-utils"
 import { getAgentConfig, getAgentPublicKey, appendAgentAction, getLastAirdropTime, setLastAirdropTime, isAirdropCooldownExpired, getOwnerByAgentPublicKey } from "./redis"
 import { signAndSendTransaction } from "./privy"
+import { createPrivateLendOfferAsAgent, createPrivateBorrowRequestAsAgent } from "./private-flow"
 import { executeSwap } from "./jupiter"
 import {
   fetchAllLoans,
@@ -800,18 +801,38 @@ async function runCycle(userWallet: string): Promise<void> {
             )
 
             let txHash: string
+            let stealthPubkey: string | undefined
             try {
-              const serializedTx = await buildCreateLendOfferTx(
-                connection,
-                program,
-                agentPubkey,
-                { debtTokenSymbol, collateralTokenSymbol, debtAmount, collateralAmount, duration, apy },
-                {
-                  collateralPriceUpdate: priceUpdateAccounts[collateralFeedId],
-                  debtPriceUpdate: priceUpdateAccounts[debtFeedId],
-                },
-              )
-              txHash = await signAndSendTransaction(userWallet, serializedTx)
+              if (config.privacyEnabled) {
+                const result = await createPrivateLendOfferAsAgent({
+                  ownerWallet: userWallet,
+                  agentWallet: agentPubkeyStr,
+                  debtTokenSymbol,
+                  collateralTokenSymbol,
+                  debtAmount,
+                  collateralAmount,
+                  duration,
+                  apy,
+                  priceUpdates: {
+                    collateralPriceUpdate: priceUpdateAccounts[collateralFeedId],
+                    debtPriceUpdate: priceUpdateAccounts[debtFeedId],
+                  },
+                })
+                txHash = result.txHash
+                stealthPubkey = result.stealthPublicKey
+              } else {
+                const serializedTx = await buildCreateLendOfferTx(
+                  connection,
+                  program,
+                  agentPubkey,
+                  { debtTokenSymbol, collateralTokenSymbol, debtAmount, collateralAmount, duration, apy },
+                  {
+                    collateralPriceUpdate: priceUpdateAccounts[collateralFeedId],
+                    debtPriceUpdate: priceUpdateAccounts[debtFeedId],
+                  },
+                )
+                txHash = await signAndSendTransaction(userWallet, serializedTx)
+              }
             } finally {
               cleanup().catch(() => {})
             }
@@ -820,7 +841,11 @@ async function runCycle(userWallet: string): Promise<void> {
             await logAction(userWallet, {
               timestamp: new Date().toISOString(),
               type: "created_lend_offer",
-              details: `Created lend offer: ${debtAmount.toFixed(2)} ${debtTokenSymbol} at ${apy}% APY, ${duration}s, collateral ${collateralAmount.toFixed(4)} ${collateralTokenSymbol}`,
+              details:
+                `Created ${config.privacyEnabled ? "private " : ""}lend offer: ` +
+                `${debtAmount.toFixed(2)} ${debtTokenSymbol} at ${apy}% APY, ${duration}s, ` +
+                `collateral ${collateralAmount.toFixed(4)} ${collateralTokenSymbol}` +
+                (stealthPubkey ? ` (stealth ${stealthPubkey.slice(0, 8)}...)` : ""),
               txHash,
               status: "success",
             })
@@ -926,18 +951,38 @@ async function runCycle(userWallet: string): Promise<void> {
             )
 
             let txHash: string
+            let stealthPubkey: string | undefined
             try {
-              const serializedTx = await buildCreateBorrowRequestTx(
-                connection,
-                program,
-                agentPubkey,
-                { debtTokenSymbol, collateralTokenSymbol, debtAmount, collateralAmount, duration, apy },
-                {
-                  collateralPriceUpdate: priceUpdateAccounts[collateralFeedId],
-                  debtPriceUpdate: priceUpdateAccounts[debtFeedId],
-                },
-              )
-              txHash = await signAndSendTransaction(userWallet, serializedTx)
+              if (config.privacyEnabled) {
+                const result = await createPrivateBorrowRequestAsAgent({
+                  ownerWallet: userWallet,
+                  agentWallet: agentPubkeyStr,
+                  debtTokenSymbol,
+                  collateralTokenSymbol,
+                  debtAmount,
+                  collateralAmount,
+                  duration,
+                  apy,
+                  priceUpdates: {
+                    collateralPriceUpdate: priceUpdateAccounts[collateralFeedId],
+                    debtPriceUpdate: priceUpdateAccounts[debtFeedId],
+                  },
+                })
+                txHash = result.txHash
+                stealthPubkey = result.stealthPublicKey
+              } else {
+                const serializedTx = await buildCreateBorrowRequestTx(
+                  connection,
+                  program,
+                  agentPubkey,
+                  { debtTokenSymbol, collateralTokenSymbol, debtAmount, collateralAmount, duration, apy },
+                  {
+                    collateralPriceUpdate: priceUpdateAccounts[collateralFeedId],
+                    debtPriceUpdate: priceUpdateAccounts[debtFeedId],
+                  },
+                )
+                txHash = await signAndSendTransaction(userWallet, serializedTx)
+              }
             } finally {
               cleanup().catch(() => {})
             }
@@ -946,7 +991,11 @@ async function runCycle(userWallet: string): Promise<void> {
             await logAction(userWallet, {
               timestamp: new Date().toISOString(),
               type: "created_borrow_request",
-              details: `Created borrow request: ${debtAmount.toFixed(2)} ${debtTokenSymbol} at ${apy}% APY, ${duration}s, collateral ${collateralAmount.toFixed(4)} ${collateralTokenSymbol}`,
+              details:
+                `Created ${config.privacyEnabled ? "private " : ""}borrow request: ` +
+                `${debtAmount.toFixed(2)} ${debtTokenSymbol} at ${apy}% APY, ${duration}s, ` +
+                `collateral ${collateralAmount.toFixed(4)} ${collateralTokenSymbol}` +
+                (stealthPubkey ? ` (stealth ${stealthPubkey.slice(0, 8)}...)` : ""),
               txHash,
               status: "success",
             })
