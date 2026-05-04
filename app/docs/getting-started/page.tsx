@@ -5,6 +5,7 @@ import { useT, type Lang } from "../i18n"
 const t: Record<Lang, {
   title: string
   lead: string
+  firstTimeIntro: string
   prerequisites: string
   prereq1: string
   prereq2: string
@@ -35,6 +36,7 @@ const t: Record<Lang, {
   en: {
     title: "Quick Start",
     lead: "Connect a wallet and start lending or borrowing in under two minutes.",
+    firstTimeIntro: "First time on Solana? You'll need a browser-extension wallet, a small amount of SOL for transaction fees, and some USDC or EURC to lend (or as debt to borrow against). Everything is free on devnet — the faucets below give you what you need in about a minute.",
     prerequisites: "Prerequisites",
     prereq1: "Solana wallet (Phantom, Solflare, or any wallet-standard compatible)",
     prereq2: "Devnet SOL for transaction fees",
@@ -65,6 +67,7 @@ const t: Record<Lang, {
   es: {
     title: "Inicio Rápido",
     lead: "Conecta una wallet y empieza a prestar o pedir prestado en menos de dos minutos.",
+    firstTimeIntro: "¿Primera vez en Solana? Necesitarás una wallet de extensión del navegador, un poco de SOL para tarifas de transacción, y algo de USDC o EURC para prestar (o como deuda contra la cual pedir prestado). Todo es gratis en devnet — los faucets abajo te dan lo que necesitas en aproximadamente un minuto.",
     prerequisites: "Requisitos previos",
     prereq1: "Wallet de Solana (Phantom, Solflare o cualquier compatible con wallet-standard)",
     prereq2: "SOL en devnet para comisiones de transacción",
@@ -95,6 +98,7 @@ const t: Record<Lang, {
   pt: {
     title: "Início Rápido",
     lead: "Conecte uma wallet e comece a emprestar ou tomar emprestado em menos de dois minutos.",
+    firstTimeIntro: "Primeira vez na Solana? Você vai precisar de uma wallet de extensão do navegador, um pouco de SOL pra taxas de transação, e algum USDC ou EURC pra emprestar (ou como dívida pra tomar emprestado). Tudo é grátis na devnet — os faucets abaixo te dão o que precisa em cerca de um minuto.",
     prerequisites: "Pré-requisitos",
     prereq1: "Wallet Solana (Phantom, Solflare ou qualquer compatível com wallet-standard)",
     prereq2: "SOL na devnet para taxas de transação",
@@ -125,6 +129,7 @@ const t: Record<Lang, {
   zh: {
     title: "快速开始",
     lead: "连接钱包，两分钟内即可开始借贷。",
+    firstTimeIntro: "第一次使用 Solana？您需要一个浏览器扩展钱包、一小笔用于交易费用的 SOL，以及一些用于出借的 USDC 或 EURC（或用作借款抵押的债务）。在 devnet 上一切都是免费的 — 下方的水龙头大约一分钟就能给您所需的一切。",
     prerequisites: "前提条件",
     prereq1: "Solana 钱包（Phantom、Solflare 或任何兼容 wallet-standard 的钱包）",
     prereq2: "用于交易费用的 Devnet SOL",
@@ -162,6 +167,8 @@ export default function GettingStartedPage() {
       <p className="lead text-lg text-muted-foreground">
         {s.lead}
       </p>
+
+      <p>{s.firstTimeIntro}</p>
 
       <h2>{s.prerequisites}</h2>
       <ul>

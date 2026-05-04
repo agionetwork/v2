@@ -6,6 +6,7 @@ import type { Lang } from "./i18n"
 const t: Record<Lang, {
   title: string; lead: string;
   cards: { title: string; desc: string }[];
+  status: string; statusDesc: string;
   solves: string; solvesText: string; solvesList: string[];
   arch: string; archRows: [string, string][];
   tokens: string; tokensDesc: string;
@@ -20,6 +21,8 @@ const t: Record<Lang, {
       { title: "On-Chain Reputation", desc: "Volume-weighted points system with anti-wash-trading. Repaid loans earn more than foreclosed." },
       { title: "MCP + x402", desc: "37-tool MCP server lets any AI assistant interact with the protocol. Paid tools use x402 USDC." },
     ],
+    status: "Status",
+    statusDesc: "Agio is fully functional on Solana devnet today. Mainnet ship is gated by an external smart-contract audit. The platform was built for the Colosseum Frontier Hackathon (Private Lending Track) and remains in active development. Use only test funds until mainnet is announced.",
     solves: "What Agio Solves",
     solvesText: "DeFi lending today is dominated by pooled liquidity protocols. Pools create systemic risk (one bad asset drains the pool), abstract away counterparty relationships, and offer zero customization of loan terms. Agio replaces pools with direct P2P agreements:",
     solvesList: [
@@ -52,6 +55,8 @@ const t: Record<Lang, {
       { title: "Reputación On-Chain", desc: "Sistema de puntos ponderado por volumen con anti-wash-trading. Préstamos pagados ganan más." },
       { title: "MCP + x402", desc: "Servidor MCP con 37 herramientas para que cualquier IA interactúe con el protocolo. Pagos en USDC." },
     ],
+    status: "Estado",
+    statusDesc: "Agio es completamente funcional en Solana devnet hoy. El lanzamiento en mainnet está condicionado a una auditoría externa del smart contract. La plataforma fue construida para el Colosseum Frontier Hackathon (Private Lending Track) y sigue en desarrollo activo. Usa solo fondos de prueba hasta que mainnet sea anunciado.",
     solves: "Qué Resuelve Agio",
     solvesText: "Los préstamos DeFi están dominados por protocolos de liquidez agrupada. Los pools crean riesgo sistémico, eliminan la relación entre partes y no permiten personalizar términos. Agio reemplaza pools con acuerdos P2P directos:",
     solvesList: [
@@ -84,6 +89,8 @@ const t: Record<Lang, {
       { title: "Reputação On-Chain", desc: "Sistema de pontos ponderado por volume com anti-wash-trading. Empréstimos pagos rendem mais." },
       { title: "MCP + x402", desc: "Servidor MCP com 37 ferramentas para qualquer IA interagir com o protocolo. Pagamentos em USDC." },
     ],
+    status: "Status",
+    statusDesc: "A Agio é totalmente funcional na Solana devnet hoje. O lançamento mainnet está condicionado a uma auditoria externa do smart contract. A plataforma foi construída para o Colosseum Frontier Hackathon (Private Lending Track) e segue em desenvolvimento ativo. Use apenas fundos de teste até que o mainnet seja anunciado.",
     solves: "O Que Agio Resolve",
     solvesText: "Empréstimos DeFi hoje são dominados por protocolos de liquidez agrupada. Pools criam risco sistêmico, abstraem a relação entre partes e não permitem personalizar termos. Agio substitui pools por acordos P2P diretos:",
     solvesList: [
@@ -116,6 +123,8 @@ const t: Record<Lang, {
       { title: "链上信誉", desc: "基于交易量加权的积分系统，防刷交易。还款贷款获得更多积分。" },
       { title: "MCP + x402", desc: "37 个工具的 MCP 服务器，让任何 AI 助手与协议交互。付费工具使用 x402 USDC。" },
     ],
+    status: "状态",
+    statusDesc: "Agio 目前在 Solana devnet 上完全运行。主网发布需通过外部智能合约审计后才会上线。该平台为 Colosseum Frontier Hackathon（Private Lending Track）构建，仍在积极开发中。在主网公告之前，请仅使用测试资金。",
     solves: "Agio 解决了什么",
     solvesText: "当前 DeFi 借贷由池化流动性协议主导。资金池产生系统性风险（一个坏资产拖垮整个池子），隐藏了交易对手关系，且无法自定义贷款条款。Agio 用直接的 P2P 协议取代资金池：",
     solvesList: [
@@ -156,6 +165,9 @@ export default function IntroductionPage() {
           </div>
         ))}
       </div>
+
+      <h2>{c.status}</h2>
+      <p>{c.statusDesc}</p>
 
       <h2>{c.solves}</h2>
       <p>{c.solvesText}</p>

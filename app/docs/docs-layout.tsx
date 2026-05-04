@@ -20,6 +20,7 @@ import {
   ShieldAlert,
   HelpCircle,
   Library,
+  Network,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { LangProvider, useLang, LANGS, type Lang } from "./i18n"
@@ -40,6 +41,7 @@ const ICON_BY_HREF: Record<string, ComponentType<{ className?: string }>> = {
   "/docs/security": ShieldAlert,
   "/docs/faq": HelpCircle,
   "/docs/glossary": Library,
+  "/docs/api": Network,
 }
 
 const NAV: Record<Lang, { title: string; items: { title: string; href: string }[] }[]> = {
@@ -49,7 +51,7 @@ const NAV: Record<Lang, { title: string; items: { title: string; href: string }[
     { title: "Privacy", items: [{ title: "Private Mode", href: "/docs/private-mode" }, { title: "Exclusive Counterparty", href: "/docs/exclusive-counterparty" }] },
     { title: "Features", items: [{ title: "Social", href: "/docs/social" }, { title: "Auto Loan", href: "/docs/lending-bot" }, { title: "AI Agents", href: "/docs/agents" }] },
     { title: "Tokenomics", items: [{ title: "$agioSOL", href: "/docs/agiosol" }] },
-    { title: "Developers", items: [{ title: "AI Integration", href: "/docs/mcp" }, { title: "Security & Risk", href: "/docs/security" }] },
+    { title: "Developers", items: [{ title: "AI Integration", href: "/docs/mcp" }, { title: "Public API", href: "/docs/api" }, { title: "Security & Risk", href: "/docs/security" }] },
     { title: "Reference", items: [{ title: "FAQ", href: "/docs/faq" }, { title: "Glossary", href: "/docs/glossary" }] },
   ],
   es: [
@@ -58,7 +60,7 @@ const NAV: Record<Lang, { title: string; items: { title: string; href: string }[
     { title: "Privacidad", items: [{ title: "Modo Privado", href: "/docs/private-mode" }, { title: "Contraparte Exclusiva", href: "/docs/exclusive-counterparty" }] },
     { title: "Funciones", items: [{ title: "Social", href: "/docs/social" }, { title: "Auto Loan", href: "/docs/lending-bot" }, { title: "Agentes IA", href: "/docs/agents" }] },
     { title: "Tokenomics", items: [{ title: "$agioSOL", href: "/docs/agiosol" }] },
-    { title: "Desarrolladores", items: [{ title: "Integración IA", href: "/docs/mcp" }, { title: "Seguridad y Riesgo", href: "/docs/security" }] },
+    { title: "Desarrolladores", items: [{ title: "Integración IA", href: "/docs/mcp" }, { title: "API Pública", href: "/docs/api" }, { title: "Seguridad y Riesgo", href: "/docs/security" }] },
     { title: "Referencia", items: [{ title: "FAQ", href: "/docs/faq" }, { title: "Glosario", href: "/docs/glossary" }] },
   ],
   pt: [
@@ -67,7 +69,7 @@ const NAV: Record<Lang, { title: string; items: { title: string; href: string }[
     { title: "Privacidade", items: [{ title: "Modo Privado", href: "/docs/private-mode" }, { title: "Contraparte Exclusiva", href: "/docs/exclusive-counterparty" }] },
     { title: "Recursos", items: [{ title: "Social", href: "/docs/social" }, { title: "Auto Loan", href: "/docs/lending-bot" }, { title: "Agentes IA", href: "/docs/agents" }] },
     { title: "Tokenomics", items: [{ title: "$agioSOL", href: "/docs/agiosol" }] },
-    { title: "Desenvolvedores", items: [{ title: "Integração IA", href: "/docs/mcp" }, { title: "Segurança e Risco", href: "/docs/security" }] },
+    { title: "Desenvolvedores", items: [{ title: "Integração IA", href: "/docs/mcp" }, { title: "API Pública", href: "/docs/api" }, { title: "Segurança e Risco", href: "/docs/security" }] },
     { title: "Referência", items: [{ title: "FAQ", href: "/docs/faq" }, { title: "Glossário", href: "/docs/glossary" }] },
   ],
   zh: [
@@ -76,7 +78,7 @@ const NAV: Record<Lang, { title: string; items: { title: string; href: string }[
     { title: "隐私", items: [{ title: "私密模式", href: "/docs/private-mode" }, { title: "独家对手方", href: "/docs/exclusive-counterparty" }] },
     { title: "功能", items: [{ title: "社交", href: "/docs/social" }, { title: "Auto Loan", href: "/docs/lending-bot" }, { title: "AI 代理", href: "/docs/agents" }] },
     { title: "Tokenomics", items: [{ title: "$agioSOL", href: "/docs/agiosol" }] },
-    { title: "开发者", items: [{ title: "AI 集成", href: "/docs/mcp" }, { title: "安全与风险", href: "/docs/security" }] },
+    { title: "开发者", items: [{ title: "AI 集成", href: "/docs/mcp" }, { title: "公开 API", href: "/docs/api" }, { title: "安全与风险", href: "/docs/security" }] },
     { title: "参考", items: [{ title: "FAQ", href: "/docs/faq" }, { title: "术语表", href: "/docs/glossary" }] },
   ],
 }
