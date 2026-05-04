@@ -46,8 +46,11 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* Globe */}
-        <Globe />
+        {/* Globe — pulled up on mobile so it sits closer to the CTA buttons.
+             On lg+ the side-by-side grid puts it next to the copy already. */}
+        <div className="-mt-16 lg:mt-0">
+          <Globe />
+        </div>
       </div>
     </section>
   )
