@@ -1,14 +1,15 @@
 "use client"
 
-import { useMemo, useState, useCallback, useRef } from "react"
+import { useMemo, useState, useCallback, useRef, useEffect } from "react"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { HelpCircle as QuestionMarkCircledIcon } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { LayoutGrid, List as ListIcon } from "lucide-react"
 import { useLoans, formatDuration, type ParsedLoan } from "@/hooks/useLoans"
 import { useLoanContract } from "@/hooks/useLoanContract"
 import { useWallet } from "@solana/wallet-adapter-react"
@@ -23,6 +24,35 @@ function shortenAddress(addr: string): string {
 const getTokenDisplaySymbol = (symbol: string): string => {
   if (symbol === 'bSOL') return 'agioSOL'
   return symbol
+}
+
+const TOKEN_LOGOS: Record<string, string> = {
+  SOL: '/images/sol-logo.png',
+  USDC: '/images/usdc-logo.png',
+  USDT: '/images/tether-usdt-logo.png',
+  EURC: '/images/eurc-logo.png',
+  bSOL: '/images/bluebgagio.png',
+}
+
+const getTokenLogo = (symbol: string): string =>
+  TOKEN_LOGOS[symbol] || '/images/placeholder-logo.png'
+
+/** Inline `[logo] $TICKER` chip used in cards + the list view. */
+function TokenBadge({ symbol, size = 16 }: { symbol: string; size?: number }) {
+  return (
+    <span className="inline-flex items-center gap-1 align-middle">
+      <img
+        src={getTokenLogo(symbol)}
+        alt={symbol}
+        width={size}
+        height={size}
+        className="rounded-full object-contain shrink-0"
+        style={{ width: size, height: size }}
+        onError={(e) => { (e.target as HTMLImageElement).src = '/images/placeholder-logo.png' }}
+      />
+      <span>${getTokenDisplaySymbol(symbol)}</span>
+    </span>
+  )
 }
 
 const ACCEPTED_TOKENS = ['SOL', 'USDC', 'EURC', 'bSOL'] as const
@@ -50,6 +80,21 @@ export default function LoanOffersPageClient() {
   const DAYS_MAX = 365
   const [apyRange, setApyRange] = useState<[number, number]>([APY_MIN, APY_MAX])
   const [daysRange, setDaysRange] = useState<[number, number]>([DAYS_MIN, DAYS_MAX])
+
+  // View mode: card grid (default) or condensed list. Mobile is always cards
+  // — the list table doesn't fit the narrow viewport. We track the user's
+  // preference, and the render pass overrides it to "cards" when the
+  // viewport is narrow.
+  const [viewMode, setViewMode] = useState<"cards" | "list">("cards")
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)")
+    const apply = () => setIsMobile(mq.matches)
+    apply()
+    mq.addEventListener("change", apply)
+    return () => mq.removeEventListener("change", apply)
+  }, [])
+  const effectiveViewMode = isMobile ? "cards" : viewMode
 
   const filteredOffers = useMemo(() => {
     let offers = openOffers
@@ -106,6 +151,31 @@ export default function LoanOffersPageClient() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-wrap items-end gap-4 mb-8">
+        {/* View-mode toggle — sits to the LEFT of the range sliders.
+            Hidden on mobile; the list view doesn't fit narrow viewports. */}
+        <div className="hidden md:inline-flex items-center rounded-md border bg-muted/40 p-1 gap-1">
+          <Button
+            variant={viewMode === "cards" ? "default" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            aria-label="Card view"
+            aria-pressed={viewMode === "cards"}
+            onClick={() => setViewMode("cards")}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "list" ? "default" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            aria-label="List view"
+            aria-pressed={viewMode === "list"}
+            onClick={() => setViewMode("list")}
+          >
+            <ListIcon className="h-4 w-4" />
+          </Button>
+        </div>
+
         {/* Range sliders — APY (%) + Period (days). Sliders sit at full
             range when no constraint is active; the consumer treats hitting
             a bound as "no filter" so the labels just read live values. */}
@@ -186,6 +256,8 @@ export default function LoanOffersPageClient() {
             <Button className="mt-4 bg-blue-600 hover:bg-blue-700 text-white">Create Offer</Button>
           </Link>
         </div>
+      ) : effectiveViewMode === "list" ? (
+        <OffersTable offers={filteredOffers} onAccepted={refetch} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredOffers.map((offer) => (
@@ -194,6 +266,120 @@ export default function LoanOffersPageClient() {
         </div>
       )}
     </div>
+  )
+}
+
+function OffersTable({ offers, onAccepted }: { offers: ParsedLoan[]; onAccepted: () => void }) {
+  return (
+    <div className="rounded-md border overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-center">Type</TableHead>
+            <TableHead className="text-center">Counterparty</TableHead>
+            <TableHead className="text-center">Amount</TableHead>
+            <TableHead className="text-center">Collateral</TableHead>
+            <TableHead className="text-center">APY</TableHead>
+            <TableHead className="text-center">Duration</TableHead>
+            <TableHead className="text-center">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {offers.map((offer) => (
+            <OfferRow key={offer.publicKey} offer={offer} onAccepted={onAccepted} />
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  )
+}
+
+function OfferRow({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () => void }) {
+  const { acceptBorrowOffer, acceptLendOffer } = useLoanContract()
+  const { isConnected: connected } = useWalletContext()
+  const [accepting, setAccepting] = useState(false)
+  const [accepted, setAccepted] = useState(false)
+  const busyRef = useRef(false)
+
+  const isLendOffer = offer.offerType === "lend"
+  const counterpartyAddress = isLendOffer ? offer.lender : offer.borrower
+  const { displayName: counterpartyName, profileWallet, isStealth } = useWalletProfile(counterpartyAddress)
+
+  const handleAccept = useCallback(async () => {
+    if (busyRef.current) return
+    busyRef.current = true
+    setAccepting(true)
+    try {
+      const params = {
+        loanPublicKey: offer.publicKey,
+        createKey: offer.createKey,
+        debtMint: offer.debtMint,
+        collateralMint: offer.collateralMint,
+        debtTokenSymbol: offer.debtTokenSymbol,
+        collateralTokenSymbol: offer.collateralTokenSymbol,
+        debtAmountUi: offer.debtAmountUi,
+        collateralAmountUi: offer.collateralAmountUi,
+        borrower: offer.borrower || undefined,
+        lender: offer.lender || undefined,
+      }
+      if (isLendOffer) {
+        await acceptBorrowOffer(params)
+      } else {
+        await acceptLendOffer(params)
+      }
+      setAccepted(true)
+      onAccepted()
+    } catch (err) {
+      console.error("Failed to accept offer:", err)
+    } finally {
+      setAccepting(false)
+      busyRef.current = false
+    }
+  }, [offer, isLendOffer, acceptBorrowOffer, acceptLendOffer, onAccepted])
+
+  if (accepted) return null
+
+  const counterpartyCell = isStealth ? (
+    <span className="italic text-muted-foreground">Anonymous</span>
+  ) : counterpartyAddress ? (
+    <Link
+      href={`/socialfi/profile/${profileWallet || counterpartyAddress}`}
+      className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+    >
+      {counterpartyName || shortenAddress(counterpartyAddress)}
+    </Link>
+  ) : (
+    <span className="text-muted-foreground">Open</span>
+  )
+
+  return (
+    <TableRow>
+      <TableCell className="text-center text-sm font-mono uppercase tracking-wider">
+        {isLendOffer ? "Lend" : "Borrow"}
+      </TableCell>
+      <TableCell className="text-center text-sm">{counterpartyCell}</TableCell>
+      <TableCell className="text-center text-sm font-medium">
+        {offer.debtAmountUi.toFixed(2)} <TokenBadge symbol={offer.debtTokenSymbol} />
+      </TableCell>
+      <TableCell className="text-center text-sm font-medium">
+        {offer.collateralAmountUi.toFixed(4)} <TokenBadge symbol={offer.collateralTokenSymbol} />
+      </TableCell>
+      <TableCell className={`text-center text-sm font-semibold ${isLendOffer ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+        {offer.apy}%
+      </TableCell>
+      <TableCell className="text-center text-sm">{formatDuration(offer.duration)}</TableCell>
+      <TableCell className="text-center">
+        <Button
+          size="sm"
+          variant={isLendOffer ? "destructive" : "default"}
+          className="text-xs"
+          disabled={!connected || accepting}
+          onClick={handleAccept}
+        >
+          {accepting ? "Confirming…" : isLendOffer ? "Borrow" : "Lend"}
+        </Button>
+      </TableCell>
+    </TableRow>
   )
 }
 
@@ -271,15 +457,15 @@ function OfferCard({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () =>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Amount</p>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <QuestionMarkCircledIcon className="h-4 w-4 text-muted-foreground hover:text-blue-600 transition-colors" />
+                      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold cursor-help select-none leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200">?</span>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p>The total debt amount for this loan.</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <p className="font-semibold text-black dark:text-white">
-                  {offer.debtAmountUi.toFixed(2)} {getTokenDisplaySymbol(offer.debtTokenSymbol)}
+                <p className="font-semibold text-black dark:text-white flex items-center gap-1.5">
+                  {offer.debtAmountUi.toFixed(2)} <TokenBadge symbol={offer.debtTokenSymbol} />
                 </p>
               </div>
               <div className="space-y-1">
@@ -287,15 +473,15 @@ function OfferCard({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () =>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Collateral</p>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <QuestionMarkCircledIcon className="h-4 w-4 text-muted-foreground hover:text-blue-600 transition-colors" />
+                      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold cursor-help select-none leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200">?</span>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p>The collateral amount securing this loan.</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <p className="font-semibold text-black dark:text-white">
-                  {offer.collateralAmountUi.toFixed(4)} {getTokenDisplaySymbol(offer.collateralTokenSymbol)}
+                <p className="font-semibold text-black dark:text-white flex items-center gap-1.5">
+                  {offer.collateralAmountUi.toFixed(4)} <TokenBadge symbol={offer.collateralTokenSymbol} />
                 </p>
               </div>
             </div>
@@ -305,7 +491,7 @@ function OfferCard({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () =>
                   <p className="text-sm text-gray-500 dark:text-gray-400">APY</p>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <QuestionMarkCircledIcon className="h-4 w-4 text-muted-foreground hover:text-blue-600 transition-colors" />
+                      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold cursor-help select-none leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200">?</span>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p>Annual Percentage Yield for this loan.</p>
@@ -321,15 +507,15 @@ function OfferCard({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () =>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Interest</p>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <QuestionMarkCircledIcon className="h-4 w-4 text-muted-foreground hover:text-blue-600 transition-colors" />
+                      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold cursor-help select-none leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200">?</span>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p>Expected interest for the loan term.</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <p className={`font-semibold ${isLendOffer ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
-                  {expectedInterest.toFixed(4)} {getTokenDisplaySymbol(offer.debtTokenSymbol)}
+                <p className={`font-semibold flex items-center gap-1.5 ${isLendOffer ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+                  {expectedInterest.toFixed(4)} <TokenBadge symbol={offer.debtTokenSymbol} />
                 </p>
               </div>
             </div>
