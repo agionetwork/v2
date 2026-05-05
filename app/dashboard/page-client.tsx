@@ -21,6 +21,12 @@ import BorrowDashboard from "../../components/dashboard/borrow-dashboard"
 import LendDashboard from "../../components/dashboard/lend-dashboard"
 import LoanViewModal from "../../components/dashboard/loan-view-modal"
 import { GetFaucetsButton } from "../../components/dashboard/get-faucets-button"
+import {
+  LiquidityIcon,
+  AssetDonutIcon,
+  LoanChartIcon,
+  ActivityPulseIcon,
+} from "../../components/dashboard/three-icons"
 import Link from "next/link"
 import { useWallet } from "@solana/wallet-adapter-react"
 import { useWalletContext } from "@/components/wallet-provider"
@@ -244,11 +250,14 @@ function DashboardContent() {
         let value = totalValue > 0 ? (tokenValue / totalValue) * 100 : 0
         value = isNaN(value) || !isFinite(value) ? 0 : Math.max(0, Math.round(value * 100) / 100)
 
+        // Brand-aligned palette: stays in the blue/violet family used by the
+        // glass cards so the donut reads as part of the same surface family
+        // rather than a foreign chart widget.
         const colors: { [key: string]: string } = {
-          'SOL': '#3B82F6',
-          'USDC': '#1E40AF',
-          'EURC': '#2563EB',
-          'bSOL': '#1E3A8A',
+          'SOL': '#4A90FF',
+          'USDC': '#1358EC',
+          'EURC': '#60A5FA',
+          'bSOL': '#7C3AED',
         }
 
         return {
@@ -291,13 +300,7 @@ function DashboardContent() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <CardTitle className={`text-2xl font-bold flex items-center gap-2 ${titleColor}`}>
-                      <span className="w-8 h-8 bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <rect x="2" y="7" width="20" height="10" rx="2"/>
-                          <path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/>
-                          <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                      </span>
+                      <LiquidityIcon size={36} />
                       Your Liquidity
                     </CardTitle>
                     <CardDescription className={descriptionColor}>
@@ -387,12 +390,7 @@ function DashboardContent() {
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-blue-100/20 to-blue-200/30 dark:from-blue-900/20 dark:via-blue-800/20 dark:to-blue-700/20 pointer-events-none"></div>
                 <CardHeader className="relative z-10">
                   <CardTitle className={`text-xl font-bold flex items-center gap-2 ${titleColor}`}>
-                    <span className="w-8 h-8 bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M21 12A9 9 0 1 1 12 3v9z"/>
-                        <path d="M12 3a9 9 0 0 1 9 9h-9z"/>
-                      </svg>
-                    </span>
+                    <AssetDonutIcon size={32} />
                     Asset Distribution
                   </CardTitle>
                   <CardDescription className={descriptionColor}>Composition of your portfolio</CardDescription>
@@ -417,23 +415,36 @@ function DashboardContent() {
                         <ResponsivePie
                           data={validData}
                           margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-                          innerRadius={0.5}
-                          padAngle={0.7}
-                          cornerRadius={3}
-                          activeOuterRadiusOffset={4}
+                          innerRadius={0.62}
+                          padAngle={1.4}
+                          cornerRadius={6}
+                          activeOuterRadiusOffset={6}
                           colors={{ datum: 'data.color' }}
-                          borderWidth={1}
-                          borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
+                          borderWidth={0}
+                          borderColor={{ from: 'color' }}
                           arcLinkLabelsSkipAngle={10}
                           arcLinkLabelsTextColor={chartAxisColor}
                           arcLinkLabelsThickness={2}
                           arcLinkLabelsColor={{ from: 'color' }}
                           enableArcLabels={false}
                           tooltip={({ datum }) => (
-                            <div className="bg-white shadow-lg rounded-lg px-3 py-2 border border-gray-200 text-sm">
+                            <div
+                              className="rounded-lg px-3 py-2 text-sm"
+                              style={{
+                                background: theme === 'dark'
+                                  ? 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0)), rgba(8,14,36,0.96)'
+                                  : 'linear-gradient(135deg, rgba(74,144,255,0.08), rgba(255,255,255,0)), rgba(255,255,255,0.98)',
+                                border: theme === 'dark'
+                                  ? '1px solid rgba(74,144,255,0.22)'
+                                  : '1px solid rgba(74,144,255,0.18)',
+                                boxShadow: '0 8px 24px -8px rgba(74,144,255,0.25), 0 1px 0 rgba(255,255,255,0.08) inset',
+                                backdropFilter: 'blur(8px)',
+                                color: theme === 'dark' ? '#E2E8F0' : '#0A1230',
+                              }}
+                            >
                               <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: datum.color }}></div>
-                                <span className="font-medium text-gray-900">{getTokenDisplaySymbol(datum.id as string)}: {datum.value.toFixed(2)}%</span>
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: datum.color, boxShadow: `0 0 8px ${datum.color}` }}></div>
+                                <span className="font-medium">{getTokenDisplaySymbol(datum.id as string)}: {datum.value.toFixed(2)}%</span>
                               </div>
                             </div>
                           )}
@@ -471,12 +482,7 @@ function DashboardContent() {
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-blue-100/20 to-blue-200/30 dark:from-blue-900/20 dark:via-blue-800/20 dark:to-blue-700/20 pointer-events-none"></div>
                 <CardHeader className="relative z-10">
                   <CardTitle className={`text-xl font-bold flex items-center gap-2 ${titleColor}`}>
-                    <span className="w-8 h-8 bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <polyline points="3 17 9 11 13 15 21 7"/>
-                        <polyline points="14 7 21 7 21 14"/>
-                      </svg>
-                    </span>
+                    <LoanChartIcon size={32} />
                     Loan Overview
                   </CardTitle>
                   <CardDescription className={descriptionColor}>Summary of your loan activity</CardDescription>
@@ -502,43 +508,65 @@ function DashboardContent() {
                         yScale={{ type: 'linear', min: 0, max: 'auto', stacked: false }}
                         curve="monotoneX"
                         axisBottom={{
-                          tickSize: 5,
-                          tickPadding: 5,
+                          tickSize: 4,
+                          tickPadding: 6,
                           tickRotation: -30,
                           legendOffset: 40,
                           legendPosition: 'middle',
                         }}
                         axisLeft={{
-                          tickSize: 5,
-                          tickPadding: 5,
+                          tickSize: 4,
+                          tickPadding: 6,
                           tickRotation: 0,
                           legend: 'Amount',
                           legendOffset: -50,
                           legendPosition: 'middle',
                         }}
-                        colors={({ id }) => id === 'Borrowed' ? '#3B82F6' : '#1E3A8A'}
+                        colors={({ id }) => id === 'Borrowed' ? '#4A90FF' : '#1358EC'}
                         lineWidth={3}
-                        pointSize={10}
-                        pointColor={{ theme: 'background' }}
-                        pointBorderWidth={3}
+                        enableArea={true}
+                        areaOpacity={theme === 'dark' ? 0.18 : 0.12}
+                        pointSize={9}
+                        pointColor={theme === 'dark' ? '#0A1230' : '#FFFFFF'}
+                        pointBorderWidth={2.5}
                         pointBorderColor={{ from: 'serieColor' }}
                         enablePointLabel={false}
                         useMesh={true}
                         tooltip={({ point }) => {
                           const d = point.data as any
                           const loan = d.loan as ParsedLoan | undefined
+                          const seriesColor = (point as any).serieColor as string | undefined
                           return (
-                            <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-3 border border-gray-200 dark:border-gray-700 text-sm">
-                              <div className="font-semibold text-blue-600 dark:text-blue-400 mb-1">{String(point.seriesId)}</div>
-                              <div className="text-gray-700 dark:text-gray-300">Date: {point.data.xFormatted}</div>
-                              <div className="text-gray-700 dark:text-gray-300">Cumulative: {point.data.yFormatted}</div>
+                            <div
+                              className="rounded-lg p-3 text-sm"
+                              style={{
+                                background: theme === 'dark'
+                                  ? 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0)), rgba(8,14,36,0.96)'
+                                  : 'linear-gradient(135deg, rgba(74,144,255,0.08), rgba(255,255,255,0)), rgba(255,255,255,0.98)',
+                                border: theme === 'dark'
+                                  ? '1px solid rgba(74,144,255,0.22)'
+                                  : '1px solid rgba(74,144,255,0.18)',
+                                boxShadow: '0 8px 24px -8px rgba(74,144,255,0.25), 0 1px 0 rgba(255,255,255,0.08) inset',
+                                backdropFilter: 'blur(8px)',
+                                color: theme === 'dark' ? '#E2E8F0' : '#0A1230',
+                              }}
+                            >
+                              <div className="font-semibold mb-1 flex items-center gap-2">
+                                <span
+                                  className="inline-block w-2.5 h-2.5 rounded-full"
+                                  style={{ backgroundColor: seriesColor, boxShadow: `0 0 6px ${seriesColor}` }}
+                                />
+                                {String(point.seriesId)}
+                              </div>
+                              <div className={theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}>Date: {point.data.xFormatted}</div>
+                              <div className={theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}>Cumulative: {point.data.yFormatted}</div>
                               {loan && (
                                 <>
-                                  <div className="text-gray-600 dark:text-gray-400 mt-1">
+                                  <div className={`mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                                     {loan.debtAmountUi.toFixed(2)} {getTokenDisplaySymbol(loan.debtTokenSymbol)}
                                   </div>
-                                  <div className="text-gray-600 dark:text-gray-400">APY: {loan.apy}%</div>
-                                  <div className="text-gray-600 dark:text-gray-400">Status: {getStatusLabel(loan.status)}</div>
+                                  <div className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>APY: {loan.apy}%</div>
+                                  <div className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>Status: {getStatusLabel(loan.status)}</div>
                                 </>
                               )}
                             </div>
@@ -546,11 +574,26 @@ function DashboardContent() {
                         }}
                         theme={{
                           axis: {
-                            ticks: { text: { fill: chartAxisColor, fontSize: 11 } },
+                            domain: { line: { stroke: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(10,18,48,0.10)', strokeWidth: 1 } },
+                            ticks: {
+                              line: { stroke: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(10,18,48,0.10)', strokeWidth: 1 },
+                              text: { fill: chartAxisColor, fontSize: 11 },
+                            },
                             legend: { text: { fill: chartAxisColor, fontSize: 12 } },
                           },
-                          grid: { line: { stroke: theme === 'dark' ? '#374151' : '#E5E7EB', strokeWidth: 1 } },
-                          crosshair: { line: { stroke: '#3B82F6', strokeWidth: 1, strokeOpacity: 0.5 } },
+                          grid: {
+                            line: {
+                              stroke: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(10,18,48,0.06)',
+                              strokeWidth: 1,
+                            },
+                          },
+                          crosshair: {
+                            line: {
+                              stroke: '#4A90FF',
+                              strokeWidth: 1,
+                              strokeOpacity: 0.5,
+                            },
+                          },
                         }}
                         legends={[
                           {
@@ -612,7 +655,7 @@ function DashboardContent() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-blue-100 text-sm font-medium">Interest Earned</p>
-                      <p className="text-2xl font-bold text-green-300">${loanSummary.interestEarnedUsd.toFixed(2)}</p>
+                      <p className="text-2xl font-bold text-green-600">${loanSummary.interestEarnedUsd.toFixed(2)}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -624,11 +667,7 @@ function DashboardContent() {
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-blue-100/20 to-blue-200/30 dark:from-blue-900/20 dark:via-blue-800/20 dark:to-blue-700/20 pointer-events-none"></div>
               <CardHeader className="relative z-10">
                 <CardTitle className={`text-xl font-bold flex items-center gap-2 ${titleColor}`}>
-                  <span className="w-8 h-8 bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                    </svg>
-                  </span>
+                  <ActivityPulseIcon size={32} />
                   Recent Activity
                 </CardTitle>
                 <CardDescription className={descriptionColor}>Your most recent loan activity</CardDescription>
