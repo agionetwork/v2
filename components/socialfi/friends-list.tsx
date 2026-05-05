@@ -67,12 +67,12 @@ function FriendCard({ profile }: { profile: TapestryProfileResponse }) {
           </Link>
           <button
             onClick={handleToggleFavorite}
-            className="absolute -top-1 -right-1 p-1 rounded-full bg-[#0A1230] border border-white/15 shadow-md hover:scale-110 transition-transform"
+            className="absolute -top-1 -right-1 hover:scale-110 transition-transform drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
             title={favorited ? "Remove from favourites" : "Add to favourites"}
           >
             <Star
-              className={`h-3.5 w-3.5 ${
-                favorited ? "text-yellow-400 fill-yellow-400" : "text-white/70 hover:text-yellow-300"
+              className={`h-4 w-4 ${
+                favorited ? "text-yellow-400 fill-yellow-400" : "text-white/80 hover:text-yellow-300"
               }`}
             />
           </button>
