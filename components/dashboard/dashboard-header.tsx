@@ -22,8 +22,6 @@ import { DevnetFaucetButton } from "@/components/devnet-faucet-button"
 import { toast } from "sonner"
 import { useTapestryProfile } from "@/components/tapestry-profile-provider"
 import { getCustomProperty } from "@/lib/tapestry"
-import { FairScoreBadge } from "@/components/fairscore-badge"
-import type { FairScore } from "@/lib/fairscale"
 
 
 interface DashboardHeaderProps {
@@ -38,7 +36,6 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
   const { profile: tapestryProfile } = useTapestryProfile()
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [myFairScore, setMyFairScore] = useState<FairScore | null>(null)
   const dialectAvailable = useDialectAvailable()
 
   const profileImage = tapestryProfile?.profile
@@ -55,21 +52,6 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [pathname])
-
-  useEffect(() => {
-    if (!address) {
-      setMyFairScore(null)
-      return
-    }
-    let cancelled = false
-    fetch(`/api/fairscale/score?wallet=${address}`)
-      .then((r) => r.json())
-      .then((data: FairScore) => {
-        if (!cancelled && data && typeof data.score === "number") setMyFairScore(data)
-      })
-      .catch(() => { if (!cancelled) setMyFairScore(null) })
-    return () => { cancelled = true }
-  }, [address])
 
   const handleWalletConnect = () => {
     if (isConnected) {
@@ -194,14 +176,6 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
           >
             Loan Offers
           </Link>
-          <Link
-            href="/socialfi/leaderboard"
-            className={`transition-colors hover:text-white/80 ${
-              pathname === "/socialfi/leaderboard" ? "text-white" : "text-white/60"
-            }`}
-          >
-            Leaderboard
-          </Link>
         </nav>
         <Link href="/" className="md:hidden flex items-center mr-2">
           <img src="/agio-logo-3d.png" alt="AGIO" className="h-8 w-8" />
@@ -215,16 +189,6 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
           <span className="sr-only">Toggle Menu</span>
         </Button>
         <div className="flex flex-1 md:flex-none items-center justify-end gap-2">
-          {isConnected && myFairScore && (
-            <FairScoreBadge
-              score={myFairScore.score}
-              tier={myFairScore.tier}
-              subOnchain={myFairScore.subOnchain}
-              subSocial={myFairScore.subSocial}
-              subBehavioral={myFairScore.subBehavioral}
-            />
-          )}
-
           {isConnected && <DevnetFaucetButton />}
 
           <Button
@@ -333,7 +297,6 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
             { href: "/auto-loan", label: "Auto-Loan" },
             { href: "/borrow-lend", label: "Borrow / Lend" },
             { href: "/loan-offers", label: "Loan Offers" },
-            { href: "/socialfi/leaderboard", label: "Leaderboard" },
           ].map((item) => (
             <Link
               key={item.href}
