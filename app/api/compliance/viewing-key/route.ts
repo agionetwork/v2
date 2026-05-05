@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { isValidSolanaAddress } from "@/lib/agent/auth"
+import { isValidSolanaAddress, verifyWalletSignature } from "@/lib/agent/auth"
 import { getStealthWalletsForUser } from "@/lib/agent/stealth"
 import { generateViewingKey } from "@/lib/cloak/client"
 import { isRedisConfigured } from "@/lib/agent/redis"
@@ -17,6 +17,10 @@ interface Body {
   scope?: string
   /** Optional expiry, in days. Default 30. Max 365. */
   expiresInDays?: number
+  /** Wallet signature over `message` proving ownership of `wallet`. */
+  signature?: string
+  /** The signed message — must be `agio-compliance:{wallet}`. */
+  message?: string
 }
 
 export async function POST(req: NextRequest) {
@@ -32,6 +36,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: "wallet is required and must be a valid Solana address." },
       { status: 400 },
+    )
+  }
+
+  // Auth gate: the caller must prove they control `wallet` before we mint
+  // a viewing key over its stealth set. Without this, any client could
+  // request keys decrypting any other user's private loan history.
+  const { signature, message } = body
+  if (!signature || !message) {
+    return NextResponse.json(
+      { error: "Missing wallet signature. Sign agio-compliance:<wallet> and pass signature + message." },
+      { status: 401 },
+    )
+  }
+  if (message !== `agio-compliance:${wallet}`) {
+    return NextResponse.json(
+      { error: "Signed message must be exactly agio-compliance:<wallet>." },
+      { status: 400 },
+    )
+  }
+  if (!verifyWalletSignature(wallet, signature, message)) {
+    return NextResponse.json(
+      { error: "Signature does not verify against wallet." },
+      { status: 401 },
     )
   }
 

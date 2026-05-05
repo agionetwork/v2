@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Copy, Check, ExternalLink, KeyRound, EyeOff, RefreshCcw } from "lucide-react"
+import { useWallet } from "@solana/wallet-adapter-react"
 import { useWalletContext } from "@/components/wallet-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -51,6 +52,7 @@ function CopyableField({ value, label }: { value: string; label?: string }) {
 
 export default function CompliancePageClient() {
   const { isConnected, address } = useWalletContext()
+  const { signMessage } = useWallet()
   const [stealthList, setStealthList] = useState<string[]>([])
   const [loadingList, setLoadingList] = useState(false)
   const [generating, setGenerating] = useState<string | null>(null) // scope being generated
@@ -83,12 +85,23 @@ export default function CompliancePageClient() {
 
   async function generate(scope: "all" | string) {
     if (!address) return
+    if (!signMessage) {
+      toast.error("Your wallet does not support message signing.")
+      return
+    }
     setGenerating(scope)
     try {
+      // Auth gate matching the server: signed message proves the caller
+      // controls this wallet, so nobody else can mint a viewing key over
+      // its stealth set.
+      const message = `agio-compliance:${address}`
+      const signatureBytes = await signMessage(new TextEncoder().encode(message))
+      const signature = Buffer.from(signatureBytes).toString("base64")
+
       const res = await fetch("/api/compliance/viewing-key", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet: address, scope, expiresInDays }),
+        body: JSON.stringify({ wallet: address, scope, expiresInDays, signature, message }),
       })
       const data = await res.json()
       if (!res.ok) {
