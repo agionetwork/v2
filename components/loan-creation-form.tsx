@@ -16,7 +16,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Icons } from "@/components/ui/icons"
-import { HelpCircle as QuestionMarkCircledIcon } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { TermTooltip } from "@/components/term-tooltip"
 import { useLoanContract } from "@/hooks/useLoanContract"
@@ -444,7 +443,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <QuestionMarkCircledIcon className="h-4 w-4 text-muted-foreground hover:text-blue-600 transition-colors" />
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold cursor-help select-none leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200">?</span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs bg-transparent dark:bg-blue-950">
                         <p>{config.amountTooltip}</p>
@@ -500,7 +499,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <QuestionMarkCircledIcon className="h-4 w-4 text-muted-foreground hover:text-blue-600 transition-colors" />
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold cursor-help select-none leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200">?</span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p>{config.collateralTooltip}</p>
@@ -575,7 +574,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <QuestionMarkCircledIcon className="h-4 w-4 text-muted-foreground hover:text-blue-600 transition-colors" />
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold cursor-help select-none leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200">?</span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p>{config.percentageTooltip}</p>
@@ -599,7 +598,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
               <div className="space-y-6">
                 <div className="flex items-center gap-1">
                   <Label htmlFor="loan-term" className="text-sm font-medium text-foreground">
-                    PERIOD:
+                    PERIOD
                   </Label>
                   <Input
                     type="number"
@@ -618,7 +617,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <QuestionMarkCircledIcon className="h-4 w-4 text-muted-foreground hover:text-blue-600 transition-colors" />
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold cursor-help select-none leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200">?</span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p>
@@ -645,7 +644,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
               <div className="space-y-6">
                 <div className="flex items-center gap-1">
                   <Label htmlFor="apy" className="text-sm font-medium text-foreground">
-                    <TermTooltip term="apy">APY (%)</TermTooltip>:
+                    <TermTooltip term="apy">APY (%)</TermTooltip>
                   </Label>
                   <Input
                     type="number"
@@ -664,7 +663,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <QuestionMarkCircledIcon className="h-4 w-4 text-muted-foreground hover:text-blue-600 transition-colors" />
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold cursor-help select-none leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200">?</span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p>
@@ -696,7 +695,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <QuestionMarkCircledIcon className="h-4 w-4 text-muted-foreground hover:text-blue-600 transition-colors flex-shrink-0" />
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold cursor-help select-none leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200 flex-shrink-0">?</span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p>{config.privacyTooltip}</p>
@@ -709,8 +708,8 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="text-black dark:text-white bg-white dark:bg-blue-950">
-                    <SelectItem value="no">No</SelectItem>
-                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="no"><span className="font-semibold text-red-600 dark:text-red-400">No</span></SelectItem>
+                    <SelectItem value="yes"><span className="font-semibold text-green-600 dark:text-green-400">Yes</span></SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -725,7 +724,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <QuestionMarkCircledIcon className="h-4 w-4 text-muted-foreground hover:text-blue-600 transition-colors flex-shrink-0" />
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold cursor-help select-none leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200 flex-shrink-0">?</span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p>{config.exclusiveTooltip}</p>
@@ -744,8 +743,8 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="text-black dark:text-white bg-white dark:bg-blue-950">
-                    <SelectItem value="no">No</SelectItem>
-                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="no"><span className="font-semibold text-red-600 dark:text-red-400">No</span></SelectItem>
+                    <SelectItem value="yes"><span className="font-semibold text-green-600 dark:text-green-400">Yes</span></SelectItem>
                   </SelectContent>
                 </Select>
               </div>
