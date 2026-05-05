@@ -651,3 +651,82 @@ html { scroll-behavior: smooth; }
     linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%);
   color: #fff;
 }
+
+/* ────────────────────────────────────────────────────────────────────────
+   Glass tabs (shadcn Tabs) — same surface family as the cards. The list
+   becomes a glass strip; triggers are transparent until active, where
+   they pick up a glass pill with the right tone.
+   ──────────────────────────────────────────────────────────────────── */
+.agio-glass-page [data-slot="tabs-list"] {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%),
+    rgba(8, 14, 36, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 4px 14px -8px rgba(0, 0, 0, 0.45);
+  border-radius: 12px;
+  padding: 4px;
+  height: auto;
+}
+.agio-glass-page [data-slot="tabs-trigger"] {
+  color: rgba(255, 255, 255, 0.65);
+  border-radius: 8px;
+  background: transparent;
+  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+.agio-glass-page [data-slot="tabs-trigger"]:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+/* Default active = brand blue glass */
+.agio-glass-page [data-slot="tabs-trigger"][data-state="active"] {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.92) 100%);
+  color: #fff;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 4px 14px -6px rgba(74, 144, 255, 0.45),
+    0 6px 20px -10px rgba(0, 0, 0, 0.45);
+}
+/* Borrow tab: red active state to signal taking on debt is a different
+   class of action than lending capital. Gradient mirrors the destructive
+   button so the visual language stays consistent. */
+.agio-glass-page [data-slot="tabs-trigger"][data-value="borrow"][data-state="active"] {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(180deg, hsl(var(--destructive)) 0%, hsl(var(--destructive) / 0.92) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 4px 14px -6px rgba(220, 50, 50, 0.45),
+    0 6px 20px -10px rgba(0, 0, 0, 0.45);
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Glass nav item — used in the SocialFi vertical sidebar (Offers /
+   Network) and its mobile counterpart. Same surface family as the
+   Cards: subtle hover wash, brand-blue glass when active.
+   ──────────────────────────────────────────────────────────────────── */
+.agio-glass-nav-item {
+  border: 1px solid transparent;
+  background: transparent;
+}
+.agio-glass-nav-item:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+.agio-glass-nav-item--active,
+.agio-glass-nav-item--active:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.92) 100%);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 4px 14px -6px rgba(74, 144, 255, 0.4),
+    0 6px 20px -10px rgba(0, 0, 0, 0.45);
+}

@@ -464,7 +464,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                     <SelectTrigger className="w-1/2 h-8 text-black dark:text-white rounded-l-none border-l-[0.5px] border-l-black dark:border-l-white bg-transparent dark:bg-transparent">
                       <div className="flex items-center gap-1">
                         <img
-                          src={`/images/${token === "EURC" ? "eurc.webp" : token === "USDT" ? "tether-usdt-logo.png" : token.toLowerCase() + "-logo.png"}`}
+                          src={`/images/${token === "EURC" ? "eurc-logo.png" : token === "USDT" ? "tether-usdt-logo.png" : token.toLowerCase() + "-logo.png"}`}
                           alt={token}
                           className="w-4 h-4"
                         />
@@ -476,7 +476,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                         <SelectItem key={t} value={t}>
                           <div className="flex items-center gap-1">
                             <img
-                              src={`/images/${t === "EURC" ? "eurc.webp" : t === "USDT" ? "tether-usdt-logo.png" : t.toLowerCase() + "-logo.png"}`}
+                              src={`/images/${t === "EURC" ? "eurc-logo.png" : t === "USDT" ? "tether-usdt-logo.png" : t.toLowerCase() + "-logo.png"}`}
                               alt={t}
                               className="w-4 h-4"
                             />
@@ -520,7 +520,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                     <SelectTrigger className="w-1/2 h-8 text-black dark:text-white rounded-l-none border-l-[0.5px] border-l-black dark:border-l-white bg-transparent dark:bg-transparent">
                       <div className="flex items-center gap-1">
                         <img
-                          src={`/images/${tokenCollateral === "EURC" ? "eurc.webp" : tokenCollateral === "USDT" ? "tether-usdt-logo.png" : tokenCollateral.toLowerCase() + "-logo.png"}`}
+                          src={`/images/${tokenCollateral === "EURC" ? "eurc-logo.png" : tokenCollateral === "USDT" ? "tether-usdt-logo.png" : tokenCollateral.toLowerCase() + "-logo.png"}`}
                           alt={tokenCollateral}
                           className="w-4 h-4"
                         />
@@ -532,7 +532,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                         <SelectItem key={t} value={t}>
                           <div className="flex items-center gap-1">
                             <img
-                              src={`/images/${t === "EURC" ? "eurc.webp" : t === "USDT" ? "tether-usdt-logo.png" : t.toLowerCase() + "-logo.png"}`}
+                              src={`/images/${t === "EURC" ? "eurc-logo.png" : t === "USDT" ? "tether-usdt-logo.png" : t.toLowerCase() + "-logo.png"}`}
                               alt={t}
                               className="w-4 h-4"
                             />

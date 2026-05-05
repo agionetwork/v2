@@ -183,10 +183,8 @@ export default function SocialFiPageClient() {
             <button
               key={key}
               onClick={() => handleNavChange(key)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "bg-muted text-muted-foreground"
+              className={`agio-glass-nav-item flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
+                isActive ? "agio-glass-nav-item--active text-white" : "text-white/60 hover:text-white"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -216,10 +214,8 @@ export default function SocialFiPageClient() {
                 <button
                   key={key}
                   onClick={() => handleNavChange(key)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 ${
-                    isActive
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className={`agio-glass-nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    isActive ? "agio-glass-nav-item--active text-white" : "text-white/60 hover:text-white"
                   }`}
                 >
                   <Icon className="h-5 w-5 flex-shrink-0" />
