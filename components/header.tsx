@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
@@ -58,14 +57,14 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Button
-            className="bg-gradient-to-r from-[#4A90FF] to-[#3B82F6] hover:brightness-110 text-white px-5 py-2 text-[13px] font-display font-medium rounded-lg transition-all"
-            asChild
+          <Link
+            href="/borrow-lend"
+            data-slot="button"
+            data-variant="default"
+            className="inline-flex items-center justify-center px-5 py-2 text-[13px] font-display font-medium text-white rounded-lg uppercase tracking-wider"
           >
-            <Link href="/borrow-lend">
-              LAUNCH APP
-            </Link>
-          </Button>
+            LAUNCH APP
+          </Link>
 
           {/* Mobile hamburger */}
           <button

@@ -207,6 +207,14 @@ function DocsLayoutInner({ children }: { children: React.ReactNode }) {
 
         <div style={{ flex: 1 }} />
         <LangToggle />
+        <Link
+          href="/borrow-lend"
+          className="ml-3 inline-flex h-9 items-center justify-center rounded-md px-4 font-display text-[13px] font-medium tracking-wider uppercase text-white"
+          data-slot="button"
+          data-variant="default"
+        >
+          Launch App
+        </Link>
       </header>
 
       {/* Mobile overlay */}

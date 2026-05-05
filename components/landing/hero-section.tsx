@@ -33,13 +33,17 @@ export function HeroSection() {
           <div className="mt-9 flex gap-3 flex-wrap">
             <Link
               href="/loan-offers"
-              className="inline-flex items-center gap-2 px-[22px] py-3.5 rounded-md text-[15px] font-semibold text-white bg-gradient-to-b from-[#4A90FF] to-[#3B82F6] border border-[#4A90FF] shadow-[0_2px_0_rgba(0,0,0,0.15),0_8px_24px_rgba(74,144,255,0.3)] hover:brightness-110 transition-all"
+              data-slot="button"
+              data-variant="default"
+              className="inline-flex items-center gap-2 px-[22px] py-3.5 rounded-md text-[15px] font-semibold uppercase text-white"
             >
               LOAN OFFERS
             </Link>
             <Link
               href="/borrow-lend"
-              className="inline-flex items-center gap-2 px-[22px] py-3.5 rounded-md text-[15px] font-medium text-white border border-[#2A3A6E] hover:border-white transition-all uppercase"
+              data-slot="button"
+              data-variant="outline"
+              className="inline-flex items-center gap-2 px-[22px] py-3.5 rounded-md text-[15px] font-medium uppercase text-white"
             >
               REQUEST A LOAN
             </Link>

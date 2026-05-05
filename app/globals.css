@@ -540,9 +540,9 @@ html { scroll-behavior: smooth; }
    landing page CTAs (which use bespoke gradients) stay untouched.
    ──────────────────────────────────────────────────────────────────── */
 
-/* Default (primary) action: brand-blue gradient + inner sheen + glow. */
-.agio-glass-page [data-slot="button"][data-variant="default"],
-.agio-glass-header [data-slot="button"][data-variant="default"] {
+/* Default (primary) action: brand-blue gradient + inner sheen + glow.
+   Applied globally so docs / landing buttons share the same chrome. */
+[data-slot="button"][data-variant="default"] {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 55%),
     linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.92) 100%);
@@ -555,8 +555,7 @@ html { scroll-behavior: smooth; }
     0 8px 24px -10px rgba(0, 0, 0, 0.45);
   transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
-.agio-glass-page [data-slot="button"][data-variant="default"]:hover,
-.agio-glass-header [data-slot="button"][data-variant="default"]:hover {
+[data-slot="button"][data-variant="default"]:hover {
   filter: brightness(1.08);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.3) inset,
@@ -565,8 +564,7 @@ html { scroll-behavior: smooth; }
     0 10px 28px -10px rgba(0, 0, 0, 0.5);
   transform: translateY(-1px);
 }
-.agio-glass-page [data-slot="button"][data-variant="default"]:active,
-.agio-glass-header [data-slot="button"][data-variant="default"]:active {
+[data-slot="button"][data-variant="default"]:active {
   transform: translateY(0);
   filter: brightness(0.96);
 }
@@ -574,8 +572,7 @@ html { scroll-behavior: smooth; }
 /* Outline: hairline + transparent backdrop, picks up the page's ambient glow.
    Translucent variants follow the page foreground so light mode stays
    readable; only solid-background variants keep #fff in both modes. */
-.agio-glass-page [data-slot="button"][data-variant="outline"],
-.agio-glass-header [data-slot="button"][data-variant="outline"] {
+[data-slot="button"][data-variant="outline"] {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%),
     rgba(255, 255, 255, 0.02);
@@ -588,8 +585,7 @@ html { scroll-behavior: smooth; }
     0 4px 14px -8px rgba(0, 0, 0, 0.45);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
-.agio-glass-page [data-slot="button"][data-variant="outline"]:hover,
-.agio-glass-header [data-slot="button"][data-variant="outline"]:hover {
+[data-slot="button"][data-variant="outline"]:hover {
   background:
     linear-gradient(180deg, rgba(74, 144, 255, 0.10) 0%, rgba(74, 144, 255, 0.02) 100%),
     rgba(74, 144, 255, 0.03);
@@ -600,8 +596,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Secondary: muted glass, less prominent than primary. */
-.agio-glass-page [data-slot="button"][data-variant="secondary"],
-.agio-glass-header [data-slot="button"][data-variant="secondary"] {
+[data-slot="button"][data-variant="secondary"] {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%),
     rgba(255, 255, 255, 0.04);
@@ -614,8 +609,7 @@ html { scroll-behavior: smooth; }
     0 4px 14px -8px rgba(0, 0, 0, 0.4);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
-.agio-glass-page [data-slot="button"][data-variant="secondary"]:hover,
-.agio-glass-header [data-slot="button"][data-variant="secondary"]:hover {
+[data-slot="button"][data-variant="secondary"]:hover {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%),
     rgba(255, 255, 255, 0.06);
@@ -623,8 +617,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Destructive: red glass, same chrome family but tinted. */
-.agio-glass-page [data-slot="button"][data-variant="destructive"],
-.agio-glass-header [data-slot="button"][data-variant="destructive"] {
+[data-slot="button"][data-variant="destructive"] {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 55%),
     linear-gradient(180deg, hsl(var(--destructive)) 0%, hsl(var(--destructive) / 0.92) 100%);
@@ -636,19 +629,16 @@ html { scroll-behavior: smooth; }
     0 8px 22px -10px rgba(0, 0, 0, 0.45);
   transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
 }
-.agio-glass-page [data-slot="button"][data-variant="destructive"]:hover,
-.agio-glass-header [data-slot="button"][data-variant="destructive"]:hover {
+[data-slot="button"][data-variant="destructive"]:hover {
   filter: brightness(1.08);
   transform: translateY(-1px);
 }
 
 /* Ghost: stay nearly invisible until hover for low-emphasis actions. */
-.agio-glass-page [data-slot="button"][data-variant="ghost"],
-.agio-glass-header [data-slot="button"][data-variant="ghost"] {
+[data-slot="button"][data-variant="ghost"] {
   color: hsl(var(--foreground));
 }
-.agio-glass-page [data-slot="button"][data-variant="ghost"]:hover,
-.agio-glass-header [data-slot="button"][data-variant="ghost"]:hover {
+[data-slot="button"][data-variant="ghost"]:hover {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%);
   color: hsl(var(--foreground));

@@ -25,13 +25,17 @@ export function CTASection() {
         <div className="mt-9 flex gap-3 justify-center flex-wrap">
           <Link
             href="/borrow-lend"
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-lg bg-gradient-to-r from-[#4A90FF] to-[#3B82F6] text-white font-display font-medium text-[15px] hover:brightness-110 transition-all"
+            data-slot="button"
+            data-variant="default"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-lg font-display font-medium text-[15px] uppercase text-white"
           >
             CREATE LOAN
           </Link>
           <Link
             href="/docs"
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-lg border border-[#2A3A6E] text-white font-display font-medium text-[15px] hover:border-[#4A90FF] transition-colors uppercase"
+            data-slot="button"
+            data-variant="outline"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-lg font-display font-medium text-[15px] uppercase text-white"
           >
             READ THE DOCS
           </Link>
