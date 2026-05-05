@@ -118,7 +118,7 @@ export default function LoanOffersPageClient() {
             "no bound" so users can constrain only one side of either range. */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-xs uppercase tracking-wider text-white/60 font-mono">APY range (%)</label>
+            <label className="text-xs uppercase tracking-wider text-muted-foreground font-mono">APY range (%)</label>
             <div className="flex items-center gap-2">
               <Input
                 type="number"
@@ -131,7 +131,7 @@ export default function LoanOffersPageClient() {
                 onChange={(e) => setMinApy(e.target.value)}
                 className="w-24"
               />
-              <span className="text-white/40">—</span>
+              <span className="text-muted-foreground">—</span>
               <Input
                 type="number"
                 inputMode="decimal"
@@ -146,7 +146,7 @@ export default function LoanOffersPageClient() {
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs uppercase tracking-wider text-white/60 font-mono">Period (days)</label>
+            <label className="text-xs uppercase tracking-wider text-muted-foreground font-mono">Period (days)</label>
             <div className="flex items-center gap-2">
               <Input
                 type="number"
@@ -159,7 +159,7 @@ export default function LoanOffersPageClient() {
                 onChange={(e) => setMinDays(e.target.value)}
                 className="w-24"
               />
-              <span className="text-white/40">—</span>
+              <span className="text-muted-foreground">—</span>
               <Input
                 type="number"
                 inputMode="numeric"

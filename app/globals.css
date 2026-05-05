@@ -571,14 +571,16 @@ html { scroll-behavior: smooth; }
   filter: brightness(0.96);
 }
 
-/* Outline: hairline + transparent backdrop, picks up the page's ambient glow. */
+/* Outline: hairline + transparent backdrop, picks up the page's ambient glow.
+   Translucent variants follow the page foreground so light mode stays
+   readable; only solid-background variants keep #fff in both modes. */
 .agio-glass-page [data-slot="button"][data-variant="outline"],
 .agio-glass-header [data-slot="button"][data-variant="outline"] {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%),
     rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #fff;
+  color: hsl(var(--foreground));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow:
@@ -604,7 +606,7 @@ html { scroll-behavior: smooth; }
     linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%),
     rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  color: #fff;
+  color: hsl(var(--foreground));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow:
@@ -643,12 +645,23 @@ html { scroll-behavior: smooth; }
 /* Ghost: stay nearly invisible until hover for low-emphasis actions. */
 .agio-glass-page [data-slot="button"][data-variant="ghost"],
 .agio-glass-header [data-slot="button"][data-variant="ghost"] {
-  color: #fff;
+  color: hsl(var(--foreground));
 }
 .agio-glass-page [data-slot="button"][data-variant="ghost"]:hover,
 .agio-glass-header [data-slot="button"][data-variant="ghost"]:hover {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%);
+  color: hsl(var(--foreground));
+}
+
+/* The header always sits on dark glass regardless of theme, so its
+   translucent buttons should keep white text for legibility. */
+.agio-glass-header [data-slot="button"][data-variant="outline"],
+.agio-glass-header [data-slot="button"][data-variant="secondary"],
+.agio-glass-header [data-slot="button"][data-variant="ghost"] {
+  color: #fff;
+}
+.agio-glass-header [data-slot="button"][data-variant="ghost"]:hover {
   color: #fff;
 }
 
@@ -672,14 +685,14 @@ html { scroll-behavior: smooth; }
   height: auto;
 }
 .agio-glass-page [data-slot="tabs-trigger"] {
-  color: rgba(255, 255, 255, 0.65);
+  color: hsl(var(--foreground) / 0.65);
   border-radius: 8px;
   background: transparent;
   transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 }
 .agio-glass-page [data-slot="tabs-trigger"]:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.04);
+  color: hsl(var(--foreground));
+  background: hsl(var(--foreground) / 0.04);
 }
 /* Default active = brand blue glass */
 .agio-glass-page [data-slot="tabs-trigger"][data-state="active"] {
@@ -739,20 +752,20 @@ html { scroll-behavior: smooth; }
 .agio-glass-page [data-slot="select-trigger"],
 .agio-glass-page [data-slot="input"] {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%),
-    rgba(8, 14, 36, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  color: #fff;
+    linear-gradient(180deg, hsl(var(--foreground) / 0.04) 0%, hsl(var(--foreground) / 0.01) 100%),
+    hsl(var(--background) / 0.55);
+  border: 1px solid hsl(var(--foreground) / 0.10);
+  color: hsl(var(--foreground));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.05) inset,
-    0 2px 8px -4px rgba(0, 0, 0, 0.35);
+    0 1px 0 hsl(var(--foreground) / 0.05) inset,
+    0 2px 8px -4px rgba(0, 0, 0, 0.25);
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 .agio-glass-page [data-slot="select-trigger"]:hover,
 .agio-glass-page [data-slot="input"]:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: hsl(var(--foreground) / 0.18);
 }
 .agio-glass-page [data-slot="select-trigger"]:focus,
 .agio-glass-page [data-slot="select-trigger"][data-state="open"],
@@ -760,11 +773,11 @@ html { scroll-behavior: smooth; }
 .agio-glass-page [data-slot="input"]:focus-visible {
   border-color: rgba(74, 144, 255, 0.45);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 1px 0 hsl(var(--foreground) / 0.05) inset,
     0 0 0 3px rgba(74, 144, 255, 0.15),
     0 4px 14px -6px rgba(74, 144, 255, 0.25);
   outline: none;
 }
 .agio-glass-page [data-slot="input"]::placeholder {
-  color: rgba(255, 255, 255, 0.35);
+  color: hsl(var(--muted-foreground));
 }
