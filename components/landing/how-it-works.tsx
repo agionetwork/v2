@@ -13,11 +13,11 @@ export function HowItWorks() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-[#1C2A52]">
           {/* Step 1 */}
-          <div className="p-8 border-b md:border-b-0 md:border-r border-[#1C2A52]">
+          <div className="p-8 border-b md:border-b-0 md:border-r border-[#1C2A52] flex flex-col">
             <div className="font-mono text-[11px] tracking-[0.14em] text-[#8FA8D8]">STEP 01 · CREATE YOUR NETWORK</div>
 
             <h3 className="font-display text-2xl font-medium tracking-[-0.015em] mt-[18px] mb-3 text-white">Build your circle of trust</h3>
-            <p className="text-[#8FA8D8] text-[15px] max-w-[340px]">
+            <p className="text-[#8FA8D8] text-[15px] max-w-[340px] flex-1">
               Add friends, family, and businesses you know. Your social graph becomes the underwriting. Reputation you actually have, not a credit score.
             </p>
             <div className="mt-8 h-[180px] border border-[#1C2A52] rounded-[10px] relative overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(74,144,255,0.08)_0%,transparent_70%),#0E1A42]">
@@ -42,10 +42,10 @@ export function HowItWorks() {
           </div>
 
           {/* Step 2 */}
-          <div className="p-8 border-b md:border-b-0 md:border-r border-[#1C2A52]">
+          <div className="p-8 border-b md:border-b-0 md:border-r border-[#1C2A52] flex flex-col">
             <div className="font-mono text-[11px] tracking-[0.14em] text-[#8FA8D8]">STEP 02 · CUSTOMIZE YOUR LOAN</div>
             <h3 className="font-display text-2xl font-medium tracking-[-0.015em] mt-[18px] mb-3 text-white">Set terms, sign onchain</h3>
-            <p className="text-[#8FA8D8] text-[15px] max-w-[340px]">
+            <p className="text-[#8FA8D8] text-[15px] max-w-[340px] flex-1">
               Amount, APY, duration, and collateral ratio are agreed between two people. The contract lives onchain, no paperwork, no middleman.
             </p>
             <div className="mt-8 h-[180px] border border-[#1C2A52] rounded-[10px] relative overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(74,144,255,0.08)_0%,transparent_70%),#0E1A42]">
@@ -86,10 +86,10 @@ export function HowItWorks() {
           </div>
 
           {/* Step 3 */}
-          <div className="p-8">
+          <div className="p-8 flex flex-col">
             <div className="font-mono text-[11px] tracking-[0.14em] text-[#8FA8D8]">STEP 03 · CREATE LOAN</div>
             <h3 className="font-display text-2xl font-medium tracking-[-0.015em] mt-[18px] mb-3 text-white">Repayments settle onchain</h3>
-            <p className="text-[#8FA8D8] text-[15px] max-w-[340px]">
+            <p className="text-[#8FA8D8] text-[15px] max-w-[340px] flex-1">
               Borrower locks collateral, receives liquidity. On repayment, collateral returns automatically.
             </p>
             <div className="mt-8 h-[180px] border border-[#1C2A52] rounded-[10px] relative overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(74,144,255,0.08)_0%,transparent_70%),#0E1A42]">
