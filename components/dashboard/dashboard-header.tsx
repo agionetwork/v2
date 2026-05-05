@@ -13,18 +13,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { WalletConnectModal } from "@/components/wallet-connect-modal"
 import { DevnetFaucetButton } from "@/components/devnet-faucet-button"
 import { toast } from "sonner"
-import { useLoans } from "@/hooks/useLoans"
-import { calculatePoints, formatPoints, type TokenPrices } from "@/lib/points"
-import { useTokenPrices } from "@/hooks/useTokenPrices"
 import { useTapestryProfile } from "@/components/tapestry-profile-provider"
 import { getCustomProperty } from "@/lib/tapestry"
+import { FairScoreBadge } from "@/components/fairscore-badge"
+import type { FairScore } from "@/lib/fairscale"
 
 
 interface DashboardHeaderProps {
@@ -39,8 +38,7 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
   const { profile: tapestryProfile } = useTapestryProfile()
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { loans, agentWallet } = useLoans()
-  const { prices } = useTokenPrices()
+  const [myFairScore, setMyFairScore] = useState<FairScore | null>(null)
   const dialectAvailable = useDialectAvailable()
 
   const profileImage = tapestryProfile?.profile
@@ -58,22 +56,20 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
     setMobileMenuOpen(false)
   }, [pathname])
 
-  // Extract simple { symbol: price } map for points calculation
-  const tokenPrices = useMemo<TokenPrices>(() => {
-    const result: TokenPrices = {}
-    for (const [symbol, data] of Object.entries(prices)) {
-      result[symbol] = data.price
+  useEffect(() => {
+    if (!address) {
+      setMyFairScore(null)
+      return
     }
-    return result
-  }, [prices])
-
-  const myPoints = useMemo(() => {
-    if (!address) return 0
-    // Include agent wallet points (agent creates loans on behalf of user)
-    const ownerPoints = calculatePoints(loans, address, tokenPrices)
-    const agentPoints = agentWallet ? calculatePoints(loans, agentWallet, tokenPrices) : 0
-    return ownerPoints + agentPoints
-  }, [loans, address, agentWallet, tokenPrices])
+    let cancelled = false
+    fetch(`/api/fairscale/score?wallet=${address}`)
+      .then((r) => r.json())
+      .then((data: FairScore) => {
+        if (!cancelled && data && typeof data.score === "number") setMyFairScore(data)
+      })
+      .catch(() => { if (!cancelled) setMyFairScore(null) })
+    return () => { cancelled = true }
+  }, [address])
 
   const handleWalletConnect = () => {
     if (isConnected) {
@@ -219,11 +215,14 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
           <span className="sr-only">Toggle Menu</span>
         </Button>
         <div className="flex flex-1 md:flex-none items-center justify-end gap-2">
-          {isConnected && (
-            <div className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-white text-sm font-semibold">
-              <span>{formatPoints(myPoints)}</span>
-              <span className="text-yellow-400 text-xs font-bold">PTS</span>
-            </div>
+          {isConnected && myFairScore && (
+            <FairScoreBadge
+              score={myFairScore.score}
+              tier={myFairScore.tier}
+              subOnchain={myFairScore.subOnchain}
+              subSocial={myFairScore.subSocial}
+              subBehavioral={myFairScore.subBehavioral}
+            />
           )}
 
           {isConnected && <DevnetFaucetButton />}

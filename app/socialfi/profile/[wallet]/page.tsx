@@ -24,6 +24,8 @@ import {
 import { toast } from "sonner"
 import { useSolDomain } from "@/hooks/useSNS"
 import { useFavorites } from "@/hooks/useFavorites"
+import { FairScoreCard } from "@/components/fairscore-badge"
+import type { FairScore } from "@/lib/fairscale"
 
 function shortenAddress(addr: string): string {
   if (!addr || addr.length < 10) return addr
@@ -47,6 +49,22 @@ export default function ProfilePage() {
   const [acceptingLoan, setAcceptingLoan] = useState<string | null>(null)
   // Resolve agent wallet for the profile being viewed (their agent creates loans on-chain)
   const [profileAgentWallet, setProfileAgentWallet] = useState<string | null>(null)
+  const [fairScore, setFairScore] = useState<FairScore | null>(null)
+
+  useEffect(() => {
+    if (!walletAddress) {
+      setFairScore(null)
+      return
+    }
+    let cancelled = false
+    fetch(`/api/fairscale/score?wallet=${walletAddress}`)
+      .then((r) => r.json())
+      .then((data: FairScore) => {
+        if (!cancelled && data && typeof data.score === "number") setFairScore(data)
+      })
+      .catch(() => { if (!cancelled) setFairScore(null) })
+    return () => { cancelled = true }
+  }, [walletAddress])
 
   const solDomain = useSolDomain(walletAddress)
 
@@ -347,6 +365,17 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Reputation */}
+      {fairScore && (
+        <FairScoreCard
+          score={fairScore.score}
+          tier={fairScore.tier}
+          subOnchain={fairScore.subOnchain}
+          subSocial={fairScore.subSocial}
+          subBehavioral={fairScore.subBehavioral}
+        />
+      )}
 
       {/* Stats Cards */}
       <div className="grid gap-4 grid-cols-2">
