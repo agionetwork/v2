@@ -19,9 +19,18 @@ const BOX_W = 180
 const BOX_H = 56
 const GAP = 80 // visual gap between logos
 
-// Each slot = BOX_W + GAP so that translateX(-50%) is always pixel-perfect
-// (no CSS gap — spacing is baked into the slot width)
+// Each slot = BOX_W + GAP so the loop is pixel-perfect (no CSS gap, spacing
+// is baked into the slot width)
 const SLOT_W = BOX_W + GAP
+
+// Total pixel width of one copy of the partners — used as the exact loop
+// distance for the marquee. Avoids subpixel rounding errors that come with
+// using a percentage on a flex container.
+const LOOP_W = partners.length * SLOT_W
+
+// Tune the duration to keep apparent speed constant regardless of how many
+// partners are on the strip (about 240px/sec).
+const SCROLL_DURATION_S = Math.max(8, Math.round(LOOP_W / 100))
 
 // Two copies for seamless infinite loop
 const track = [...partners, ...partners]
@@ -51,7 +60,13 @@ export function EcosystemCarousel() {
 
         <div
           className="flex items-center animate-scroll-x"
-          style={{ willChange: "transform" }}
+          style={
+            {
+              willChange: "transform",
+              "--marquee-w": `${LOOP_W}px`,
+              "--marquee-duration": `${SCROLL_DURATION_S}s`,
+            } as React.CSSProperties
+          }
         >
           {track.map((p, i) => (
             <div

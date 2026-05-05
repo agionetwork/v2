@@ -413,9 +413,14 @@ html { scroll-behavior: smooth; }
 }
 
 @keyframes scroll-x {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(calc(-1 * var(--marquee-w, 50%)), 0, 0); }
 }
 .animate-scroll-x {
-  animation: scroll-x 14s linear infinite;
+  animation: scroll-x var(--marquee-duration, 14s) linear infinite;
+  /* Hint the compositor so the long 14-30s loop stays on the GPU and
+     doesn't repaint mid-cycle, which is what was causing the visible
+     judder at the loop seam. */
+  will-change: transform;
+  backface-visibility: hidden;
 }
