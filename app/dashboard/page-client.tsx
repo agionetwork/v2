@@ -58,7 +58,7 @@ function TitleHelp({ description }: { description: string }) {
       <Tooltip>
         <TooltipTrigger asChild>
           <span
-            className="ml-0.5 inline-flex items-center justify-center w-3 h-3 rounded-full text-[7px] font-bold cursor-help select-none self-start mt-0.5 leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200"
+            className="ml-1 inline-flex items-center justify-center w-[18px] h-[18px] rounded-full text-[10px] font-bold cursor-help select-none -translate-y-1.5 leading-none transition-colors bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-600 dark:text-blue-200"
             aria-label={description}
           >
             ?
