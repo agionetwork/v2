@@ -168,8 +168,8 @@ export default function BorrowDashboard() {
 
       <Tabs defaultValue="myloans" className="space-y-6">
         <TabsList className="inline-flex h-10 w-full max-w-md mx-auto mb-4 bg-muted/50 border dark:border-white/10">
-          <TabsTrigger value="myloans" className="flex-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white">My Loans</TabsTrigger>
-          <TabsTrigger value="opportunities" className="flex-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white">Available Offers</TabsTrigger>
+          <TabsTrigger value="myloans" className="flex-1 data-[state=active]:!bg-red-600 data-[state=active]:!text-white">My Loans</TabsTrigger>
+          <TabsTrigger value="opportunities" className="flex-1 data-[state=active]:!bg-red-600 data-[state=active]:!text-white">Available Offers</TabsTrigger>
         </TabsList>
 
         <TabsContent value="myloans">
@@ -183,7 +183,7 @@ export default function BorrowDashboard() {
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <p className="text-lg font-medium">No loans</p>
                   <p className="text-sm mt-1">Your borrow requests and loans will appear here</p>
-                  <Link href="/borrow-lend"><Button className="mt-4 bg-blue-600 hover:bg-blue-700 text-white">Create a Borrow Request</Button></Link>
+                  <Link href="/borrow-lend"><Button variant="destructive" className="mt-4">Create a Borrow Request</Button></Link>
                 </div>
               ) : (
                 <div className="rounded-md border">
@@ -217,7 +217,8 @@ export default function BorrowDashboard() {
                               <div className="flex items-center justify-center gap-1">
                                 <Button
                                   size="sm"
-                                  className={isLoanExpired ? "text-xs bg-red-500 hover:bg-red-600 text-white" : "text-xs bg-blue-600 hover:bg-blue-700 text-white"}
+                                  variant="destructive"
+                                  className="text-xs"
                                   onClick={() => { setSelectedLoan(loan); setIsModalOpen(true) }}
                                 >
                                   {isLoanExpired ? "Repay Now" : "View"}
@@ -334,7 +335,8 @@ function OpportunityRow({
           {!lenderIsStealth && (
             <Button
               size="sm"
-              className="text-xs bg-red-500 hover:bg-red-600 text-white"
+              variant="destructive"
+              className="text-xs"
               disabled={accepting}
               onClick={onAcceptPublic}
             >
