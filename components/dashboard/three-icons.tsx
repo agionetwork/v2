@@ -71,85 +71,85 @@ interface IconProps {
 }
 
 /**
- * Liquidity: a vertical stack of three coin discs. Each coin spins about its
- * vertical axis with a small phase offset so the pile looks alive without
- * drifting around. Used on the "Your Liquidity" card title.
+ * Liquidity: a single coin standing face-on to the camera with a $ glyph
+ * carved into the centre. The coin tilts gently and bobs so it reads as
+ * "live currency" without ever rotating the $ out of sight.
  */
 export function LiquidityIcon({ size = 32 }: IconProps = {}) {
   const groupRef = useRef<THREE.Group | null>(null)
-  const coinsRef = useRef<THREE.Mesh[]>([])
 
   const ref = useMiniScene((scene) => {
     const group = new THREE.Group()
-    coinsRef.current = []
 
-    const baseMat = new THREE.MeshStandardMaterial({
+    const faceMat = new THREE.MeshStandardMaterial({
       color: 0x4a90ff,
-      metalness: 0.55,
-      roughness: 0.3,
+      metalness: 0.6,
+      roughness: 0.28,
     })
     const rimMat = new THREE.MeshStandardMaterial({
       color: 0x1358ec,
-      metalness: 0.6,
-      roughness: 0.25,
+      metalness: 0.7,
+      roughness: 0.22,
     })
 
-    const radii = [0.62, 0.62, 0.62]
-    const ys = [-0.55, 0, 0.55]
+    // Coin body — short cylinder oriented so its flat faces look at the camera.
+    const radius = 1.05
+    const thickness = 0.22
+    const coin = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius, radius, thickness, 48),
+      faceMat
+    )
+    coin.rotation.x = Math.PI / 2
+    group.add(coin)
 
-    radii.forEach((r, i) => {
-      const coin = new THREE.Mesh(
-        new THREE.CylinderGeometry(r, r, 0.18, 36),
-        baseMat
-      )
-      coin.position.y = ys[i]
-      coinsRef.current.push(coin)
-      group.add(coin)
+    // Outer rim ring for an extra metallic edge.
+    const rim = new THREE.Mesh(
+      new THREE.TorusGeometry(radius + 0.005, 0.05, 12, 48),
+      rimMat
+    )
+    group.add(rim)
 
-      const rim = new THREE.Mesh(
-        new THREE.TorusGeometry(r + 0.005, 0.035, 10, 36),
-        rimMat
-      )
-      rim.rotation.x = Math.PI / 2
-      rim.position.y = ys[i]
-      group.add(rim)
-    })
+    // Inner ring on the front face for a real-coin engraving feel.
+    const innerRing = new THREE.Mesh(
+      new THREE.TorusGeometry(radius - 0.18, 0.025, 10, 48),
+      rimMat
+    )
+    innerRing.position.z = thickness / 2 + 0.005
+    group.add(innerRing)
 
-    // $ glyph on the top coin so the stack reads as currency at a glance.
+    // $ glyph centered on the front face.
     const dollarCanvas = document.createElement("canvas")
-    dollarCanvas.width = 64
-    dollarCanvas.height = 64
+    dollarCanvas.width = 128
+    dollarCanvas.height = 128
     const ctx = dollarCanvas.getContext("2d")!
-    ctx.clearRect(0, 0, 64, 64)
+    ctx.clearRect(0, 0, 128, 128)
     ctx.fillStyle = "#ffffff"
-    ctx.font = "bold 46px Arial, sans-serif"
+    ctx.font = "bold 96px Arial, sans-serif"
     ctx.textAlign = "center"
     ctx.textBaseline = "middle"
-    ctx.fillText("$", 32, 34)
+    ctx.fillText("$", 64, 70)
     const dollarTex = new THREE.CanvasTexture(dollarCanvas)
+    dollarTex.anisotropy = 4
     const dollarMat = new THREE.MeshStandardMaterial({
       map: dollarTex,
       transparent: true,
       emissive: 0xffffff,
-      emissiveIntensity: 0.4,
+      emissiveIntensity: 0.55,
       depthWrite: false,
     })
     const dollar = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.7, 0.7),
+      new THREE.PlaneGeometry(1.1, 1.1),
       dollarMat
     )
-    dollar.position.set(0, 0.65, 0)
-    dollar.rotation.x = -Math.PI / 2
+    dollar.position.z = thickness / 2 + 0.012
     group.add(dollar)
 
-    group.rotation.x = 0.4
     groupRef.current = group
     scene.add(group)
   }, (t) => {
-    coinsRef.current.forEach((coin, i) => {
-      coin.rotation.y = t * 0.6 + i * 0.7
-    })
     if (groupRef.current) {
+      groupRef.current.rotation.y = Math.sin(t * 0.9) * 0.18
+      groupRef.current.rotation.x = Math.sin(t * 0.6 + 1) * 0.05
       groupRef.current.position.y = Math.sin(t * 0.9) * 0.05
     }
   })
@@ -175,7 +175,9 @@ export function AssetDonutIcon({ size = 32 }: IconProps = {}) {
   const ref = useMiniScene((scene) => {
     const group = new THREE.Group()
 
-    const segmentColors = [0x4a90ff, 0x1358ec, 0x60a5fa, 0x7c3aed]
+    // All-blue palette — light → mid → brand → deep navy. Matches the
+    // dashboard's blue-only chart aesthetic instead of mixing in violet.
+    const segmentColors = [0x93c5fd, 0x60a5fa, 0x4a90ff, 0x1358ec]
     const segments = 4
     const arc = (Math.PI * 2) / segments
 
@@ -266,20 +268,6 @@ export function LoanChartIcon({ size = 32 }: IconProps = {}) {
       barsRef.current.push(bar)
       group.add(bar)
     })
-
-    // Trend arrow line above the bars
-    const trendMat = new THREE.LineBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.85,
-    })
-    const trendGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-0.7, -0.12, 0.25),
-      new THREE.Vector3(-0.05, 0.18, 0.25),
-      new THREE.Vector3(0.65, 0.55, 0.25),
-    ])
-    const trend = new THREE.Line(trendGeo, trendMat)
-    group.add(trend)
 
     group.rotation.x = 0.18
     group.rotation.y = -0.15
