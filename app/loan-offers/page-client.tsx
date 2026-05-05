@@ -3,6 +3,7 @@
 import { useMemo, useState, useCallback, useRef } from "react"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { HelpCircle as QuestionMarkCircledIcon } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -41,6 +42,10 @@ export default function LoanOffersPageClient() {
     urlToken && ACCEPTED_TOKENS.includes(urlToken as any) ? urlToken : "all"
   )
   const [sortBy, setSortBy] = useState("newest")
+  const [minApy, setMinApy] = useState<string>("")
+  const [maxApy, setMaxApy] = useState<string>("")
+  const [minDays, setMinDays] = useState<string>("")
+  const [maxDays, setMaxDays] = useState<string>("")
 
   const filteredOffers = useMemo(() => {
     let offers = openOffers
@@ -62,6 +67,28 @@ export default function LoanOffersPageClient() {
       offers = offers.filter(l => l.debtTokenSymbol === filterToken)
     }
 
+    // APY range
+    const minApyNum = minApy === "" ? null : Number(minApy)
+    const maxApyNum = maxApy === "" ? null : Number(maxApy)
+    if (minApyNum !== null && Number.isFinite(minApyNum)) {
+      offers = offers.filter(l => l.apy >= minApyNum)
+    }
+    if (maxApyNum !== null && Number.isFinite(maxApyNum)) {
+      offers = offers.filter(l => l.apy <= maxApyNum)
+    }
+
+    // Period range (loan duration is stored in seconds; UI is in days)
+    const minDaysNum = minDays === "" ? null : Number(minDays)
+    const maxDaysNum = maxDays === "" ? null : Number(maxDays)
+    if (minDaysNum !== null && Number.isFinite(minDaysNum)) {
+      const minSec = minDaysNum * 86400
+      offers = offers.filter(l => l.duration >= minSec)
+    }
+    if (maxDaysNum !== null && Number.isFinite(maxDaysNum)) {
+      const maxSec = maxDaysNum * 86400
+      offers = offers.filter(l => l.duration <= maxSec)
+    }
+
     // Sort
     if (sortBy === "highest-apy") {
       offers = [...offers].sort((a, b) => b.apy - a.apy)
@@ -72,7 +99,7 @@ export default function LoanOffersPageClient() {
     }
 
     return offers
-  }, [openOffers, filterType, filterToken, sortBy, publicKey, isMyWallet])
+  }, [openOffers, filterType, filterToken, sortBy, minApy, maxApy, minDays, maxDays, publicKey, isMyWallet])
 
   if (loading) {
     return (
@@ -86,8 +113,69 @@ export default function LoanOffersPageClient() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-end items-center mb-8">
-        <div className="flex gap-4">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-8">
+        {/* Range filters — APY (%) + Period (days). Empty inputs are treated as
+            "no bound" so users can constrain only one side of either range. */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs uppercase tracking-wider text-white/60 font-mono">APY range (%)</label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={200}
+                step={0.5}
+                placeholder="Min"
+                value={minApy}
+                onChange={(e) => setMinApy(e.target.value)}
+                className="w-24"
+              />
+              <span className="text-white/40">—</span>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={200}
+                step={0.5}
+                placeholder="Max"
+                value={maxApy}
+                onChange={(e) => setMaxApy(e.target.value)}
+                className="w-24"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs uppercase tracking-wider text-white/60 font-mono">Period (days)</label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={365}
+                step={1}
+                placeholder="Min"
+                value={minDays}
+                onChange={(e) => setMinDays(e.target.value)}
+                className="w-24"
+              />
+              <span className="text-white/40">—</span>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={365}
+                step={1}
+                placeholder="Max"
+                value={maxDays}
+                onChange={(e) => setMaxDays(e.target.value)}
+                className="w-24"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-4">
           <Select value={filterType} onValueChange={setFilterType}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Type" />

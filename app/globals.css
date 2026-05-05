@@ -730,3 +730,41 @@ html { scroll-behavior: smooth; }
     0 4px 14px -6px rgba(74, 144, 255, 0.4),
     0 6px 20px -10px rgba(0, 0, 0, 0.45);
 }
+
+/* ────────────────────────────────────────────────────────────────────────
+   Glass form controls — Select triggers and Inputs inside the glass page
+   share the same chrome family (subtle wash + hairline + backdrop blur,
+   accent-blue ring on focus).
+   ──────────────────────────────────────────────────────────────────── */
+.agio-glass-page [data-slot="select-trigger"],
+.agio-glass-page [data-slot="input"] {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%),
+    rgba(8, 14, 36, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #fff;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 2px 8px -4px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+.agio-glass-page [data-slot="select-trigger"]:hover,
+.agio-glass-page [data-slot="input"]:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.agio-glass-page [data-slot="select-trigger"]:focus,
+.agio-glass-page [data-slot="select-trigger"][data-state="open"],
+.agio-glass-page [data-slot="input"]:focus,
+.agio-glass-page [data-slot="input"]:focus-visible {
+  border-color: rgba(74, 144, 255, 0.45);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 0 0 3px rgba(74, 144, 255, 0.15),
+    0 4px 14px -6px rgba(74, 144, 255, 0.25);
+  outline: none;
+}
+.agio-glass-page [data-slot="input"]::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
