@@ -4,6 +4,11 @@ import Link from "next/link"
 import { TableCell } from "@/components/ui/table"
 import { useWalletProfile } from "@/hooks/useWalletProfile"
 
+function shortenAddress(addr: string): string {
+  if (!addr || addr.length < 10) return addr
+  return `${addr.slice(0, 4)}…${addr.slice(-4)}`
+}
+
 /**
  * Renders a table cell with a resolved wallet profile name (linked to the profile page).
  * Handles agent wallets transparently via reverse lookup → owner Tapestry profile.
@@ -14,6 +19,7 @@ export function WalletNameCell({
   forceMask = false,
 }: {
   address: string | null
+  /** Text rendered when `address` is null (no counterparty yet). */
   fallback?: string
   /**
    * Mask the address as "Anonymous (private)" even when the address itself is
@@ -50,7 +56,7 @@ export function WalletNameCell({
         href={`/socialfi/profile/${profileWallet || address}`}
         className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
       >
-        {displayName || fallback}
+        {displayName || shortenAddress(address)}
       </Link>
     </TableCell>
   )

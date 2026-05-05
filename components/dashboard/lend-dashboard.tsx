@@ -180,10 +180,12 @@ export default function LendDashboard() {
       </div>
 
       <Tabs defaultValue="lend-myloans" className="space-y-6">
-        <TabsList className="inline-flex h-10 w-full max-w-md mx-auto mb-4 bg-muted/50 border dark:border-white/10">
-          <TabsTrigger value="lend-myloans" className="flex-1">My Loans</TabsTrigger>
-          <TabsTrigger value="lend-requests" className="flex-1">Available Offers</TabsTrigger>
-        </TabsList>
+        <div className="flex justify-center mb-4">
+          <TabsList className="inline-flex h-10 w-auto bg-muted/50 border dark:border-white/10">
+            <TabsTrigger value="lend-myloans">My Loans</TabsTrigger>
+            <TabsTrigger value="lend-requests">Available Offers</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="lend-myloans">
           <Card className="border-2 border-gray-200 dark:border-gray-800 shadow-lg bg-transparent">
@@ -328,7 +330,7 @@ function LendOfferRow({
 
   return (
     <TableRow>
-      <WalletNameCell address={loan.borrower} fallback="Open" />
+      <WalletNameCell address={loan.borrower} fallback="Open" forceMask={borrowerIsStealth} />
       <TableCell className="text-center font-medium">{loan.debtAmountUi.toFixed(2)} ${loan.debtTokenSymbol}</TableCell>
       <TableCell className="text-center font-medium">{loan.collateralAmountUi.toFixed(2)} ${loan.collateralTokenSymbol}</TableCell>
       <TableCell className="text-center font-medium text-green-600">{loan.apy}%</TableCell>
