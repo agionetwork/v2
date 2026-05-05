@@ -549,8 +549,8 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 pt-4">
-              <div className="space-y-1">
+            <div className="grid grid-cols-1 gap-4 mt-6">
+              <div className="space-y-3">
                 <div className="flex items-center gap-1">
                   <Label
                     htmlFor="collateral-percentage"
@@ -595,8 +595,8 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 pt-6">
-              <div className="space-y-1">
+            <div className="grid grid-cols-1 gap-4 mt-8">
+              <div className="space-y-3">
                 <div className="flex items-center gap-1">
                   <Label htmlFor="loan-term" className="text-sm font-medium text-foreground">
                     PERIOD:
@@ -641,8 +641,8 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 pt-6">
-              <div className="space-y-1">
+            <div className="grid grid-cols-1 gap-4 mt-8">
+              <div className="space-y-3">
                 <div className="flex items-center gap-1">
                   <Label htmlFor="apy" className="text-sm font-medium text-foreground">
                     <TermTooltip term="apy">APY (%)</TermTooltip>:
@@ -766,11 +766,6 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
           </div>
         </div>
       </CardContent>
-      {!isPriceReliable && (
-        <div className="mx-4 mb-2 p-2 rounded-md bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-xs text-center">
-          Price feeds unavailable. Offers disabled until live prices are restored.
-        </div>
-      )}
       {(errors.loanAmount || errors.collateralAmount || errors.solFees || errors.submit) && (
         <div className="mx-4 mb-2 p-2 rounded-md bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-xs text-center">
           {errors.loanAmount || errors.collateralAmount || errors.solFees || errors.submit}
