@@ -37,7 +37,7 @@ export function PillarsSection() {
         <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6 md:gap-12 mb-16">
           <div className="font-mono text-[11px] tracking-[0.14em] uppercase text-[#8FA8D8] pt-3">02 / WHY AGIO</div>
           <h2 className="font-display font-medium text-[clamp(32px,3.6vw,52px)] leading-[1.05] tracking-[-0.022em] text-white" style={{ textWrap: "balance" } as React.CSSProperties}>
-            Lending secured by <em className="not-italic text-[#4A90FF] font-normal">smart-contracts</em>, not by institutions.
+            Lending secured by <em className="not-italic text-[#4A90FF] font-normal">smart-contracts</em>,<br />not by institutions.
           </h2>
         </div>
 
