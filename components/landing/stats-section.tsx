@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 
-const TAPESTRY_NAMESPACE = "agionetwork"
-
 function SlotNumber({ value, duration = 1500 }: { value: string; duration?: number }) {
   const [display, setDisplay] = useState("0")
   const [rolling, setRolling] = useState(true)
@@ -73,18 +71,18 @@ export function StatsSection() {
   const sectionRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
-    fetch("/api/tapestry", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        path: `/profiles/?namespace=${TAPESTRY_NAMESPACE}&page=1&pageSize=1`,
-        method: "GET",
-      }),
-    })
+    // Use the same source the leaderboard reads: distinct wallets that have
+    // claimed a Tapestry profile in the Agio namespace. Counting profile
+    // totalCount produces a higher number when a wallet has multiple
+    // profiles, which made the landing stat (37) disagree with the
+    // leaderboard count (30). One source of truth.
+    fetch("/api/tapestry/profiles/all")
       .then((res) => res.json())
       .then((data) => {
-        const total = data.totalCount ?? data.profiles?.length ?? 0
-        if (total > 0) setProfileCount(total)
+        const count = typeof data?.count === "number"
+          ? data.count
+          : Array.isArray(data?.wallets) ? data.wallets.length : 0
+        if (count > 0) setProfileCount(count)
       })
       .catch(() => {})
   }, [])
