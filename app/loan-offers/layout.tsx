@@ -49,7 +49,7 @@ export default function LoanOffersLayout({
           <TapestryProfileProvider>
             <FriendsProvider>
               <DashboardHeader />
-              <div className="container mx-auto p-6">
+              <div className="agio-glass-page container mx-auto p-6">
                 {children}
               </div>
             </FriendsProvider>

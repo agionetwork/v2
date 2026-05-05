@@ -50,7 +50,7 @@ export default function BorrowLendLayout({
             <FriendsProvider>
               <div className="h-dvh overflow-hidden flex flex-col">
                 <DashboardHeader />
-                <div className="flex-1 overflow-hidden container mx-auto p-6">
+                <div className="agio-glass-page flex-1 overflow-hidden container mx-auto p-6">
                   {children}
                 </div>
               </div>

@@ -35,7 +35,7 @@ function AutoLoanContent({ children }: { children: ReactNode }) {
             <TapestryProfileProvider>
               <FriendsProvider>
                 <DashboardHeader />
-                <>{children}</>
+                <div className="agio-glass-page">{children}</div>
               </FriendsProvider>
             </TapestryProfileProvider>
           </LoansProvider>
