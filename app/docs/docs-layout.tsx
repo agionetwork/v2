@@ -201,7 +201,7 @@ function DocsLayoutInner({ children }: { children: React.ReactNode }) {
 
         <a href="https://agio.network" className="flex items-center gap-2.5" target="_blank" rel="noopener noreferrer">
           <Image src="/agio-logo-3d.png" alt="Agio" width={32} height={32} className="object-contain" />
-          <span className="font-semibold tracking-tight">Agio Network</span>
+          <span className="font-display text-[15px] font-medium tracking-tight">Agio Network</span>
           <span className="text-muted-foreground text-xs font-normal">Docs</span>
         </a>
 

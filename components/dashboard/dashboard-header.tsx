@@ -113,11 +113,11 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
           <div className="mr-4 hidden md:flex">
             <Link href="/" className="mr-6 flex items-center space-x-2">
               <img src="/agio-logo-3d.png" alt="AGIO Network" className="h-12 w-12" />
-              <span className="hidden font-bold sm:inline-block text-white">
+              <span className="hidden font-display text-[15px] font-medium tracking-tight text-white sm:inline-block">
                 Agio Network
               </span>
             </Link>
-            <nav className="flex items-center space-x-6 text-sm font-medium">
+            <nav className="flex items-center space-x-6 font-mono text-[12px] tracking-[0.06em] uppercase">
               <div className="h-8 w-24"></div>
               <div className="h-8 w-24"></div>
               <div className="h-8 w-24"></div>
@@ -147,12 +147,12 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
         <div className="hidden md:flex items-center mr-4">
           <Link href="/" className="flex items-center space-x-2">
             <img src="/agio-logo-3d.png" alt="AGIO Network" className="h-12 w-12" />
-            <span className="hidden font-bold sm:inline-block text-white">
+            <span className="hidden font-display text-[15px] font-medium tracking-tight text-white sm:inline-block">
               Agio Network
             </span>
           </Link>
         </div>
-        <nav className="hidden md:flex flex-1 items-center justify-center space-x-6 text-sm font-medium">
+        <nav className="hidden md:flex flex-1 items-center justify-center space-x-6 font-mono text-[12px] tracking-[0.06em] uppercase">
           <Link
             href="/dashboard"
             className={`transition-colors hover:text-white/80 ${
@@ -339,7 +339,7 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
               key={item.href}
               href={item.href}
               className={cn(
-                "block px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                "block px-3 py-2 rounded-md font-mono text-[13px] tracking-[0.06em] uppercase transition-colors",
                 pathname === item.href
                   ? "text-white bg-white/10"
                   : "text-white/60 hover:text-white hover:bg-white/5"
