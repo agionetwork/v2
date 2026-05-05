@@ -547,7 +547,7 @@ html { scroll-behavior: smooth; }
     linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 55%),
     linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.92) 100%);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  color: hsl(var(--primary-foreground));
+  color: #fff;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.25) inset,
     0 0 0 1px rgba(255, 255, 255, 0.04) inset,
@@ -578,7 +578,7 @@ html { scroll-behavior: smooth; }
     linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%),
     rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  color: inherit;
+  color: #fff;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow:
@@ -604,7 +604,7 @@ html { scroll-behavior: smooth; }
     linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%),
     rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  color: inherit;
+  color: #fff;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow:
@@ -627,7 +627,7 @@ html { scroll-behavior: smooth; }
     linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 55%),
     linear-gradient(180deg, hsl(var(--destructive)) 0%, hsl(var(--destructive) / 0.92) 100%);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  color: hsl(var(--destructive-foreground));
+  color: #fff;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.22) inset,
     0 4px 12px -4px rgba(220, 50, 50, 0.4),
@@ -641,9 +641,13 @@ html { scroll-behavior: smooth; }
 }
 
 /* Ghost: stay nearly invisible until hover for low-emphasis actions. */
+.agio-glass-page [data-slot="button"][data-variant="ghost"],
+.agio-glass-header [data-slot="button"][data-variant="ghost"] {
+  color: #fff;
+}
 .agio-glass-page [data-slot="button"][data-variant="ghost"]:hover,
 .agio-glass-header [data-slot="button"][data-variant="ghost"]:hover {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%);
-  color: inherit;
+  color: #fff;
 }
