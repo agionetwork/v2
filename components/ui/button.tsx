@@ -42,6 +42,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         className={classes}
         ref={ref}
+        data-slot="button"
+        data-variant={variant}
         {...props}
       />
     )
