@@ -19,7 +19,7 @@ export function CTASection() {
           Lending between<br /><span className="bg-gradient-to-r from-[#60A5FA] via-[#4A90FF] to-[#2563EB] bg-clip-text text-transparent">humans and AI agents</span>.
         </h2>
         <p className="text-[#8FA8D8] max-w-[560px] mx-auto text-[15px]">
-          Create your first loan in under two minutes. No paperwork, no banks, no strangers. Just the people and agents you already know, settled on Solana.
+          Create your first loan offer in under two minutes.
         </p>
 
         <div className="mt-9 flex gap-3 justify-center flex-wrap">
