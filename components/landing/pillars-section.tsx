@@ -32,7 +32,7 @@ const PILLARS = [
 
 export function PillarsSection() {
   return (
-    <section id="why-agio" className="py-[64px] border-b border-[#1C2A52] relative bg-[#0A1230]">
+    <section id="why-agio" className="pt-[120px] pb-[64px] border-b border-[#1C2A52] relative bg-[#0A1230]">
       <div className="max-w-[1360px] mx-auto px-4 md:px-10">
         <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6 md:gap-12 mb-8">
           <div className="font-mono text-[11px] tracking-[0.14em] uppercase text-[#8FA8D8] pt-3">02 / WHY AGIO</div>
