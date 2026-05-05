@@ -745,8 +745,22 @@ function DashboardContent() {
                           </div>
                           <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:space-x-2">
                             <Badge
-                              variant={loan.status === LoanStatus.Accepted ? 'default' : loan.status === LoanStatus.Repaid ? 'secondary' : 'outline'}
-                              className="text-xs"
+                              className={
+                                loan.status === LoanStatus.Accepted
+                                  ? "text-xs bg-green-600 hover:bg-green-700 text-white border-transparent"
+                                  : loan.status === LoanStatus.Repaid
+                                  ? "text-xs bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+                                  : loan.status === LoanStatus.Foreclosed
+                                  ? "text-xs bg-red-600 hover:bg-red-700 text-white border-transparent"
+                                  : "text-xs"
+                              }
+                              variant={
+                                loan.status === LoanStatus.Accepted ||
+                                loan.status === LoanStatus.Repaid ||
+                                loan.status === LoanStatus.Foreclosed
+                                  ? "default"
+                                  : "outline"
+                              }
                             >
                               {getStatusLabel(loan.status)}
                             </Badge>
@@ -756,7 +770,7 @@ function DashboardContent() {
                               onClick={() => handleViewLoan(loan)}
                               className="text-xs"
                             >
-                              View Details
+                              View
                             </Button>
                           </div>
                         </div>
