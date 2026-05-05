@@ -837,3 +837,48 @@ html { scroll-behavior: smooth; }
     0 3px 10px -2px rgba(74, 144, 255, 0.6),
     0 5px 14px -4px rgba(0, 0, 0, 0.45);
 }
+
+/* ────────────────────────────────────────────────────────────────────────
+   Glass modals — Dialog, AlertDialog and Sheet share the same glass
+   chrome as the cards. Applied globally (not scoped to .agio-glass-page)
+   because portals render at the body level, but only when the primitive
+   carries the data-slot hook so non-shadcn modals stay untouched.
+   ──────────────────────────────────────────────────────────────────── */
+[data-slot="dialog-overlay"] {
+  background:
+    radial-gradient(60rem 50rem at 50% 50%, rgba(74, 144, 255, 0.08), transparent 65%),
+    rgba(2, 6, 23, 0.72) !important;
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+}
+[data-slot="dialog-content"] {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 100%),
+    hsl(var(--background) / 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 18px !important;
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+    0 24px 60px -20px rgba(0, 0, 0, 0.6),
+    0 8px 24px -8px rgba(74, 144, 255, 0.15) !important;
+  position: relative;
+  overflow: hidden;
+}
+/* Top-edge accent halo on the panel — same trick the .agio-glass-page card
+   uses, gives the modal a subtle catch-light. */
+[data-slot="dialog-content"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(160deg, rgba(74, 144, 255, 0.07) 0%, transparent 45%);
+  border-radius: inherit;
+}
+:root.dark [data-slot="dialog-content"] {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%),
+    rgba(8, 14, 36, 0.78) !important;
+}

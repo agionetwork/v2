@@ -549,7 +549,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-4 pt-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-1">
                   <Label
@@ -595,7 +595,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-4 pt-6">
               <div className="space-y-1">
                 <div className="flex items-center gap-1">
                   <Label htmlFor="loan-term" className="text-sm font-medium text-foreground">
@@ -641,7 +641,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-4 pt-6">
               <div className="space-y-1">
                 <div className="flex items-center gap-1">
                   <Label htmlFor="apy" className="text-sm font-medium text-foreground">

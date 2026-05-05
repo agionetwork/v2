@@ -331,12 +331,12 @@ function DashboardContent() {
                             </div>
                             <div className="flex flex-col gap-1.5">
                               <Link href={`/loan-offers?type=borrow&token=${token.symbol}`}>
-                                <Button size="sm" className="text-xs bg-red-500 hover:bg-red-600 text-white w-full">
+                                <Button size="sm" variant="destructive" className="text-xs w-full">
                                   Borrow
                                 </Button>
                               </Link>
                               <Link href={`/loan-offers?type=lend&token=${token.symbol}`}>
-                                <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white w-full">
+                                <Button size="sm" className="text-xs w-full">
                                   Lend
                                 </Button>
                               </Link>

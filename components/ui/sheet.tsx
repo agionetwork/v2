@@ -19,6 +19,7 @@ const SheetPortal = ({ children }: any) => <>{children}</>
 
 const SheetOverlay = ({ className, ...props }: any) => (
   <div
+    data-slot="dialog-overlay"
     className={cn(
       "fixed inset-0 z-50 bg-black/80",
       className
@@ -45,6 +46,7 @@ const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>(
         <SheetOverlay />
         <div
           ref={ref}
+          data-slot="dialog-content"
           className={cn(
             "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out",
             sideClasses[side],
