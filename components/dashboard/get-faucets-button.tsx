@@ -48,9 +48,9 @@ export function GetFaucetsButton() {
           >
             <div className="flex items-start gap-3">
               <img
-                src="/brands/solana.svg"
+                src="/brands/Solana_logo.png"
                 alt="Solana"
-                className="w-10 h-10 flex-shrink-0"
+                className="w-10 h-10 flex-shrink-0 object-contain"
               />
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-sm flex items-center gap-1.5">
@@ -76,9 +76,9 @@ export function GetFaucetsButton() {
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm ring-1 ring-foreground/5">
                 <img
-                  src="/brands/circle.svg"
+                  src="/brands/circle.png"
                   alt="Circle"
-                  className="w-7 h-7"
+                  className="w-7 h-7 object-contain"
                 />
               </div>
               <div className="flex-1 min-w-0">
