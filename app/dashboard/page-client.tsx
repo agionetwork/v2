@@ -453,10 +453,96 @@ function DashboardContent() {
                         )
                       }
 
+                      // Custom arc-link layer that splits left/right by slice
+                      // angle, draws the elbow, embeds the token logo, and
+                      // declutters overlapping labels by pushing each one a
+                      // minimum distance below the previous on its side.
+                      const customLabelLayer = (props: any) => {
+                        const { dataWithArc, centerX, centerY, radius } = props
+                        const labelGap = 18 // min vertical spacing between labels
+                        const elbowOffset = 8
+                        const horizontalRun = 22
+                        const logoSize = 14
+                        const labelGapAfterLogo = 4
+
+                        const items = dataWithArc.map((d: any) => {
+                          const mid = (d.arc.startAngle + d.arc.endAngle) / 2
+                          const sx = centerX + Math.sin(mid) * (radius + elbowOffset)
+                          const sy = centerY - Math.cos(mid) * (radius + elbowOffset)
+                          const isRight = Math.sin(mid) >= 0
+                          const labelX = isRight ? sx + horizontalRun : sx - horizontalRun
+                          return {
+                            id: d.id,
+                            value: d.value,
+                            color: d.color,
+                            sx,
+                            sy,
+                            labelX,
+                            labelY: sy,
+                            isRight,
+                          }
+                        })
+
+                        const declutter = (arr: any[]) => {
+                          arr.sort((a, b) => a.labelY - b.labelY)
+                          for (let i = 1; i < arr.length; i++) {
+                            const prev = arr[i - 1]
+                            if (arr[i].labelY < prev.labelY + labelGap) {
+                              arr[i].labelY = prev.labelY + labelGap
+                            }
+                          }
+                        }
+
+                        const right = items.filter((i: any) => i.isRight)
+                        const left = items.filter((i: any) => !i.isRight)
+                        declutter(right)
+                        declutter(left)
+
+                        return (
+                          <g>
+                            {[...right, ...left].map((it: any) => {
+                              const elbowX = it.labelX
+                              const tipX = it.isRight ? it.labelX + 4 : it.labelX - 4
+                              const logoX = it.isRight ? tipX + 4 : tipX - 4 - logoSize
+                              const textX = it.isRight
+                                ? logoX + logoSize + labelGapAfterLogo
+                                : logoX - labelGapAfterLogo
+                              return (
+                                <g key={it.id}>
+                                  <polyline
+                                    points={`${it.sx},${it.sy} ${elbowX},${it.labelY} ${tipX},${it.labelY}`}
+                                    fill="none"
+                                    stroke={it.color}
+                                    strokeWidth={1.5}
+                                  />
+                                  <image
+                                    href={getTokenLogo(it.id)}
+                                    x={logoX}
+                                    y={it.labelY - logoSize / 2}
+                                    width={logoSize}
+                                    height={logoSize}
+                                  />
+                                  <text
+                                    x={textX}
+                                    y={it.labelY + 4}
+                                    textAnchor={it.isRight ? "start" : "end"}
+                                    fill={chartAxisColor}
+                                    fontSize={11}
+                                    fontFamily="ui-sans-serif, system-ui, sans-serif"
+                                  >
+                                    ${getTokenDisplaySymbol(it.id)} ({it.value.toFixed(2)}%)
+                                  </text>
+                                </g>
+                              )
+                            })}
+                          </g>
+                        )
+                      }
+
                       return (
                         <ResponsivePie
                           data={validData}
-                          margin={{ top: 28, right: 80, bottom: 28, left: 80 }}
+                          margin={{ top: 32, right: 110, bottom: 32, left: 110 }}
                           innerRadius={0.62}
                           padAngle={1.4}
                           cornerRadius={6}
@@ -464,14 +550,9 @@ function DashboardContent() {
                           colors={{ datum: 'data.color' }}
                           borderWidth={0}
                           borderColor={{ from: 'color' }}
-                          arcLinkLabelsSkipAngle={6}
-                          arcLinkLabelsTextColor={chartAxisColor}
-                          arcLinkLabelsThickness={2}
-                          arcLinkLabelsColor={{ from: 'color' }}
-                          arcLinkLabel={(d) =>
-                            `$${getTokenDisplaySymbol(d.id as string)} (${d.value.toFixed(2)}%)`
-                          }
+                          enableArcLinkLabels={false}
                           enableArcLabels={false}
+                          layers={["arcs", "arcLabels", "legends", customLabelLayer]}
                           tooltip={({ datum }) => (
                             <div
                               className="rounded-lg px-3 py-2 text-sm"
