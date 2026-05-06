@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useRef, useCallback } from "react"
+import { useMemo, useState, useRef, useCallback, useEffect } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +16,7 @@ import LoanViewModal from "./loan-view-modal"
 import { WalletNameCell } from "./wallet-name-cell"
 import { AcceptOfferModal } from "./accept-offer-modal"
 import { useIsStealth } from "@/hooks/useIsStealth"
+import { sortLoansStable, TABLE_PAGE_SIZE, TablePaginator } from "./table-paginator"
 
 export default function LendDashboard() {
   const { publicKey } = useWallet()
@@ -78,13 +79,18 @@ export default function LendDashboard() {
 
   // Private pending offers sent TO this wallet by borrowers
   // (borrower used create_lend_offer with is_private=true, targeting this wallet as lender)
-  const offersForMe = useMemo(() =>
-    myLentLoans.filter(l =>
-      l.status === LoanStatus.Pending &&
-      l.borrower !== null &&
-      l.privateStatus > 0
-    ),
-  [myLentLoans])
+  const offersForMe = useMemo(
+    () =>
+      sortLoansStable(
+        myLentLoans.filter(
+          (l) =>
+            l.status === LoanStatus.Pending &&
+            l.borrower !== null &&
+            l.privateStatus > 0,
+        ),
+      ),
+    [myLentLoans],
+  )
 
   // User's own pending offers (created by this wallet via create_borrow_offer)
   const myOwnPending = useMemo(() => {
@@ -94,9 +100,31 @@ export default function LendDashboard() {
     )
   }, [myLentLoans, offersForMe])
 
-  const myLoans = useMemo(() =>
-    [...activeLoans, ...myOwnPending],
-  [activeLoans, myOwnPending])
+  const myLoans = useMemo(
+    () => sortLoansStable([...activeLoans, ...myOwnPending]),
+    [activeLoans, myOwnPending],
+  )
+
+  // Pagination — 10 rows each, deterministic order via the stable sort.
+  const [myLoansPage, setMyLoansPage] = useState(1)
+  const myLoansTotalPages = Math.max(1, Math.ceil(myLoans.length / TABLE_PAGE_SIZE))
+  useEffect(() => {
+    if (myLoansPage > myLoansTotalPages) setMyLoansPage(myLoansTotalPages)
+  }, [myLoansPage, myLoansTotalPages])
+  const myLoansPageItems = useMemo(() => {
+    const start = (myLoansPage - 1) * TABLE_PAGE_SIZE
+    return myLoans.slice(start, start + TABLE_PAGE_SIZE)
+  }, [myLoans, myLoansPage])
+
+  const [offersForMePage, setOffersForMePage] = useState(1)
+  const offersForMeTotalPages = Math.max(1, Math.ceil(offersForMe.length / TABLE_PAGE_SIZE))
+  useEffect(() => {
+    if (offersForMePage > offersForMeTotalPages) setOffersForMePage(offersForMeTotalPages)
+  }, [offersForMePage, offersForMeTotalPages])
+  const offersForMePageItems = useMemo(() => {
+    const start = (offersForMePage - 1) * TABLE_PAGE_SIZE
+    return offersForMe.slice(start, start + TABLE_PAGE_SIZE)
+  }, [offersForMe, offersForMePage])
 
   // Total receivable: principal + interest for each active loan (if repaid)
   const totalReceivable = activeLoans.reduce((sum, l) => {
@@ -206,7 +234,7 @@ export default function LendDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {myLoans.map((loan) => {
+                      {myLoansPageItems.map((loan) => {
                         const isLoanExpired = loan.status === LoanStatus.Accepted &&
                           loan.start != null && (Date.now() / 1000) > (loan.start + loan.duration)
                         // I lent privately → mask the borrower in my own
@@ -240,6 +268,11 @@ export default function LendDashboard() {
                       })}
                     </TableBody>
                   </Table>
+                  <TablePaginator
+                    page={myLoansPage}
+                    totalPages={myLoansTotalPages}
+                    onChange={setMyLoansPage}
+                  />
                 </div>
               )}
             </CardContent>
@@ -268,7 +301,7 @@ export default function LendDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {offersForMe.map((loan) => (
+                      {offersForMePageItems.map((loan) => (
                         <LendOfferRow
                           key={loan.publicKey}
                           loan={loan}
@@ -279,6 +312,11 @@ export default function LendDashboard() {
                       ))}
                     </TableBody>
                   </Table>
+                  <TablePaginator
+                    page={offersForMePage}
+                    totalPages={offersForMeTotalPages}
+                    onChange={setOffersForMePage}
+                  />
                 </div>
               )}
             </CardContent>

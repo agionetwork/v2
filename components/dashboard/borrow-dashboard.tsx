@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useRef, useCallback } from "react"
+import { useMemo, useState, useRef, useCallback, useEffect } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +16,7 @@ import LoanViewModal from "./loan-view-modal"
 import { WalletNameCell } from "./wallet-name-cell"
 import { AcceptOfferModal } from "./accept-offer-modal"
 import { useIsStealth } from "@/hooks/useIsStealth"
+import { sortLoansStable, TABLE_PAGE_SIZE, TablePaginator } from "./table-paginator"
 
 export default function BorrowDashboard() {
   const { publicKey } = useWallet()
@@ -79,15 +80,43 @@ export default function BorrowDashboard() {
     myBorrowedLoans.filter(l => l.status === LoanStatus.Pending),
   [myBorrowedLoans])
 
-  const myLoans = useMemo(() =>
-    [...activeLoans, ...myPendingOffers],
-  [activeLoans, myPendingOffers])
+  const myLoans = useMemo(
+    () => sortLoansStable([...activeLoans, ...myPendingOffers]),
+    [activeLoans, myPendingOffers],
+  )
 
   // Exclude own + agent wallet offers from opportunities
   const opportunities = useMemo(() => {
-    if (!publicKey) return availableLendOffers
-    return availableLendOffers.filter(l => !isMyWallet(l.lender))
+    const list = publicKey
+      ? availableLendOffers.filter((l) => !isMyWallet(l.lender))
+      : availableLendOffers
+    return sortLoansStable(list)
   }, [availableLendOffers, publicKey, isMyWallet])
+
+  // Pagination — 10 rows per table, deterministic order via the stable
+  // sort above so a poll mid-page never reshuffles what's visible.
+  const [myLoansPage, setMyLoansPage] = useState(1)
+  const myLoansTotalPages = Math.max(1, Math.ceil(myLoans.length / TABLE_PAGE_SIZE))
+  useEffect(() => {
+    if (myLoansPage > myLoansTotalPages) setMyLoansPage(myLoansTotalPages)
+  }, [myLoansPage, myLoansTotalPages])
+  const myLoansPageItems = useMemo(() => {
+    const start = (myLoansPage - 1) * TABLE_PAGE_SIZE
+    return myLoans.slice(start, start + TABLE_PAGE_SIZE)
+  }, [myLoans, myLoansPage])
+
+  const [opportunitiesPage, setOpportunitiesPage] = useState(1)
+  const opportunitiesTotalPages = Math.max(
+    1,
+    Math.ceil(opportunities.length / TABLE_PAGE_SIZE),
+  )
+  useEffect(() => {
+    if (opportunitiesPage > opportunitiesTotalPages) setOpportunitiesPage(opportunitiesTotalPages)
+  }, [opportunitiesPage, opportunitiesTotalPages])
+  const opportunitiesPageItems = useMemo(() => {
+    const start = (opportunitiesPage - 1) * TABLE_PAGE_SIZE
+    return opportunities.slice(start, start + TABLE_PAGE_SIZE)
+  }, [opportunities, opportunitiesPage])
 
   const totalBorrowed = activeLoans.reduce((sum, l) => sum + l.debtAmountUi, 0)
   const avgApy = activeLoans.length > 0
@@ -193,7 +222,7 @@ export default function BorrowDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {myLoans.map((loan) => {
+                      {myLoansPageItems.map((loan) => {
                         const isLoanExpired = loan.status === LoanStatus.Accepted &&
                           loan.start != null && (Date.now() / 1000) > (loan.start + loan.duration)
                         // I accepted privately on the borrower side → mask the
@@ -228,6 +257,11 @@ export default function BorrowDashboard() {
                       })}
                     </TableBody>
                   </Table>
+                  <TablePaginator
+                    page={myLoansPage}
+                    totalPages={myLoansTotalPages}
+                    onChange={setMyLoansPage}
+                  />
                 </div>
               )}
             </CardContent>
@@ -256,7 +290,7 @@ export default function BorrowDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {opportunities.map((loan) => (
+                      {opportunitiesPageItems.map((loan) => (
                         <OpportunityRow
                           key={loan.publicKey}
                           loan={loan}
@@ -267,6 +301,11 @@ export default function BorrowDashboard() {
                       ))}
                     </TableBody>
                   </Table>
+                  <TablePaginator
+                    page={opportunitiesPage}
+                    totalPages={opportunitiesTotalPages}
+                    onChange={setOpportunitiesPage}
+                  />
                 </div>
               )}
             </CardContent>
