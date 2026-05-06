@@ -580,11 +580,20 @@ html { scroll-behavior: smooth; }
     linear-gradient(180deg, #0A1230 0%, #060B22 100%);
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  /* Floating rounded pill — sits with a small gap from the viewport
+     edges so the page background shows through around it. The
+     border-radius wraps every corner instead of just the bottom band. */
+  margin: 10px 12px 0 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.06) inset,
     0 1px 0 rgba(74, 144, 255, 0.06) inset,
-    0 8px 28px -16px rgba(0, 0, 0, 0.55);
+    0 12px 32px -16px rgba(0, 0, 0, 0.55);
+  width: calc(100% - 24px) !important;
+  /* Sticky offset matches the top margin so the pill floats neatly
+     above the scroll content. */
+  top: 10px !important;
 }
 /* Light mode: header picks up the same saturated blue gradient as the
    avatar card on the dashboard / socialfi pages (Tailwind blue-600 →
@@ -594,21 +603,16 @@ html { scroll-behavior: smooth; }
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 60%),
     linear-gradient(90deg, #2563EB 0%, #1E40AF 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.16);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.18) inset,
-    0 8px 28px -16px rgba(30, 64, 175, 0.45);
+    0 12px 32px -16px rgba(30, 64, 175, 0.45);
 }
 .agio-glass-header::after {
-  /* Subtle accent line at the very bottom edge so the header reads as an
-     elevated surface rather than a flat band. */
-  content: "";
-  position: absolute;
-  inset: auto 0 -1px 0;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(74, 144, 255, 0.35), transparent);
-  opacity: 0.6;
+  /* No-op — kept to override the legacy bottom accent line. With a
+     fully rounded floating pill the bottom edge sits well inside the
+     viewport, so a horizontal accent line under it would look odd. */
+  content: none;
 }
 
 /* ────────────────────────────────────────────────────────────────────────
