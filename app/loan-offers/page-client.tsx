@@ -26,6 +26,24 @@ const getTokenDisplaySymbol = (symbol: string): string => {
   return symbol
 }
 
+/**
+ * Token-amount formatter that picks decimal places based on magnitude.
+ * Fixed to 4 decimals everywhere was rounding tiny interest values
+ * (e.g. 1% APY on a small principal) to "0.0000". This shows enough
+ * decimals so non-zero values never look zero, while large numbers stay
+ * readable.
+ */
+function formatTokenAmount(value: number): string {
+  if (!Number.isFinite(value) || value === 0) return "0"
+  const abs = Math.abs(value)
+  let decimals: number
+  if (abs >= 1) decimals = 4
+  else if (abs >= 0.01) decimals = 6
+  else if (abs >= 0.0001) decimals = 8
+  else return value.toExponential(2)
+  return value.toFixed(decimals).replace(/\.?0+$/, '')
+}
+
 const TOKEN_LOGOS: Record<string, string> = {
   SOL: '/images/sol-logo.png',
   USDC: '/images/usdc-logo.png',
@@ -518,7 +536,7 @@ function OfferCard({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () =>
                   </Tooltip>
                 </div>
                 <p className={`font-semibold flex items-center gap-1.5 ${isLendOffer ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
-                  {expectedInterest.toFixed(4)} <TokenBadge symbol={offer.debtTokenSymbol} />
+                  {formatTokenAmount(expectedInterest)} <TokenBadge symbol={offer.debtTokenSymbol} />
                 </p>
               </div>
             </div>
