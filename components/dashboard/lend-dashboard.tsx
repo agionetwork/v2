@@ -153,28 +153,24 @@ export default function LendDashboard() {
           <CardHeader className="pb-2"><CardTitle className="text-base font-medium text-center">Total Lent</CardTitle></CardHeader>
           <CardContent className="text-center">
             <div className="text-2xl font-bold">{totalReceivable.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Total receivable if repaid</p>
           </CardContent>
         </Card>
         <Card className="border-2 border-gray-200 dark:border-gray-800 shadow-lg bg-transparent">
           <CardHeader className="pb-2"><CardTitle className="text-base font-medium text-center">Active Loans</CardTitle></CardHeader>
           <CardContent className="text-center">
             <div className="text-2xl font-bold">{activeLoans.length}</div>
-            <p className="text-xs text-muted-foreground">Currently earning interest</p>
           </CardContent>
         </Card>
         <Card className="border-2 border-gray-200 dark:border-gray-800 shadow-lg bg-transparent">
           <CardHeader className="pb-2"><CardTitle className="text-base font-medium text-center">Interest Earned</CardTitle></CardHeader>
           <CardContent className="text-center">
             <div className="text-2xl font-bold text-green-600">${interestEarnedUsd.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Total interest received</p>
           </CardContent>
         </Card>
         <Card className="border-2 border-gray-200 dark:border-gray-800 shadow-lg bg-transparent">
           <CardHeader className="pb-2"><CardTitle className="text-base font-medium text-center">Average APY</CardTitle></CardHeader>
           <CardContent className="text-center">
             <div className="text-2xl font-bold text-green-600">{avgApy.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground">Average lending rate</p>
           </CardContent>
         </Card>
       </div>
