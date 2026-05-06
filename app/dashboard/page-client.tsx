@@ -453,44 +453,36 @@ function DashboardContent() {
                         )
                       }
 
-                      // Custom arc-link layer — keeps the original Nivo
-                      // line shape (one straight segment from the slice's
-                      // outer edge to the label) but adds two things Nivo
-                      // can't:
-                      //   1. Side-aware decluttering so overlapping labels
-                      //      get pushed apart on their own half of the donut.
-                      //   2. An inline 14 px token logo placed before the
-                      //      "$TICKER (XX%)" text.
+                      // Custom arc-link layer — labels sit just outside the
+                      // slice along the same radial direction, so every
+                      // connector line is short and roughly the same length.
+                      // When two slices on the same side would collide, the
+                      // declutter pass pushes them apart by a fixed Y gap.
                       const customLabelLayer = (props: any) => {
                         const { dataWithArc, centerX, centerY, radius } = props
-                        const labelGap = 18 // min vertical spacing between labels
-                        const labelDistance = 32 // horizontal padding past the slice edge
+                        const lineLen = 14 // short radial connector
+                        const labelGap = 20 // min vertical spacing between labels
                         const logoSize = 14
                         const logoTextGap = 4
 
                         const items = dataWithArc.map((d: any) => {
                           const mid = (d.arc.startAngle + d.arc.endAngle) / 2
-                          // Anchor the line ON the slice's outer edge.
+                          // Line: slice edge → a point lineLen outward along
+                          // the radial.
                           const startX = centerX + Math.sin(mid) * radius
                           const startY = centerY - Math.cos(mid) * radius
+                          const endX = centerX + Math.sin(mid) * (radius + lineLen)
+                          const endY = centerY - Math.cos(mid) * (radius + lineLen)
                           const isRight = Math.sin(mid) >= 0
-                          // Initial label slot — radial direction extended to
-                          // labelDistance, then declutter may shift Y.
-                          const targetX = centerX + Math.sin(mid) * (radius + labelDistance)
-                          const targetY = centerY - Math.cos(mid) * (radius + labelDistance)
                           return {
                             id: d.id,
                             value: d.value,
                             color: d.color,
                             startX,
                             startY,
-                            // Pin labels to a fixed left/right column so the
-                            // logo + text always start from the same X — easier
-                            // for the eye to scan when there are several.
-                            labelX: isRight
-                              ? centerX + radius + labelDistance
-                              : centerX - radius - labelDistance,
-                            labelY: targetY,
+                            endX,
+                            endY,
+                            labelY: endY,
                             isRight,
                           }
                         })
@@ -513,18 +505,18 @@ function DashboardContent() {
                         return (
                           <g>
                             {[...right, ...left].map((it: any) => {
-                              const logoX = it.isRight ? it.labelX : it.labelX - logoSize
+                              const logoX = it.isRight ? it.endX + 2 : it.endX - 2 - logoSize
                               const textX = it.isRight
                                 ? logoX + logoSize + logoTextGap
                                 : logoX - logoTextGap
                               return (
                                 <g key={it.id}>
-                                  {/* Single straight line: slice edge → label anchor. */}
+                                  {/* Short radial connector. */}
                                   <line
                                     x1={it.startX}
                                     y1={it.startY}
-                                    x2={it.labelX}
-                                    y2={it.labelY}
+                                    x2={it.endX}
+                                    y2={it.endY}
                                     stroke={it.color}
                                     strokeWidth={1.5}
                                   />
@@ -555,7 +547,7 @@ function DashboardContent() {
                       return (
                         <ResponsivePie
                           data={validData}
-                          margin={{ top: 32, right: 110, bottom: 32, left: 110 }}
+                          margin={{ top: 36, right: 140, bottom: 36, left: 140 }}
                           innerRadius={0.62}
                           padAngle={1.4}
                           cornerRadius={6}
