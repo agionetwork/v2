@@ -199,40 +199,59 @@ export default function DashboardHeader({ onConnectWallet }: DashboardHeaderProp
             <span className="sr-only">Toggle theme</span>
           </Button>
 
-          {/* Dialect Notification Inbox */}
-          {isConnected && dialectAvailable && (
-            <NotificationsButton
-              theme={theme === "dark" ? "dark" : "light"}
-              channels={["email", "telegram"]}
-              renderModalComponent={({ ref, open, children }) =>
-                open ? (
-                  <div
+          {/* Notification bell — always visible whenever the wallet is
+              connected. When the Dialect SDK is initialised we hand the
+              click off to <NotificationsButton/> so the inbox modal opens.
+              When it isn't (env unconfigured, wallet provider not
+              recognised, SDK still mounting) we render a plain bell that
+              shows a friendly toast instead, so the icon never silently
+              disappears. */}
+          {isConnected && (
+            dialectAvailable ? (
+              <NotificationsButton
+                theme={theme === "dark" ? "dark" : "light"}
+                channels={["email", "telegram"]}
+                renderModalComponent={({ ref, open, children }) =>
+                  open ? (
+                    <div
+                      ref={ref}
+                      className="dialect fixed right-4 top-16 z-[100] w-[400px] max-h-[80vh] overflow-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl"
+                    >
+                      {children}
+                    </div>
+                  ) : null
+                }
+              >
+                {({ open, setOpen, unreadCount, ref }) => (
+                  <Button
                     ref={ref}
-                    className="dialect fixed right-4 top-16 z-[100] w-[400px] max-h-[80vh] overflow-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setOpen(!open)}
+                    className="relative text-white hover:bg-transparent hover:text-white/80 focus-visible:ring-0 focus-visible:ring-offset-0"
                   >
-                    {children}
-                  </div>
-                ) : null
-              }
-            >
-              {({ open, setOpen, unreadCount, ref }) => (
-                <Button
-                  ref={ref}
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setOpen(!open)}
-                  className="relative text-white hover:bg-transparent hover:text-white/80 focus-visible:ring-0 focus-visible:ring-offset-0"
-                >
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  )}
-                  <span className="sr-only">Notifications</span>
-                </Button>
-              )}
-            </NotificationsButton>
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                    <span className="sr-only">Notifications</span>
+                  </Button>
+                )}
+              </NotificationsButton>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => toast.info("Notifications are warming up — try again in a moment.")}
+                className="relative text-white hover:bg-transparent hover:text-white/80 focus-visible:ring-0 focus-visible:ring-offset-0"
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="sr-only">Notifications</span>
+              </Button>
+            )
           )}
 
           {isUserAuthenticated ? (
