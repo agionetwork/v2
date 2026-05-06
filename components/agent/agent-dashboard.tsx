@@ -185,24 +185,12 @@ export function AgentDashboard({ wallet, status, onRefresh, authQuery }: Props) 
               />
               {togglingPrivacy && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
             </div>
-          </div>
-
-          {/* Balances */}
-          <div className="grid grid-cols-3 gap-3">
-            {Object.entries(status.balances).map(([token, amount]) => (
-              <div key={token} className="text-center p-3 rounded-lg bg-muted/50">
-                <div className="text-lg font-bold">{amount.toFixed(token === "SOL" ? 4 : 2)}</div>
-                <div className="text-xs text-muted-foreground">{token}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between">
+            {/* Deactivate / Activate button — sits inline with the
+                Private toggle so the on/off controls are grouped. */}
             <Button
               size="sm"
               variant={isActive ? "destructive" : "default"}
-              className={!isActive ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+              className={`flex-shrink-0 ml-1 ${!isActive ? "bg-green-600 hover:bg-green-700 text-white" : ""}`}
               onClick={handleToggle}
               disabled={toggling}
             >
@@ -215,16 +203,36 @@ export function AgentDashboard({ wallet, status, onRefresh, authQuery }: Props) 
               )}
               {isActive ? "Deactivate" : "Activate"}
             </Button>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => setShowFund(true)}>
-                <ArrowUpToLine className="h-4 w-4 mr-1" />
-                Fund
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setShowWithdraw(true)}>
-                <ArrowDownToLine className="h-4 w-4 mr-1" />
-                Withdraw
-              </Button>
-            </div>
+          </div>
+
+          {/* Balances */}
+          <div className="grid grid-cols-3 gap-3">
+            {Object.entries(status.balances).map(([token, amount]) => (
+              <div key={token} className="text-center p-3 rounded-lg bg-muted/50">
+                <div className="text-lg font-bold">{amount.toFixed(token === "SOL" ? 4 : 2)}</div>
+                <div className="text-xs text-muted-foreground">{token}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Funding actions — centered at the bottom of the card. */}
+          <div className="flex items-center justify-center gap-3 pt-1">
+            <Button
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+              onClick={() => setShowFund(true)}
+            >
+              <ArrowUpToLine className="h-4 w-4 mr-1" />
+              Fund
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setShowWithdraw(true)}
+            >
+              <ArrowDownToLine className="h-4 w-4 mr-1" />
+              Withdraw
+            </Button>
           </div>
         </CardContent>
       </Card>

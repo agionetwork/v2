@@ -147,8 +147,12 @@ export function AgentConfigForm({ wallet, config, onSaved }: Props) {
         <CardTitle className="text-base font-medium">Settings</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Strategy grid — Borrowing on the LEFT, Lending on the RIGHT
+            on md+ viewports. Mobile keeps them stacked. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+
         {/* Lending Section */}
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg overflow-hidden md:order-2">
           <div className="w-full flex items-center justify-between p-3">
             <div className="flex items-center gap-3">
               {lendOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -262,7 +266,7 @@ export function AgentConfigForm({ wallet, config, onSaved }: Props) {
         </div>
 
         {/* Borrowing Section */}
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg overflow-hidden md:order-1">
           <div className="w-full flex items-center justify-between p-3">
             <div className="flex items-center gap-3">
               {borrowOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -373,6 +377,8 @@ export function AgentConfigForm({ wallet, config, onSaved }: Props) {
               </div>
             </div>
           )}
+        </div>
+
         </div>
 
         {/* Save Button */}
