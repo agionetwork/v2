@@ -456,7 +456,7 @@ function DashboardContent() {
                       return (
                         <ResponsivePie
                           data={validData}
-                          margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                          margin={{ top: 28, right: 80, bottom: 28, left: 80 }}
                           innerRadius={0.62}
                           padAngle={1.4}
                           cornerRadius={6}
@@ -464,10 +464,13 @@ function DashboardContent() {
                           colors={{ datum: 'data.color' }}
                           borderWidth={0}
                           borderColor={{ from: 'color' }}
-                          arcLinkLabelsSkipAngle={10}
+                          arcLinkLabelsSkipAngle={6}
                           arcLinkLabelsTextColor={chartAxisColor}
                           arcLinkLabelsThickness={2}
                           arcLinkLabelsColor={{ from: 'color' }}
+                          arcLinkLabel={(d) =>
+                            `$${getTokenDisplaySymbol(d.id as string)} (${d.value.toFixed(2)}%)`
+                          }
                           enableArcLabels={false}
                           tooltip={({ datum }) => (
                             <div
@@ -485,36 +488,19 @@ function DashboardContent() {
                               }}
                             >
                               <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: datum.color, boxShadow: `0 0 8px ${datum.color}` }}></div>
-                                <span className="font-medium">{getTokenDisplaySymbol(datum.id as string)}: {datum.value.toFixed(2)}%</span>
+                                <img
+                                  src={getTokenLogo(datum.id as string)}
+                                  alt={String(datum.id)}
+                                  className="w-4 h-4 object-contain"
+                                  onError={(e) => { (e.target as HTMLImageElement).src = '/images/placeholder-logo.png' }}
+                                />
+                                <span className="font-medium">${getTokenDisplaySymbol(datum.id as string)} ({datum.value.toFixed(2)}%)</span>
                               </div>
                             </div>
                           )}
                         />
                       )
                     })()}
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {getAssetDistributionData()
-                        .filter(item => item && typeof item.value === 'number' && !isNaN(item.value) && item.value > 0)
-                        .map((item) => (
-                          <div key={item.id} className="flex items-center space-x-2">
-                            <div className="w-4 h-4 rounded-full" style={{ backgroundColor: item.color }}></div>
-                            <div className="w-5 h-5 rounded-full overflow-hidden bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-700">
-                              <img
-                                src={getTokenLogo(item.id)}
-                                alt={`${item.id} logo`}
-                                className="w-4 h-4 object-contain"
-                                onError={(e) => { (e.target as HTMLImageElement).src = '/images/placeholder-logo.png' }}
-                              />
-                            </div>
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              ${getTokenDisplaySymbol(item.id)} ({item.value.toFixed(2)}%)
-                            </span>
-                          </div>
-                        ))}
-                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -548,7 +534,7 @@ function DashboardContent() {
                         margin={{ top: 20, right: 20, bottom: 50, left: 60 }}
                         xScale={{ type: 'point' }}
                         yScale={{ type: 'linear', min: 0, max: 'auto', stacked: false }}
-                        curve="catmullRom"
+                        curve="monotoneX"
                         axisBottom={{
                           tickSize: 4,
                           tickPadding: 6,
@@ -564,7 +550,7 @@ function DashboardContent() {
                           legendOffset: -50,
                           legendPosition: 'middle',
                         }}
-                        colors={({ id }) => id === 'Borrowed' ? '#4A90FF' : '#1358EC'}
+                        colors={({ id }) => id === 'Borrowed' ? '#DC2626' : '#4A90FF'}
                         lineWidth={3}
                         enableArea={true}
                         areaOpacity={theme === 'dark' ? 0.18 : 0.12}
