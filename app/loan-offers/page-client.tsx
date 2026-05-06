@@ -88,7 +88,7 @@ export default function LoanOffersPageClient() {
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards")
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)")
+    const mq = window.matchMedia("(max-width: 639px)")
     const apply = () => setIsMobile(mq.matches)
     apply()
     mq.addEventListener("change", apply)
@@ -152,27 +152,30 @@ export default function LoanOffersPageClient() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-wrap items-end gap-4 mb-8">
         {/* View-mode toggle — sits to the LEFT of the range sliders.
-            Hidden on mobile; the list view doesn't fit narrow viewports. */}
-        <div className="hidden md:inline-flex items-center rounded-md border bg-muted/40 p-1 gap-1">
+            Hidden on phones; the list view doesn't fit narrow viewports.
+            Bumped to sm: so it shows on tablets and up. */}
+        <div className="hidden sm:inline-flex items-center rounded-lg border border-blue-500/40 bg-background/80 p-1 gap-1 shadow-sm">
           <Button
             variant={viewMode === "cards" ? "default" : "ghost"}
             size="icon"
-            className="h-8 w-8"
+            className="h-9 w-9"
             aria-label="Card view"
             aria-pressed={viewMode === "cards"}
+            title="Card view"
             onClick={() => setViewMode("cards")}
           >
-            <LayoutGrid className="h-4 w-4" />
+            <LayoutGrid className="h-5 w-5" />
           </Button>
           <Button
             variant={viewMode === "list" ? "default" : "ghost"}
             size="icon"
-            className="h-8 w-8"
+            className="h-9 w-9"
             aria-label="List view"
             aria-pressed={viewMode === "list"}
+            title="List view"
             onClick={() => setViewMode("list")}
           >
-            <ListIcon className="h-4 w-4" />
+            <ListIcon className="h-5 w-5" />
           </Button>
         </div>
 
