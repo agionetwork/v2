@@ -44,14 +44,30 @@ export async function POST(req: NextRequest) {
     const data = await res.json().catch(() => null)
 
     if (!res.ok) {
+      // Log the upstream payload so the dev terminal shows what
+      // Tapestry actually rejected, rather than a silent 500.
+      console.warn(
+        "[tapestry-proxy] upstream returned",
+        res.status,
+        path,
+        data,
+      )
       return NextResponse.json(
-        { error: "Tapestry API error", status: res.status },
+        { error: "Tapestry API error", status: res.status, upstream: data ?? null },
         { status: res.status },
       )
     }
 
     return NextResponse.json(data)
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  } catch (err) {
+    // Network errors (DNS, connection refused, timeout, …) end up here.
+    // Surface them in the response and the dev terminal so a misconfigured
+    // TAPESTRY_API_URL or an upstream outage isn't swallowed as a bare 500.
+    const message = err instanceof Error ? err.message : String(err)
+    console.error("[tapestry-proxy] network/parse failure:", message)
+    return NextResponse.json(
+      { error: "Tapestry proxy failed", detail: message },
+      { status: 502 },
+    )
   }
 }
