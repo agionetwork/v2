@@ -328,7 +328,12 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8">
+      {/* Match the SocialFi page container so the avatar card and every
+          card below it (Tabs, Your Liquidity, Asset Distribution, Loan
+          Overview, the four totals row, Recent Activity) line up at the
+          same outer width as /socialfi. The header is intentionally a
+          touch wider than this column since it floats over the page. */}
+      <div className="flex-1 p-4 md:p-8 pt-6 max-w-7xl mx-auto">
         <ProfileCard />
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
