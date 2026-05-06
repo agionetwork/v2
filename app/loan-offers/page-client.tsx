@@ -27,11 +27,11 @@ const getTokenDisplaySymbol = (symbol: string): string => {
 }
 
 /**
- * Token-amount formatter that picks decimal places based on magnitude.
- * Fixed to 4 decimals everywhere was rounding tiny interest values
- * (e.g. 1% APY on a small principal) to "0.0000". This shows enough
- * decimals so non-zero values never look zero, while large numbers stay
- * readable.
+ * Token-amount formatter — always plain decimals, never scientific
+ * notation. Scales the decimal count by magnitude so tiny interest
+ * values (e.g. 1% APY on a small principal) still render as a
+ * non-zero number, while big numbers stay readable. Trailing zeros
+ * are trimmed.
  */
 function formatTokenAmount(value: number): string {
   if (!Number.isFinite(value) || value === 0) return "0"
@@ -40,7 +40,8 @@ function formatTokenAmount(value: number): string {
   if (abs >= 1) decimals = 4
   else if (abs >= 0.01) decimals = 6
   else if (abs >= 0.0001) decimals = 8
-  else return value.toExponential(2)
+  else if (abs >= 0.000001) decimals = 10
+  else decimals = 12
   return value.toFixed(decimals).replace(/\.?0+$/, '')
 }
 
