@@ -75,16 +75,32 @@ export async function fundStealthWallet(params: FundStealthParams): Promise<Fund
 
   // Step 1 — shield: move funds from funder's public wallet into a fresh
   // Cloak UTXO. The deposit is publicly visible (linked to funder).
-  const shielded = await shield(
-    { mint, amount },
-    {
-      connection,
-      ...signing,
-      relayUrl,
-      onProgress: onProgress ? (s) => onProgress(`shield: ${s}`) : undefined,
-      onProofProgress,
-    },
-  )
+  let shielded
+  try {
+    shielded = await shield(
+      { mint, amount },
+      {
+        connection,
+        ...signing,
+        relayUrl,
+        onProgress: onProgress ? (s) => onProgress(`shield: ${s}`) : undefined,
+        onProofProgress,
+      },
+    )
+  } catch (err) {
+    // The Cloak SDK throws "Merkle tree account not found at <PDA>" when
+    // the shielded pool for this (program, mint) hasn't been initialised
+    // on chain. That's a Cloak-side init issue, not user error — surface
+    // a friendlier message so the modal can explain the limitation.
+    const raw = err instanceof Error ? err.message : String(err)
+    if (raw.includes("Merkle tree account not found")) {
+      throw new Error(
+        `Cloak's shield pool isn't available for ${mint.toBase58().slice(0, 4)}…${mint.toBase58().slice(-4)} on devnet right now. ` +
+          `Cloak hasn't initialized this token's shielded pool yet — try the private flow with EURC or SOL, or use the public flow.`,
+      )
+    }
+    throw err
+  }
 
   if (delayMs > 0) {
     await new Promise((resolve) => setTimeout(resolve, delayMs))
