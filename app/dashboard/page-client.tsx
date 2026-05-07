@@ -109,20 +109,25 @@ function CounterpartyName({
   if (isStealth || isMine) {
     return <span className="italic text-muted-foreground">Anonymous</span>
   }
-  // useWalletProfile falls back to the shortened "ABCD…WXYZ" form when
-  // no Tapestry profile and no SNS domain are found. That fallback
-  // overrode our full-address render once the hook resolved (visible
-  // case-flicker + truncation flicker). Skip it explicitly: only treat
-  // displayName as a real nickname when it differs from the short
-  // fallback and isn't a substring of the address itself.
-  const looksLikeAddressFallback = (val: string | null) => {
+  // useWalletProfile falls back to multiple "address-like" values when
+  // no real nickname is set:
+  //   - shortenAddress(address) ("ABCD...WXYZ")
+  //   - the SNS domain (lowercase)
+  //   - profile.username from Tapestry (often the address lowercased)
+  // All of those visually replace our full-pubkey render once the hook
+  // resolves and look like a "casing/length flicker" to the user. Skip
+  // anything that's just a representation of the same wallet.
+  const isAddressLikeName = (val: string | null) => {
     if (!val) return false
-    if (val === shortenAddress(address)) return true
-    // base58 substring with the canonical "..." separator, mixed case preserved.
-    if (/^[A-Za-z0-9]{4}\.{3}[A-Za-z0-9]{4}$/.test(val) && address.startsWith(val.slice(0, 4)) && address.endsWith(val.slice(-4))) return true
+    const v = val.toLowerCase()
+    const a = address.toLowerCase()
+    if (v === a) return true // full address (any case)
+    if (val === shortenAddress(address) || v === shortenAddress(address).toLowerCase()) return true
+    // Generic "4chars...4chars" shape with prefix/suffix matching the address.
+    if (/^.{4}\.{3}.{4}$/.test(val) && a.startsWith(v.slice(0, 4)) && a.endsWith(v.slice(-4))) return true
     return false
   }
-  const realName = looksLikeAddressFallback(displayName) ? null : displayName
+  const realName = isAddressLikeName(displayName) ? null : displayName
   return (
     <Link
       href={`/socialfi/profile/${profileWallet || address}`}
