@@ -23,7 +23,7 @@ import { usePrivateLoanFlow, type PrivateLoanProgress } from "@/hooks/usePrivate
 import { useTokenPrices } from "@/hooks/useTokenPrices"
 import { useWalletTokens } from "@/hooks/useWalletTokens"
 import { estimatePrivateLoanCost, formatCostLines } from "@/lib/cloak/cost-estimator"
-import { Check, X, Loader2 } from "lucide-react"
+import { Check, X, Loader2, Wand2, ShieldCheck, FileSignature, PartyPopper } from "lucide-react"
 import { useTapestryProfile } from "@/components/tapestry-profile-provider"
 import { toast } from "sonner"
 import { useSNS } from "@/hooks/useSNS"
@@ -953,21 +953,29 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
           </>
           )}
 
-          <DialogFooter className="flex justify-center mt-4 gap-4">
+          <DialogFooter className="flex justify-between items-center mt-4 gap-4 sm:justify-between">
             {usePrivacy === "yes" && privateStage ? (
-              privateStage === "success" || privateStage === "error" ? (
-                <Button
-                  onClick={closePrivateModal}
-                  className="bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  Close
-                </Button>
-              ) : (
-                <Button disabled className="bg-blue-600 text-white opacity-70">
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Don&apos;t close
-                </Button>
-              )
+              <>
+                {/* "Privacy by Cloak" attribution — pinned to the left of
+                    the Close button while the private flow is running. */}
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span>Privacy by</span>
+                  <img src="/ecosystem/cloak.svg" alt="Cloak" className="h-4 w-auto opacity-90" />
+                </div>
+                {privateStage === "success" || privateStage === "error" ? (
+                  <Button
+                    onClick={closePrivateModal}
+                    className="bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    Close
+                  </Button>
+                ) : (
+                  <Button disabled className="bg-blue-600 text-white opacity-70">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Don&apos;t close
+                  </Button>
+                )}
+              </>
             ) : (
               <>
                 <Button
@@ -1026,82 +1034,115 @@ function PrivateFlowProgress(props: {
   txHash: string | null
   loanTokenSymbol: string
 }) {
-  const STEPS: { key: PrivateLoanProgress; label: string; sub?: string }[] = [
-    { key: "init", label: "Initializing stealth wallet", sub: "Privy server-side wallet, indexed in Redis" },
-    { key: "shield-sol", label: "Shielding SOL via Cloak", sub: "Funds tx fees + ATA rent for the on-chain offer" },
-    { key: "shield-token", label: `Shielding ${props.loanTokenSymbol} via Cloak`, sub: "Loan principal / collateral round-trip" },
-    { key: "create-offer", label: "Posting offer on-chain", sub: "Stealth signs Anchor createLendOffer/createBorrowRequest" },
+  // Each step carries an icon: Wand2 for the stealth-mint, Shield-style icons
+  // for the two Cloak shield round-trips, FileSignature for the Anchor post,
+  // and a green PartyPopper for the synthetic "Offer created" terminal step.
+  type IconType = typeof Check
+  const STEPS: { key: PrivateLoanProgress | "done"; label: string; sub?: string; Icon: IconType }[] = [
+    { key: "init", label: "Initializing stealth wallet", sub: "Privy server-side wallet, indexed in Redis", Icon: Wand2 },
+    { key: "shield-sol", label: "Shielding SOL via Cloak", sub: "Funds tx fees + ATA rent for the on-chain offer", Icon: ShieldCheck },
+    { key: "shield-token", label: `Shielding ${props.loanTokenSymbol} via Cloak`, sub: "Loan principal / collateral round-trip", Icon: ShieldCheck },
+    { key: "create-offer", label: "Posting offer on-chain", sub: "Stealth signs Anchor createLendOffer/createBorrowRequest", Icon: FileSignature },
+    { key: "done", label: "Offer created", sub: "Stealth-signed loan account is live on Solana", Icon: PartyPopper },
   ]
   // shield-token is skipped when SOL is the loan token (single combined round-trip).
   const isSolOnly = props.loanTokenSymbol === "SOL"
   const visibleSteps = isSolOnly ? STEPS.filter((s) => s.key !== "shield-token") : STEPS
-  const orderIdx = (k: PrivateLoanProgress) =>
-    visibleSteps.findIndex((s) => s.key === k)
+  const orderIdx = (k: string) => visibleSteps.findIndex((s) => s.key === k)
+  // The "done" step is reached only when the parent reports stage === "success".
   const stageOrder =
     props.stage === "success"
-      ? visibleSteps.length
+      ? orderIdx("done")
       : props.stage === "error"
         ? -1
-        : orderIdx(props.stage as PrivateLoanProgress)
+        : orderIdx(props.stage as string)
 
   return (
-    <div className="space-y-3 py-2">
-      {visibleSteps.map((step, i) => {
-        const isDone = props.stage === "success" || i < stageOrder
-        const isActive = i === stageOrder && props.stage !== "success"
-        const isError = props.stage === "error" && i === stageOrder + 1
-        return (
-          <div key={step.key} className="flex items-start gap-3">
-            <div className="mt-0.5 h-5 w-5 flex items-center justify-center">
-              {isDone ? (
-                <Check className="h-5 w-5 text-green-600" />
-              ) : isError ? (
-                <X className="h-5 w-5 text-red-600" />
-              ) : isActive ? (
-                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-              ) : (
-                <div className="h-2.5 w-2.5 rounded-full bg-gray-300 dark:bg-gray-600" />
+    <div className="py-2">
+      <ol className="relative pl-2">
+        {visibleSteps.map((step, i) => {
+          const isDone = i < stageOrder
+          const isActive = i === stageOrder
+          const isError = props.stage === "error" && i === stageOrder + 1
+          const isSuccessTerminal = step.key === "done" && props.stage === "success"
+          const Icon = step.Icon
+          return (
+            <li key={step.key} className="relative flex items-start gap-3 pb-4 last:pb-0">
+              {/* Vertical connector line */}
+              {i < visibleSteps.length - 1 && (
+                <span
+                  aria-hidden
+                  className={`absolute left-[15px] top-9 w-px h-[calc(100%-1.75rem)] ${
+                    isDone || isSuccessTerminal
+                      ? "bg-gradient-to-b from-green-500/70 to-green-500/20"
+                      : isActive
+                        ? "bg-gradient-to-b from-blue-500/60 to-blue-500/10"
+                        : "bg-gray-200 dark:bg-gray-700"
+                  }`}
+                />
               )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div
-                className={
-                  isActive
-                    ? "text-sm font-semibold text-blue-700 dark:text-blue-300"
-                    : isDone
-                      ? "text-sm text-green-700 dark:text-green-400"
-                      : isError
-                        ? "text-sm font-semibold text-red-700 dark:text-red-400"
-                        : "text-sm text-gray-500 dark:text-gray-400"
-                }
-              >
-                {step.label}
-              </div>
-              {step.sub && (
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {step.sub}
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })}
 
-      {props.stage === "success" && props.txHash && (
-        <div className="mt-4 rounded-lg p-3 border border-green-200 dark:border-green-900 bg-green-50/60 dark:bg-green-950/30">
-          <div className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1">
-            Loan tx
-          </div>
-          <a
-            href={`https://explorer.solana.com/tx/${props.txHash}?cluster=devnet`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs font-mono text-green-700 dark:text-green-400 underline break-all"
-          >
-            {props.txHash}
-          </a>
-        </div>
-      )}
+              {/* Icon medallion */}
+              <div
+                className={`relative h-8 w-8 flex items-center justify-center rounded-full border shrink-0 ${
+                  isDone || isSuccessTerminal
+                    ? "bg-green-50 border-green-300 text-green-600 dark:bg-green-950/40 dark:border-green-900 dark:text-green-400"
+                    : isError
+                      ? "bg-red-50 border-red-300 text-red-600 dark:bg-red-950/40 dark:border-red-900 dark:text-red-400"
+                      : isActive
+                        ? "bg-blue-50 border-blue-300 text-blue-600 dark:bg-blue-950/40 dark:border-blue-700 dark:text-blue-300"
+                        : "bg-gray-50 border-gray-200 text-gray-400 dark:bg-gray-900 dark:border-gray-800 dark:text-gray-600"
+                }`}
+              >
+                {isDone || isSuccessTerminal ? (
+                  <Check className="h-4 w-4" />
+                ) : isError ? (
+                  <X className="h-4 w-4" />
+                ) : isActive ? (
+                  <>
+                    <span className="absolute inset-0 rounded-full border-2 border-blue-400/40 animate-ping" />
+                    <Icon className="h-4 w-4" />
+                  </>
+                ) : (
+                  <Icon className="h-4 w-4" />
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0 pt-1">
+                <div
+                  className={
+                    isActive
+                      ? "text-sm font-semibold text-blue-700 dark:text-blue-300"
+                      : isDone || isSuccessTerminal
+                        ? "text-sm text-green-700 dark:text-green-400"
+                        : isError
+                          ? "text-sm font-semibold text-red-700 dark:text-red-400"
+                          : "text-sm text-gray-500 dark:text-gray-400"
+                  }
+                >
+                  {step.label}
+                </div>
+                {step.sub && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {step.sub}
+                  </div>
+                )}
+                {/* Inline loan-tx link on the terminal "Offer created" step */}
+                {isSuccessTerminal && props.txHash && (
+                  <a
+                    href={`https://explorer.solana.com/tx/${props.txHash}?cluster=devnet`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-mono text-green-700 dark:text-green-400 underline break-all"
+                  >
+                    {props.txHash.slice(0, 8)}…{props.txHash.slice(-8)}
+                  </a>
+                )}
+              </div>
+            </li>
+          )
+        })}
+      </ol>
 
       {props.stage === "error" && props.error && (
         <div className="mt-4 rounded-lg p-3 border border-red-200 dark:border-red-900 bg-red-50/60 dark:bg-red-950/30">
