@@ -4,6 +4,7 @@ import { createConnection, createReadonlyProgram } from "@/lib/program"
 import { TOKEN_MINTS, TOKEN_DECIMALS, getTokenProgram, resolveTokenProgram } from "@/lib/token-mints"
 import { LoanStatus, calculateFullRepayAmount } from "@/lib/loan-utils"
 import { getAgentConfig, getAgentPublicKey, appendAgentAction, getLastAirdropTime, setLastAirdropTime, isAirdropCooldownExpired, getOwnerByAgentPublicKey } from "./redis"
+import { getStealthWalletsForUser } from "./stealth"
 import { signAndSendTransaction } from "./privy"
 import { createPrivateLendOfferAsAgent, createPrivateBorrowRequestAsAgent } from "./private-flow"
 import { executeSwap } from "./jupiter"
@@ -212,6 +213,23 @@ async function runCycle(userWallet: string): Promise<void> {
   // Fetch token prices for USD-based amount/collateral checks
   const tokenPrices = await fetchTokenPrices()
 
+  // Self-set: every wallet that maps back to this user. Used to block
+  // self-deals (agent accepting an offer the owner posted, or vice
+  // versa) — both sides being the same human is wasteful and can drain
+  // SOL on tx fees. Lowercased once so the per-loan check is a Set
+  // lookup instead of three string compares.
+  let selfWallets: Set<string>
+  try {
+    const stealths = await getStealthWalletsForUser(userWallet)
+    selfWallets = new Set(
+      [userWallet, agentPubkeyStr, ...stealths].map((s) => s.toLowerCase()),
+    )
+  } catch {
+    selfWallets = new Set([userWallet.toLowerCase(), agentPubkeyStr.toLowerCase()])
+  }
+  const isSelf = (addr: string | null | undefined) =>
+    !!addr && selfWallets.has(addr.toLowerCase())
+
   // Balance cache: fetch each token balance once per cycle, not per candidate
   const balanceCache = new Map<string, number>()
   async function getCachedBalance(tokenSymbol: string): Promise<number> {
@@ -264,8 +282,11 @@ async function runCycle(userWallet: string): Promise<void> {
       const candidates: typeof borrowRequests = []
 
       for (const loan of borrowRequests) {
-        if (loan.borrower?.toLowerCase() === agentPubkeyStr.toLowerCase()) {
-          continue // skip self
+        // Skip any borrow request posted by the agent itself, the
+        // owner's main wallet, or any of the owner's stealths — all
+        // of those would be the agent lending money to its own user.
+        if (isSelf(loan.borrower)) {
+          continue
         }
 
         const skipReason = matchLoanToConfig(loan, config, "lend", tokenPrices)
@@ -420,8 +441,11 @@ async function runCycle(userWallet: string): Promise<void> {
       const candidates: typeof lendOffers = []
 
       for (const loan of lendOffers) {
-        if (loan.lender?.toLowerCase() === agentPubkeyStr.toLowerCase()) {
-          continue // skip self
+        // Skip any lend offer posted by the agent itself, the owner's
+        // main wallet, or any of the owner's stealths — all of those
+        // would be the agent borrowing from its own user.
+        if (isSelf(loan.lender)) {
+          continue
         }
 
         const skipReason = matchLoanToConfig(loan, config, "borrow", tokenPrices)
