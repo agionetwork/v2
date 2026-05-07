@@ -109,19 +109,26 @@ function CounterpartyName({
   if (isStealth || isMine) {
     return <span className="italic text-muted-foreground">Anonymous</span>
   }
-  // No nickname yet → render the FULL pubkey in monospace so the cell
-  // doesn't change width once the profile lookup resolves (the previous
-  // shortened "ABCD…WXYZ" form caused a visible reflow + font swap when
-  // displayName arrived). break-all keeps long pubkeys from blowing up
-  // the row on narrow viewports.
+  // useWalletProfile falls back to the shortened "ABCD…WXYZ" form when
+  // no Tapestry profile and no SNS domain are found. That fallback
+  // overrode our full-address render once the hook resolved (visible
+  // case-flicker + truncation flicker). Skip it explicitly: only treat
+  // displayName as a real nickname when it differs from the short
+  // fallback and isn't a substring of the address itself.
+  const looksLikeAddressFallback = (val: string | null) => {
+    if (!val) return false
+    if (val === shortenAddress(address)) return true
+    // base58 substring with the canonical "..." separator, mixed case preserved.
+    if (/^[A-Za-z0-9]{4}\.{3}[A-Za-z0-9]{4}$/.test(val) && address.startsWith(val.slice(0, 4)) && address.endsWith(val.slice(-4))) return true
+    return false
+  }
+  const realName = looksLikeAddressFallback(displayName) ? null : displayName
   return (
     <Link
       href={`/socialfi/profile/${profileWallet || address}`}
       className="text-blue-600 dark:text-blue-400 hover:underline break-all"
     >
-      {displayName || (
-        <span className="font-mono text-[11px]">{address}</span>
-      )}
+      {realName ? realName : <span className="font-mono text-[11px]">{address}</span>}
     </Link>
   )
 }
