@@ -434,20 +434,16 @@ function OfferRow({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () => 
   // wallet shape to a user-shape mid-load. Worst-case transition is
   // shortened address → username, which only happens when a real
   // nickname actually exists.
-  // While useWalletProfile is mid-resolve, render a thin skeleton bar
-  // so we never flash a wallet shape before the username lands. Only
-  // after the hook settles (loading=false) do we commit to either the
-  // real nickname or the shortened-address fallback.
+  // Wait for the profile resolve to settle before painting anything,
+  // so the cell goes straight from blank → username with no skeleton
+  // and no wallet flicker between them. Once loading is false we
+  // either show the real nickname or — if the wallet has no profile
+  // — the shortened-address fallback.
   const counterpartyCell = !counterpartyAddress ? (
     <span className="text-muted-foreground">Open</span>
   ) : isStealth ? (
     <span className="italic text-muted-foreground">Anonymous</span>
-  ) : profileLoading && !realCounterpartyName ? (
-    <span
-      aria-label="Resolving username"
-      className="inline-block h-3 w-24 rounded bg-muted animate-pulse align-middle"
-    />
-  ) : (
+  ) : profileLoading && !realCounterpartyName ? null : (
     <Link
       href={`/socialfi/profile/${profileWallet || counterpartyAddress}`}
       className={counterpartyLinkClass}
@@ -671,13 +667,12 @@ function OfferCard({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () =>
                 ) : !counterpartyAddress ? (
                   <p className="font-semibold text-black dark:text-white text-sm truncate">Open</p>
                 ) : counterpartyLoading && !realCardCounterpartyName ? (
-                  // Skeleton while the profile resolves so the card
-                  // never flashes a wallet shape before swapping to
-                  // the real username.
-                  <span
-                    aria-label="Resolving username"
-                    className="inline-block h-4 w-28 rounded bg-muted animate-pulse align-middle"
-                  />
+                  // Hold an empty line of the right height while the
+                  // profile resolves, so the card pops straight from
+                  // blank → username without a skeleton / wallet flash.
+                  <p className="font-semibold text-sm truncate" aria-hidden>
+                    &nbsp;
+                  </p>
                 ) : (
                   <Link
                     href={`/socialfi/profile/${counterpartyProfileWallet || counterpartyAddress}`}
