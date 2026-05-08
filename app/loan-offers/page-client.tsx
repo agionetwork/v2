@@ -383,7 +383,15 @@ function OfferRow({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () => 
 
   return (
     <TableRow>
-      <TableCell className="text-center text-sm font-mono uppercase tracking-wider">
+      {/* Type indicator — same colour as the action button: lend = blue,
+          borrow = red. Read-only label, NOT a button. */}
+      <TableCell
+        className={`text-center text-sm font-mono uppercase tracking-wider font-semibold ${
+          isLendOffer
+            ? "text-blue-600 dark:text-blue-400"
+            : "text-red-600 dark:text-red-400"
+        }`}
+      >
         {isLendOffer ? "Lend" : "Borrow"}
       </TableCell>
       <TableCell className="text-center text-sm">{counterpartyCell}</TableCell>
@@ -398,14 +406,17 @@ function OfferRow({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () => 
       </TableCell>
       <TableCell className="text-center text-sm">{formatDuration(offer.duration)}</TableCell>
       <TableCell className="text-center">
+        {/* Always "Accept"; colour follows the offer's type so a lend
+            offer's accept button is blue and a borrow request's accept
+            button is red. */}
         <Button
           size="sm"
-          variant={isLendOffer ? "destructive" : "default"}
+          variant={isLendOffer ? "default" : "destructive"}
           className="text-xs"
           disabled={!connected || accepting}
           onClick={handleAccept}
         >
-          {accepting ? "Confirming…" : isLendOffer ? "Borrow" : "Lend"}
+          {accepting ? "Confirming…" : "Accept"}
         </Button>
       </TableCell>
     </TableRow>
