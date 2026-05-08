@@ -413,28 +413,26 @@ function OfferRow({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () => 
     counterpartyAddress && !isAddressLikeName(counterpartyName, counterpartyAddress)
       ? counterpartyName
       : null
-  // The cell only ever shows: a username link (when a real Tapestry
-  // nickname / SNS domain resolves), the literal "Anonymous" for
-  // stealth wallets, "Open" for offers that have no counterparty
-  // yet, or — while the hook is still resolving — a thin skeleton
-  // bar so we never flash the wallet address before swapping to the
-  // resolved name.
+  // Cell renders one of: "Open" (no counterparty), italic
+  // "Anonymous" (stealth), the username link (real Tapestry
+  // nickname / SNS domain), or — when no profile exists for the
+  // wallet — the shortened pubkey "ABCD…WXYZ". The shortened form
+  // is also the placeholder while the hook resolves, so the cell
+  // never goes from a long pubkey to a short one and never from a
+  // wallet shape to a user-shape mid-load. Worst-case transition is
+  // shortened address → username, which only happens when a real
+  // nickname actually exists.
   const counterpartyCell = !counterpartyAddress ? (
     <span className="text-muted-foreground">Open</span>
   ) : isStealth ? (
     <span className="italic text-muted-foreground">Anonymous</span>
-  ) : realCounterpartyName ? (
+  ) : (
     <Link
       href={`/socialfi/profile/${profileWallet || counterpartyAddress}`}
       className={counterpartyLinkClass}
     >
-      {realCounterpartyName}
+      {realCounterpartyName || shortenAddress(counterpartyAddress)}
     </Link>
-  ) : (
-    <span
-      aria-label="Resolving username"
-      className="inline-block h-3 w-24 rounded bg-muted animate-pulse align-middle"
-    />
   )
 
   return (
@@ -493,7 +491,35 @@ function OfferCard({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () =>
 
   // Resolve counterparty name: Tapestry displayName > SNS domain > shortened address
   // Handles agent wallets via reverse lookup (agent → owner → profile)
-  const { displayName: counterpartyDisplayName, profileWallet: counterpartyProfileWallet, isStealth: counterpartyIsStealth } = useWalletProfile(counterpartyAddress)
+  const {
+    displayName: counterpartyDisplayName,
+    profileWallet: counterpartyProfileWallet,
+    isStealth: counterpartyIsStealth,
+  } = useWalletProfile(counterpartyAddress)
+  // Reject the address-shaped fallbacks useWalletProfile returns when
+  // no real Tapestry nickname or SNS domain is set (shortened form,
+  // pubkey lowercased, base58 substring of the wallet) so the card
+  // never flashes a wallet shape in place of a username.
+  const isCardAddressLikeName = (val: string | null | undefined, addr: string) => {
+    if (!val || !addr) return false
+    const v = val.trim()
+    if (!v) return false
+    if (v.includes("...") || v.includes("…")) return true
+    const a = addr.toLowerCase()
+    if (v.toLowerCase() === a) return true
+    if (
+      v.length >= 6 &&
+      /^[1-9A-HJ-NP-Za-km-z]+$/.test(v) &&
+      a.includes(v.toLowerCase())
+    ) {
+      return true
+    }
+    return false
+  }
+  const realCardCounterpartyName =
+    counterpartyAddress && !isCardAddressLikeName(counterpartyDisplayName, counterpartyAddress)
+      ? counterpartyDisplayName
+      : null
   const durationLabel = formatDuration(offer.duration)
   const expectedInterest = offer.debtAmountUi * offer.apy / 100 * offer.duration / (365 * 86400)
   const handleAccept = useCallback(async () => {
@@ -620,12 +646,12 @@ function OfferCard({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () =>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{counterpartyLabel}</p>
                 {counterpartyIsStealth ? (
                   <p className="font-semibold italic text-muted-foreground text-sm truncate">Anonymous</p>
-                ) : counterpartyProfileWallet ? (
+                ) : counterpartyAddress ? (
                   <Link
-                    href={`/socialfi/profile/${counterpartyProfileWallet}`}
+                    href={`/socialfi/profile/${counterpartyProfileWallet || counterpartyAddress}`}
                     className="font-semibold text-blue-600 dark:text-blue-400 hover:underline text-sm truncate block"
                   >
-                    {counterpartyDisplayName || 'Open'}
+                    {realCardCounterpartyName || shortenAddress(counterpartyAddress)}
                   </Link>
                 ) : (
                   <p className="font-semibold text-black dark:text-white text-sm truncate">Open</p>
