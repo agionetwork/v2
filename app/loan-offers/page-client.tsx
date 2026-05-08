@@ -375,12 +375,11 @@ function OfferRow({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () => 
   const counterpartyLinkClass = isLendOffer
     ? "text-blue-600 dark:text-blue-400 hover:underline font-medium"
     : "text-red-600 dark:text-red-400 hover:underline font-medium"
-  // useWalletProfile falls back to address-like values (shortened
-  // form, full pubkey lowercased, base58 substring of the wallet)
-  // when no real Tapestry nickname or SNS domain is set. Those slip
-  // through and read as a "wallet → name" flicker on every poll. Skip
-  // any displayName that's just a representation of the same wallet
-  // and render a single shortened pubkey consistently.
+  // Filter out the address-like fallbacks useWalletProfile returns
+  // when no real Tapestry nickname or SNS domain exists (shortened
+  // form, full pubkey lowercased, base58 substring of the wallet) so
+  // we never end up rendering a wallet shape next to / in place of a
+  // username.
   const isAddressLikeName = (val: string | null | undefined, addr: string) => {
     if (!val) return false
     const v = val.trim()
@@ -401,17 +400,28 @@ function OfferRow({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () => 
     counterpartyAddress && !isAddressLikeName(counterpartyName, counterpartyAddress)
       ? counterpartyName
       : null
-  const counterpartyCell = isStealth ? (
+  // The cell only ever shows: a username link (when a real Tapestry
+  // nickname / SNS domain resolves), the literal "Anonymous" for
+  // stealth wallets, "Open" for offers that have no counterparty
+  // yet, or — while the hook is still resolving — a thin skeleton
+  // bar so we never flash the wallet address before swapping to the
+  // resolved name.
+  const counterpartyCell = !counterpartyAddress ? (
+    <span className="text-muted-foreground">Open</span>
+  ) : isStealth ? (
     <span className="italic text-muted-foreground">Anonymous</span>
-  ) : counterpartyAddress ? (
+  ) : realCounterpartyName ? (
     <Link
       href={`/socialfi/profile/${profileWallet || counterpartyAddress}`}
       className={counterpartyLinkClass}
     >
-      {realCounterpartyName || shortenAddress(counterpartyAddress)}
+      {realCounterpartyName}
     </Link>
   ) : (
-    <span className="text-muted-foreground">Open</span>
+    <span
+      aria-label="Resolving username"
+      className="inline-block h-3 w-24 rounded bg-muted animate-pulse align-middle"
+    />
   )
 
   return (
