@@ -730,7 +730,16 @@ function DashboardContent() {
                         enableArea={false}
                         layers={["grid", "markers", "axes", "crosshair", "points", "slices", "mesh", "legends"]}
                         pointSize={11}
-                        pointColor={{ from: 'serieColor' }}
+                        // Each point uses its series colour explicitly so
+                        // Borrowed always renders red and Lent always blue,
+                        // matching the legend swatches. The `from: 'color'`
+                        // shape Nivo accepts on the type can fall back to
+                        // the default black on some builds, so we wire it
+                        // directly via a function and double-belt with a
+                        // `colors` lookup (already set above).
+                        pointColor={({ serieId }: any) =>
+                          serieId === 'Borrowed' ? '#DC2626' : '#4A90FF'
+                        }
                         pointBorderWidth={2}
                         pointBorderColor={theme === 'dark' ? '#0A1230' : '#FFFFFF'}
                         enablePointLabel={false}
