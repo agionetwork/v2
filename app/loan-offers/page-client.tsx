@@ -368,12 +368,19 @@ function OfferRow({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () => 
 
   if (accepted) return null
 
+  // Counterparty link colour follows the same lend / borrow code as
+  // the Type and Action cells — lend offer counterparties (= the
+  // lender) read blue, borrow request counterparties (= the borrower)
+  // read red.
+  const counterpartyLinkClass = isLendOffer
+    ? "text-blue-600 dark:text-blue-400 hover:underline font-medium"
+    : "text-red-600 dark:text-red-400 hover:underline font-medium"
   const counterpartyCell = isStealth ? (
     <span className="italic text-muted-foreground">Anonymous</span>
   ) : counterpartyAddress ? (
     <Link
       href={`/socialfi/profile/${profileWallet || counterpartyAddress}`}
-      className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+      className={counterpartyLinkClass}
     >
       {counterpartyName || shortenAddress(counterpartyAddress)}
     </Link>
