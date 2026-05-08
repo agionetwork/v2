@@ -263,7 +263,9 @@ export default function LoanOffersPageClient() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Tokens</SelectItem>
-              {ACCEPTED_TOKENS.map((sym) => (
+              {/* Drop bSOL/agioSOL from the marketplace filter — it
+                  isn't surfaced as a borrowable principal yet. */}
+              {ACCEPTED_TOKENS.filter((sym) => sym !== "bSOL").map((sym) => (
                 <SelectItem key={sym} value={sym}>
                   <span className="inline-flex items-center gap-2">
                     <img
@@ -350,7 +352,12 @@ function OfferRow({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () => 
 
   const isLendOffer = offer.offerType === "lend"
   const counterpartyAddress = isLendOffer ? offer.lender : offer.borrower
-  const { displayName: counterpartyName, profileWallet, isStealth } = useWalletProfile(counterpartyAddress)
+  const {
+    displayName: counterpartyName,
+    profileWallet,
+    isStealth,
+    loading: profileLoading,
+  } = useWalletProfile(counterpartyAddress)
 
   const handleAccept = useCallback(async () => {
     if (busyRef.current) return
@@ -427,10 +434,19 @@ function OfferRow({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () => 
   // wallet shape to a user-shape mid-load. Worst-case transition is
   // shortened address → username, which only happens when a real
   // nickname actually exists.
+  // While useWalletProfile is mid-resolve, render a thin skeleton bar
+  // so we never flash a wallet shape before the username lands. Only
+  // after the hook settles (loading=false) do we commit to either the
+  // real nickname or the shortened-address fallback.
   const counterpartyCell = !counterpartyAddress ? (
     <span className="text-muted-foreground">Open</span>
   ) : isStealth ? (
     <span className="italic text-muted-foreground">Anonymous</span>
+  ) : profileLoading && !realCounterpartyName ? (
+    <span
+      aria-label="Resolving username"
+      className="inline-block h-3 w-24 rounded bg-muted animate-pulse align-middle"
+    />
   ) : (
     <Link
       href={`/socialfi/profile/${profileWallet || counterpartyAddress}`}
@@ -500,6 +516,7 @@ function OfferCard({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () =>
     displayName: counterpartyDisplayName,
     profileWallet: counterpartyProfileWallet,
     isStealth: counterpartyIsStealth,
+    loading: counterpartyLoading,
   } = useWalletProfile(counterpartyAddress)
   // Reject the address-shaped fallbacks useWalletProfile returns when
   // no real Tapestry nickname or SNS domain is set (shortened form,
@@ -651,15 +668,23 @@ function OfferCard({ offer, onAccepted }: { offer: ParsedLoan; onAccepted: () =>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{counterpartyLabel}</p>
                 {counterpartyIsStealth ? (
                   <p className="font-semibold italic text-muted-foreground text-sm truncate">Anonymous</p>
-                ) : counterpartyAddress ? (
+                ) : !counterpartyAddress ? (
+                  <p className="font-semibold text-black dark:text-white text-sm truncate">Open</p>
+                ) : counterpartyLoading && !realCardCounterpartyName ? (
+                  // Skeleton while the profile resolves so the card
+                  // never flashes a wallet shape before swapping to
+                  // the real username.
+                  <span
+                    aria-label="Resolving username"
+                    className="inline-block h-4 w-28 rounded bg-muted animate-pulse align-middle"
+                  />
+                ) : (
                   <Link
                     href={`/socialfi/profile/${counterpartyProfileWallet || counterpartyAddress}`}
                     className="font-semibold text-blue-600 dark:text-blue-400 hover:underline text-sm truncate block"
                   >
                     {realCardCounterpartyName || shortenAddress(counterpartyAddress)}
                   </Link>
-                ) : (
-                  <p className="font-semibold text-black dark:text-white text-sm truncate">Open</p>
                 )}
               </div>
               <div className="space-y-1">
