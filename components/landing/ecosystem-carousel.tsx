@@ -7,7 +7,7 @@ import Image from "next/image"
 // scale: per-logo size tweak (1 = default BOX bounds, <1 = smaller)
 const partners = [
   { name: "Solana", logo: "/ecosystem/solana.png", w: 1287, h: 193, scale: 1 },
-  { name: "Helius", logo: "/ecosystem/helius.png", w: 1457, h: 558, scale: 0.95 },
+  { name: "Helius", logo: "/ecosystem/helius.png", w: 1441, h: 590, scale: 0.95 },
   { name: "Superteam Brasil", logo: "/ecosystem/superteam-brasil.png", w: 497, h: 80, scale: 1 },
   { name: "Cloak", logo: "/ecosystem/cloak.svg", w: 1738, h: 473, scale: 0.85 },
   { name: "Privy", logo: "/ecosystem/privy.png", w: 1304, h: 298, scale: 0.78 },
