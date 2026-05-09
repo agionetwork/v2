@@ -60,7 +60,7 @@ export function RiskZoneBar({
         : "text-emerald-500"
 
   return (
-    <div className={cn("space-y-1.5", className)}>
+    <div className={cn("space-y-1", className)}>
       <div className="flex items-baseline justify-between text-xs">
         <span className="text-muted-foreground">Collateral health</span>
         <span className={cn("font-medium tabular-nums", zoneColor)}>

@@ -472,9 +472,9 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="py-2 bg-transparent relative z-10">
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
-            <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <div className="space-y-1">
                 <div className="flex items-center gap-1">
                   <Label htmlFor="loan-amount" className="text-sm font-medium text-foreground">
@@ -612,8 +612,8 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 mt-6">
-              <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 mt-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-1">
                   <Label
                     htmlFor="collateral-percentage"
@@ -658,8 +658,8 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 mt-6">
-              <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 mt-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-1">
                   <Label htmlFor="loan-term" className="text-sm font-medium text-foreground">
                     PERIOD
@@ -704,8 +704,8 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 mt-6">
-              <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 mt-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-1">
                   <Label htmlFor="apy" className="text-sm font-medium text-foreground">
                     <TermTooltip term="apy">APY (%)</TermTooltip>
@@ -752,7 +752,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                   onValueChange={([value]) => clampedSetApyPct(value)}
                   className="w-full bg-transparent dark:bg-transparent"
                 />
-                <div className="space-y-2 pt-1">
+                <div className="space-y-1">
                   <RiskZoneBar
                     collateralValueUsd={collateralValueUsd}
                     principalUsd={principalUsd}
