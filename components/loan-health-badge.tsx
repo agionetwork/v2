@@ -101,29 +101,35 @@ export function LoanHealthBadge({ ratio, isPending = false, className, compact =
 }
 
 /**
- * Bar variant: visual gauge from 100% to 200% with the current ratio marked.
- * Shows clearly how close the loan is to the foreclosure trigger.
+ * Bar variant: visuals match the RiskZoneBar on the borrow/lend form so a
+ * loan looks the same color across creation and the dashboard modal.
+ *
+ * Scale (in collateral % terms):
+ *   start  (0%)   = 120% collateral — liquidation boundary
+ *   middle (50%)  = 150% collateral — stressed/safe boundary
+ *   end    (100%) = 180%+ collateral — comfortably safe
+ *
+ * Both halves cover the same 30-point span, so the marker sits exactly in
+ * the middle when the loan crosses into safe territory.
  */
+const PCT_LIQUIDATION = 120
+const PCT_STRESSED = 150
+const PCT_BAR_END = 180
+function pctToBarPos(pct: number): number {
+  if (pct <= PCT_LIQUIDATION) return 0
+  if (pct >= PCT_BAR_END) return 100
+  if (pct <= PCT_STRESSED) {
+    return ((pct - PCT_LIQUIDATION) / (PCT_STRESSED - PCT_LIQUIDATION)) * 50
+  }
+  return 50 + ((pct - PCT_STRESSED) / (PCT_BAR_END - PCT_STRESSED)) * 50
+}
+
 export function LoanHealthBar({ ratio, isPending = false, className }: Props) {
   const status = classify(ratio, isPending)
   const styles = STYLES[status]
   const tooltip = TOOLTIPS[status]
   const safe = Number.isFinite(ratio) && ratio > 0 ? ratio : 0
-
-  // Map 100..200% to 0..100% along the bar. Cap at extremes.
-  const pct = Math.max(0, Math.min(100, ((safe - 100) / 100) * 100))
-
-  // Tick labels positioned at their REAL location on the 100..200 scale,
-  // so 120 sits 20 % across, 150 lands at the midpoint, and 200+ pins to
-  // the right edge. Each tick uses translate(-50%) to centre on its
-  // line; the 100 / 200+ ends are kept flush left/right so they don't
-  // get clipped by the container.
-  const TICKS: { value: number; label: string }[] = [
-    { value: 100, label: "100%" },
-    { value: 120, label: "120%" },
-    { value: 150, label: "150%" },
-    { value: 200, label: "200%+" },
-  ]
+  const markerPct = pctToBarPos(safe)
 
   return (
     <div title={tooltip} className={cn("space-y-1.5", className)}>
@@ -131,49 +137,25 @@ export function LoanHealthBar({ ratio, isPending = false, className }: Props) {
         <span className="font-semibold">{safe > 0 ? `${safe.toFixed(1)}%` : "Ratio unavailable"}</span>
         <span className={cn("rounded-full border px-2.5 py-0.5 text-xs font-medium", styles)}>{LABELS[status]}</span>
       </div>
-      <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+      <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-emerald-500">
+        {/* 150% boundary tick at the midpoint */}
         <div
-          className={cn(
-            "absolute left-0 top-0 h-full rounded-full transition-all",
-            status === "healthy" && "bg-green-500",
-            status === "caution" && "bg-yellow-500",
-            status === "at-risk" && "bg-orange-500",
-            status === "foreclosure" && "bg-red-500",
-            status === "pending-ok" && "bg-green-500",
-            status === "pending-bad" && "bg-red-500",
-            status === "unknown" && "bg-muted-foreground/30",
-          )}
-          style={{ width: `${pct}%` }}
+          className="absolute top-0 bottom-0 w-px bg-black/40 dark:bg-white/40"
+          style={{ left: "50%" }}
+          aria-hidden
         />
-        {/* Foreclosure marker at 120% (= 20% of bar) */}
-        <div
-          className="absolute top-0 h-full w-px bg-red-500/60"
-          style={{ left: "20%" }}
-          title="Foreclosure threshold (120%)"
-        />
-        {/* Acceptance marker at 130% (= 30% of bar) */}
-        <div
-          className="absolute top-0 h-full w-px bg-yellow-500/60"
-          style={{ left: "30%" }}
-          title="Acceptance floor (130%)"
-        />
+        {safe > 0 && (
+          <div
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-3.5 w-1.5 rounded-sm bg-foreground shadow-md transition-[left] duration-200 ease-out"
+            style={{ left: `${markerPct}%` }}
+            aria-label={`Current ratio ${safe.toFixed(1)}%`}
+          />
+        )}
       </div>
-      <div className="relative h-4 text-xs font-medium text-muted-foreground">
-        {TICKS.map((t) => {
-          const left = ((t.value - 100) / 100) * 100
-          // Pin the endpoints flush so they don't clip; centre the rest on their tick.
-          const transform =
-            left <= 0 ? "translateX(0)" : left >= 100 ? "translateX(-100%)" : "translateX(-50%)"
-          return (
-            <span
-              key={t.value}
-              className="absolute top-0 tabular-nums"
-              style={{ left: `${left}%`, transform }}
-            >
-              {t.label}
-            </span>
-          )
-        })}
+      <div className="relative h-3.5 text-[10px] text-muted-foreground tabular-nums">
+        <span className="absolute left-0 text-red-500 font-medium">120% Liquidation</span>
+        <span className="absolute left-1/2 -translate-x-1/2">150%</span>
+        <span className="absolute right-0">180%+</span>
       </div>
     </div>
   )
