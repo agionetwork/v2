@@ -473,6 +473,22 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
       </CardHeader>
       <CardContent className="py-2 bg-transparent relative z-10">
         <div className="space-y-3">
+          <div className="space-y-1">
+            <RiskZoneBar
+              collateralValueUsd={collateralValueUsd}
+              principalUsd={principalUsd}
+              apyBps={apyBpsLive}
+              durationSeconds={durationSecsLive}
+            />
+            <WorstCasePreview
+              collateralValueUsd={collateralValueUsd}
+              principalUsd={principalUsd}
+              apyBps={apyBpsLive}
+              durationSeconds={durationSecsLive}
+              collateralSymbol={tokenCollateral}
+            />
+          </div>
+
           <div className="grid grid-cols-1 gap-2">
             <div className="grid grid-cols-1 gap-2">
               <div className="space-y-1">
@@ -752,21 +768,6 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                   onValueChange={([value]) => clampedSetApyPct(value)}
                   className="w-full bg-transparent dark:bg-transparent"
                 />
-                <div className="space-y-1">
-                  <RiskZoneBar
-                    collateralValueUsd={collateralValueUsd}
-                    principalUsd={principalUsd}
-                    apyBps={apyBpsLive}
-                    durationSeconds={durationSecsLive}
-                  />
-                  <WorstCasePreview
-                    collateralValueUsd={collateralValueUsd}
-                    principalUsd={principalUsd}
-                    apyBps={apyBpsLive}
-                    durationSeconds={durationSecsLive}
-                    collateralSymbol={tokenCollateral}
-                  />
-                </div>
               </div>
             </div>
 
