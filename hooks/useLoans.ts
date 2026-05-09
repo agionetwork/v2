@@ -19,7 +19,11 @@ export function useLoans() {
   }
 
   const { loans, loading, error, refetch } = context
-  const { publicKey } = useWallet()
+  // `connecting` covers the wallet-adapter init window where publicKey
+  // briefly reads as null even though a wallet is about to attach. We
+  // gate myWalletsReady on it so consumers don't render the unfiltered
+  // marketplace before the user's wallet info is even known.
+  const { publicKey, connecting } = useWallet()
 
   // Resolve agent wallet (Privy wallet) so agent-created loans show as user's own
   const [agentWallet, setAgentWallet] = useState<string | null>(null)
@@ -75,7 +79,13 @@ export function useLoans() {
     return () => { cancelled = true }
   }, [publicKey])
 
-  const myWalletsReady = !publicKey || (agentResolved && stealthsResolved)
+  // Adapter still attaching → wait. No wallet → ready immediately
+  // (no filtering needed). Wallet attached → wait for both flag fetches.
+  const myWalletsReady = connecting
+    ? false
+    : !publicKey
+      ? true
+      : agentResolved && stealthsResolved
 
   const stealthSet = useMemo(() => new Set(stealthWallets), [stealthWallets])
 

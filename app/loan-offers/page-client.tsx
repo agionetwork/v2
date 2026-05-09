@@ -14,7 +14,7 @@ import { useLoans, formatDuration, type ParsedLoan } from "@/hooks/useLoans"
 import { useLoanContract } from "@/hooks/useLoanContract"
 import { useWallet } from "@solana/wallet-adapter-react"
 import { useWalletContext } from "@/components/wallet-provider"
-import { useWalletProfile } from "@/hooks/useWalletProfile"
+import { useWalletProfile, prefetchWalletProfiles } from "@/hooks/useWalletProfile"
 
 function shortenAddress(addr: string): string {
   if (!addr || addr.length < 10) return addr
@@ -157,12 +157,34 @@ export default function LoanOffersPageClient() {
     return offers
   }, [openOffers, filterType, filterToken, sortBy, apyRange, daysRange, publicKey, isMyWallet])
 
+  // Pre-warm the Tapestry/owner-lookup cache for every counterparty
+  // about to render. Without this, each row's useWalletProfile fires
+  // its own request and the cell paints empty → name a beat later.
+  // We batch at the page level so the row hooks read from cache
+  // synchronously on first render. Only the FIRST batch gates the
+  // render — subsequent filter changes rely on the cache (a new,
+  // uncached counterparty just flickers in its own row, not the page).
+  const [profilesReady, setProfilesReady] = useState(false)
+  useEffect(() => {
+    if (loading || !myWalletsReady) return
+    const addrs = filteredOffers.map(l => l.offerType === 'lend' ? l.lender : l.borrower)
+    if (addrs.length === 0) {
+      setProfilesReady(true)
+      return
+    }
+    let cancelled = false
+    prefetchWalletProfiles(addrs).finally(() => {
+      if (!cancelled) setProfilesReady(true)
+    })
+    return () => { cancelled = true }
+  }, [filteredOffers, loading, myWalletsReady])
+
   // Gate the offers list on BOTH the loan-fetch AND the agent +
   // stealth lookups. Without the second wait, the user's own
   // agent/stealth offers briefly slip through isMyWallet's filter
   // (see useLoans) and the marketplace flashes them before
   // pulling them out — Surfer reported "6 offers → 4 offers".
-  if (loading || !myWalletsReady) {
+  if (loading || !myWalletsReady || !profilesReady) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center py-16">

@@ -13,6 +13,97 @@ function shortenAddress(addr: string): string {
 // Simple in-memory cache for agent → owner reverse lookups
 const ownerCache = new Map<string, string | null>()
 
+// Module-level cache of fully-resolved profile records, keyed by the
+// pubkey we were asked to resolve. A page (e.g. /loan-offers) can
+// pre-warm this with prefetchWalletProfile(...) so per-row hooks
+// return synchronously on their first render — no async flicker.
+type ResolvedRecord = { displayName: string | null; profileWallet: string | null }
+const profileCache = new Map<string, ResolvedRecord>()
+const profileInflight = new Map<string, Promise<ResolvedRecord>>()
+
+/**
+ * Run the same resolution chain useWalletProfile does, but standalone
+ * so callers can warm the module cache in batch. Subsequent hook
+ * mounts for the same address return synchronously.
+ */
+export async function prefetchWalletProfile(address: string): Promise<ResolvedRecord> {
+  if (!address) return { displayName: null, profileWallet: null }
+  const cached = profileCache.get(address)
+  if (cached) return cached
+  const inflight = profileInflight.get(address)
+  if (inflight) return inflight
+
+  const job = (async (): Promise<ResolvedRecord> => {
+    let displayName: string | null = null
+    let profileWallet: string | null = null
+
+    try {
+      const result = await searchProfiles(address, 1, 0)
+      const profile = result.profiles?.[0]?.profile
+      if (profile && profile.walletAddress?.toLowerCase() === address.toLowerCase()) {
+        const name = getCustomProperty(profile, "displayName") || profile.username
+        if (name) {
+          displayName = name
+          profileWallet = address
+        }
+      }
+    } catch { /* fall through */ }
+
+    if (!displayName) {
+      let ownerWallet: string | null = ownerCache.has(address) ? (ownerCache.get(address) ?? null) : null
+      if (!ownerCache.has(address)) {
+        try {
+          const res = await fetch(`/api/agent/owner?agent=${address}`)
+          const data = await res.json()
+          ownerWallet = data.ownerWallet || null
+        } catch { /* leave null */ }
+        ownerCache.set(address, ownerWallet)
+      }
+      if (ownerWallet) {
+        try {
+          const result = await searchProfiles(ownerWallet, 1, 0)
+          const profile = result.profiles?.[0]?.profile
+          if (profile) {
+            const name = getCustomProperty(profile, "displayName") || profile.username
+            if (name) {
+              displayName = name
+              profileWallet = ownerWallet
+            } else {
+              profileWallet = ownerWallet
+            }
+          } else {
+            profileWallet = ownerWallet
+          }
+        } catch {
+          profileWallet = ownerWallet
+        }
+      } else {
+        profileWallet = address
+      }
+    }
+
+    const record: ResolvedRecord = { displayName, profileWallet }
+    profileCache.set(address, record)
+    profileInflight.delete(address)
+    return record
+  })()
+
+  profileInflight.set(address, job)
+  return job
+}
+
+/**
+ * Convenience: pre-warm a list of pubkeys in parallel. Resolves once
+ * every entry has a cache record (success or definitive miss).
+ */
+export async function prefetchWalletProfiles(addresses: (string | null | undefined)[]): Promise<void> {
+  const unique = Array.from(
+    new Set(addresses.filter((a): a is string => !!a)),
+  )
+  if (unique.length === 0) return
+  await Promise.all(unique.map((a) => prefetchWalletProfile(a)))
+}
+
 /**
  * Resolves a wallet address to a Tapestry display name and profile link.
  * If the address is an agent wallet, performs a reverse lookup to find the
@@ -24,9 +115,13 @@ const ownerCache = new Map<string, string | null>()
  *  - loading: whether resolution is in progress
  */
 export function useWalletProfile(address: string | null | undefined) {
-  const [displayName, setDisplayName] = useState<string | null>(null)
-  const [profileWallet, setProfileWallet] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  // Seed initial state from the module cache so consumers that pre-warmed
+  // (via prefetchWalletProfiles) render the resolved name on first paint —
+  // no empty cell, no name-after-row flicker.
+  const cached = address ? profileCache.get(address) : null
+  const [displayName, setDisplayName] = useState<string | null>(cached?.displayName ?? null)
+  const [profileWallet, setProfileWallet] = useState<string | null>(cached?.profileWallet ?? null)
+  const [loading, setLoading] = useState(!!address && !cached)
   const addressRef = useRef(address)
 
   // SNS domain for the original address (will be null if agent wallet has no domain)
@@ -52,82 +147,32 @@ export function useWalletProfile(address: string | null | undefined) {
       return
     }
 
+    // Cache hit — already resolved, no async work needed.
+    const hit = profileCache.get(address)
+    if (hit) {
+      setDisplayName(hit.displayName)
+      setProfileWallet(hit.profileWallet)
+      setLoading(false)
+      return
+    }
+
     let cancelled = false
     setLoading(true)
 
-    async function resolve() {
-      if (!address) return
-
-      // Step 1: Try Tapestry profile directly for this address
-      try {
-        const result = await searchProfiles(address, 1, 0)
+    prefetchWalletProfile(address)
+      .then((record) => {
         if (cancelled) return
-        const profile = result.profiles?.[0]?.profile
-        if (profile && profile.walletAddress?.toLowerCase() === address.toLowerCase()) {
-          const name = getCustomProperty(profile, "displayName") || profile.username
-          if (name) {
-            setDisplayName(name)
-            setProfileWallet(address)
-            setLoading(false)
-            return
-          }
-        }
-      } catch {
-        // continue to agent lookup
-      }
-
-      if (cancelled) return
-
-      // Step 2: Try reverse lookup (agent → owner wallet)
-      let ownerWallet: string | null = null
-      if (ownerCache.has(address)) {
-        ownerWallet = ownerCache.get(address) ?? null
-      } else {
-        try {
-          const res = await fetch(`/api/agent/owner?agent=${address}`)
-          if (cancelled) return
-          const data = await res.json()
-          ownerWallet = data.ownerWallet || null
-          ownerCache.set(address, ownerWallet)
-        } catch {
-          ownerCache.set(address, null)
-        }
-      }
-
-      if (cancelled) return
-
-      // Step 3: If owner found, try Tapestry profile for the owner
-      if (ownerWallet) {
-        try {
-          const result = await searchProfiles(ownerWallet, 1, 0)
-          if (cancelled) return
-          const profile = result.profiles?.[0]?.profile
-          if (profile) {
-            const name = getCustomProperty(profile, "displayName") || profile.username
-            if (name) {
-              setDisplayName(name)
-              setProfileWallet(ownerWallet)
-              setLoading(false)
-              return
-            }
-          }
-        } catch {
-          // fall through
-        }
-
+        setDisplayName(record.displayName)
+        setProfileWallet(record.profileWallet)
+        setLoading(false)
+      })
+      .catch(() => {
         if (cancelled) return
-        // Owner exists but no profile name — link to owner wallet anyway
-        setProfileWallet(ownerWallet)
-      } else {
-        setProfileWallet(address)
-      }
+        setDisplayName(null)
+        setProfileWallet(address ?? null)
+        setLoading(false)
+      })
 
-      // No Tapestry name found — displayName stays null, component falls back to solDomain/shortened
-      setDisplayName(null)
-      setLoading(false)
-    }
-
-    resolve()
     return () => { cancelled = true }
   }, [address, isStealth])
 
