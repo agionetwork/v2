@@ -9,7 +9,11 @@
  * Everything else in this file is a rearrangement of that inequality.
  */
 
-export const LIQUIDATION_THRESHOLD = 1.2
+// 1.25 = 125% collateral/debt = LTV 80%. Matches DEFAULT_LIQUIDATION_THRESHOLD_BPS
+// in the Anchor program (12_500). Vaults created before the bump may still hold
+// 12_000 on-chain until an admin runs update_liquidation_threshold; the form's
+// safety hint will be slightly stricter than the deployed reality in that window.
+export const LIQUIDATION_THRESHOLD = 1.25
 export const SECONDS_PER_YEAR = 31_536_000
 
 // Protocol-wide APY ceiling. The on-chain `apy` field is u8, and the form

@@ -16,7 +16,7 @@ interface Props {
 }
 
 /**
- * Foreclosure threshold: < 120% (DEFAULT_LIQUIDATION_THRESHOLD = 12000 bps).
+ * Foreclosure threshold: < 125% (DEFAULT_LIQUIDATION_THRESHOLD = 12500 bps, LTV 80%).
  * Acceptance floor: 130% (offers can be created at 150-300%, accepted at >= 130%).
  */
 function classify(ratio: number, isPending: boolean): LoanHealthStatus {
@@ -28,7 +28,7 @@ function classify(ratio: number, isPending: boolean): LoanHealthStatus {
 
   if (ratio >= 150) return "healthy"
   if (ratio >= 130) return "caution"
-  if (ratio >= 120) return "at-risk"
+  if (ratio >= 125) return "at-risk"
   return "foreclosure"
 }
 
@@ -53,10 +53,10 @@ const STYLES: Record<LoanHealthStatus, string> = {
 }
 
 const TOOLTIPS: Record<LoanHealthStatus, string> = {
-  healthy: "At or above 150%. Comfortable buffer over the foreclosure threshold (120%).",
+  healthy: "At or above 150%. Comfortable buffer over the foreclosure threshold (125%, LTV 80%).",
   caution: "Between 130% and 150%. Above the acceptance floor but watch oracle moves.",
-  "at-risk": "Between 120% and 130%. Add collateral or repay before the price moves further.",
-  foreclosure: "Below 120%. Lender can foreclose at any time. Add collateral immediately.",
+  "at-risk": "Between 125% and 130%. Add collateral or repay before the price moves further.",
+  foreclosure: "Below 125% (LTV 80%). Lender can foreclose at any time. Add collateral immediately.",
   "pending-ok": "At or above the 130% acceptance floor. The offer is acceptable.",
   "pending-bad": "Below the 130% acceptance floor. The offer cannot be accepted as-is.",
   unknown: "Oracle prices unavailable, ratio not computable.",
@@ -105,16 +105,16 @@ export function LoanHealthBadge({ ratio, isPending = false, className, compact =
  * loan looks the same color across creation and the dashboard modal.
  *
  * Scale (in collateral % terms):
- *   start  (0%)   = 120% collateral — liquidation boundary
+ *   start  (0%)   = 125% collateral — liquidation boundary (LTV 80%)
  *   middle (50%)  = 150% collateral — stressed/safe boundary
- *   end    (100%) = 180%+ collateral — comfortably safe
+ *   end    (100%) = 175%+ collateral — comfortably safe
  *
- * Both halves cover the same 30-point span, so the marker sits exactly in
+ * Both halves cover the same 25-point span, so the marker sits exactly in
  * the middle when the loan crosses into safe territory.
  */
-const PCT_LIQUIDATION = 120
+const PCT_LIQUIDATION = 125
 const PCT_STRESSED = 150
-const PCT_BAR_END = 180
+const PCT_BAR_END = 175
 function pctToBarPos(pct: number): number {
   if (pct <= PCT_LIQUIDATION) return 0
   if (pct >= PCT_BAR_END) return 100
@@ -153,9 +153,9 @@ export function LoanHealthBar({ ratio, isPending = false, className }: Props) {
         )}
       </div>
       <div className="relative h-3.5 text-[10px] text-muted-foreground tabular-nums">
-        <span className="absolute left-0 text-red-500 font-medium">120% Liquidation</span>
+        <span className="absolute left-0 text-red-500 font-medium">125% Liquidation</span>
         <span className="absolute left-1/2 -translate-x-1/2">150%</span>
-        <span className="absolute right-0">180%+</span>
+        <span className="absolute right-0">175%+</span>
       </div>
     </div>
   )

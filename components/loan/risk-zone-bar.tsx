@@ -18,15 +18,15 @@ interface Props {
 
 /**
  * Two-segment collateralization meter:
- *   start  (0%)   = 1.2× — liquidation boundary
- *   middle (50%)  = 1.5× — stressed/safe boundary
- *   end    (100%) = 1.8×+ — comfortably safe
+ *   start  (0%)   = 1.25× — liquidation boundary (LTV 80%)
+ *   middle (50%)  = 1.5×  — stressed/safe boundary
+ *   end    (100%) = 1.75×+ — comfortably safe
  *
- * Each half maps to the same 0.3× span, so the marker hits the middle
- * exactly when the loan crosses into the "safe" zone. Below 1.2× the
+ * Each half maps to the same 0.25× span, so the marker hits the middle
+ * exactly when the loan crosses into the "safe" zone. Below 1.25× the
  * marker pins at the start and the zone label flips to "Liquidation risk".
  */
-const RATIO_BAR_END = 1.8
+const RATIO_BAR_END = 1.75
 function ratioToBarPct(r: number): number {
   if (r <= RATIO_LIQUIDATION) return 0
   if (r >= RATIO_BAR_END) return 100
@@ -85,10 +85,10 @@ export function RiskZoneBar({
       </div>
       <div className="relative h-3.5 text-[10px] text-muted-foreground tabular-nums">
         <span className="absolute left-0 -translate-x-0 text-red-500 font-medium">
-          1.2× Liquidation
+          1.25× Liquidation
         </span>
         <span className="absolute left-1/2 -translate-x-1/2">1.5×</span>
-        <span className="absolute right-0">1.8×+</span>
+        <span className="absolute right-0">1.75×+</span>
       </div>
     </div>
   )

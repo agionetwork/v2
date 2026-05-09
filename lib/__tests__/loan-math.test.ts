@@ -31,12 +31,12 @@ describe('maxDebtUsd', () => {
 })
 
 describe('minCollateralUsd', () => {
-  test('zero APY → 1.2× principal exactly', () => {
-    expect(minCollateralUsd(1000, 0, 30 * DAY)).toBeCloseTo(1200, 6)
+  test('zero APY → 1.25× principal exactly (LTV 80%)', () => {
+    expect(minCollateralUsd(1000, 0, 30 * DAY)).toBeCloseTo(1250, 6)
   })
 
-  test('5% APY 1 year → 1.2 × 1050 = 1260', () => {
-    expect(minCollateralUsd(1000, 500, YEAR)).toBeCloseTo(1260, 6)
+  test('5% APY 1 year → 1.25 × 1050 = 1312.5', () => {
+    expect(minCollateralUsd(1000, 500, YEAR)).toBeCloseTo(1312.5, 6)
   })
 })
 
@@ -71,17 +71,17 @@ describe('isLoanSafe', () => {
 })
 
 describe('maxApyBps', () => {
-  test('collateral exactly 1.2× principal → max APY = 0', () => {
-    expect(maxApyBps(120, 100, 30 * DAY)).toBe(0)
+  test('collateral exactly 1.25× principal → max APY = 0', () => {
+    expect(maxApyBps(125, 100, 30 * DAY)).toBe(0)
   })
 
-  test('collateral below 1.2× principal → max APY = 0 (already unsafe)', () => {
+  test('collateral below 1.25× principal → max APY = 0 (already unsafe)', () => {
     expect(maxApyBps(100, 100, 30 * DAY)).toBe(0)
   })
 
-  test('150 collateral, 100 principal, 1 year → ~25% APY', () => {
-    // 150 = 1.2 × 100 × (1 + apy × 1) → apy = 0.25
-    expect(maxApyBps(150, 100, YEAR)).toBe(2500)
+  test('150 collateral, 100 principal, 1 year → 20% APY', () => {
+    // 150 = 1.25 × 100 × (1 + apy × 1) → apy = 0.20
+    expect(maxApyBps(150, 100, YEAR)).toBe(2000)
   })
 
   test('caps at MAX_APY_BPS regardless of how generous the math allows', () => {
@@ -120,13 +120,13 @@ describe('safetyRatio + safetyZone', () => {
     expect(safetyRatio(150, 100, 0, 30 * DAY)).toBeCloseTo(1.5, 6)
   })
 
-  test('ratio < 1.2 → liquidation zone', () => {
+  test('ratio < 1.25 → liquidation zone', () => {
     expect(safetyZone(1.1)).toBe('liquidation')
-    expect(safetyZone(1.19)).toBe('liquidation')
+    expect(safetyZone(1.24)).toBe('liquidation')
   })
 
-  test('1.2 ≤ ratio < 1.5 → stressed zone', () => {
-    expect(safetyZone(1.2)).toBe('stressed')
+  test('1.25 ≤ ratio < 1.5 → stressed zone', () => {
+    expect(safetyZone(1.25)).toBe('stressed')
     expect(safetyZone(1.49)).toBe('stressed')
   })
 
@@ -156,7 +156,7 @@ describe('COLLATERAL_PRESETS', () => {
 })
 
 describe('LIQUIDATION_THRESHOLD constant', () => {
-  test('matches the on-chain 12_000 bps', () => {
-    expect(LIQUIDATION_THRESHOLD).toBe(1.2)
+  test('matches the on-chain 12_500 bps (LTV 80%)', () => {
+    expect(LIQUIDATION_THRESHOLD).toBe(1.25)
   })
 })
