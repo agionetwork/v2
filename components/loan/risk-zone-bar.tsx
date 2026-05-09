@@ -17,16 +17,25 @@ interface Props {
 }
 
 /**
- * Three-zone collateralization meter:
- *   ratio < 1.2  → 🔴 liquidation
- *   1.2 ≤ < 1.5  → 🟡 stressed
- *   ratio ≥ 1.5  → 🟢 safe
+ * Two-segment collateralization meter:
+ *   start  (0%)   = 1.2× — liquidation boundary
+ *   middle (50%)  = 1.5× — stressed/safe boundary
+ *   end    (100%) = 1.8×+ — comfortably safe
  *
- * The zones are colored bands of the bar; a vertical marker shows where
- * the current loan parameters land. Position uses the same `safetyRatio`
- * that drives `isLoanSafe`, so what the user sees and what the contract
- * accepts agree by construction.
+ * Each half maps to the same 0.3× span, so the marker hits the middle
+ * exactly when the loan crosses into the "safe" zone. Below 1.2× the
+ * marker pins at the start and the zone label flips to "Liquidation risk".
  */
+const RATIO_BAR_END = 1.8
+function ratioToBarPct(r: number): number {
+  if (r <= RATIO_LIQUIDATION) return 0
+  if (r >= RATIO_BAR_END) return 100
+  if (r <= RATIO_STRESSED) {
+    return ((r - RATIO_LIQUIDATION) / (RATIO_STRESSED - RATIO_LIQUIDATION)) * 50
+  }
+  return 50 + ((r - RATIO_STRESSED) / (RATIO_BAR_END - RATIO_STRESSED)) * 50
+}
+
 export function RiskZoneBar({
   collateralValueUsd,
   principalUsd,
@@ -36,14 +45,7 @@ export function RiskZoneBar({
 }: Props) {
   const ratio = safetyRatio(collateralValueUsd, principalUsd, apyBps, durationSeconds)
   const zone = safetyZone(ratio)
-
-  // Map ratio → 0-100% bar position. Cap at 2.0× (anything above is "very safe").
-  const RATIO_MAX_DISPLAY = 2.0
-  const markerPct = Math.min(100, Math.max(0, (ratio / RATIO_MAX_DISPLAY) * 100))
-
-  // Boundary ticks (12000bps and 15000bps) shown as hairline marks.
-  const liquidationTickPct = (RATIO_LIQUIDATION / RATIO_MAX_DISPLAY) * 100
-  const stressedTickPct = (RATIO_STRESSED / RATIO_MAX_DISPLAY) * 100
+  const markerPct = ratioToBarPct(ratio)
 
   const zoneLabel =
     zone === "liquidation"
@@ -67,16 +69,11 @@ export function RiskZoneBar({
           {zoneLabel} · {ratio.toFixed(2)}×
         </span>
       </div>
-      <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-red-500/80 via-yellow-500/80 to-emerald-500/80">
-        {/* Boundary hairlines */}
+      <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-emerald-500">
+        {/* 1.5× boundary tick at the midpoint */}
         <div
-          className="absolute top-0 bottom-0 w-px bg-black/30 dark:bg-white/30"
-          style={{ left: `${liquidationTickPct}%` }}
-          aria-hidden
-        />
-        <div
-          className="absolute top-0 bottom-0 w-px bg-black/30 dark:bg-white/30"
-          style={{ left: `${stressedTickPct}%` }}
+          className="absolute top-0 bottom-0 w-px bg-black/40 dark:bg-white/40"
+          style={{ left: "50%" }}
           aria-hidden
         />
         {/* Live marker */}
@@ -86,11 +83,12 @@ export function RiskZoneBar({
           aria-label={`Current ratio ${ratio.toFixed(2)}`}
         />
       </div>
-      <div className="flex justify-between text-[10px] text-muted-foreground tabular-nums">
-        <span>1.0×</span>
-        <span style={{ marginLeft: `${liquidationTickPct - 8}%` }}>1.2×</span>
-        <span style={{ marginLeft: `${stressedTickPct - liquidationTickPct - 8}%` }}>1.5×</span>
-        <span>2.0×</span>
+      <div className="relative h-3.5 text-[10px] text-muted-foreground tabular-nums">
+        <span className="absolute left-0 -translate-x-0 text-red-500 font-medium">
+          1.2× Liquidation
+        </span>
+        <span className="absolute left-1/2 -translate-x-1/2">1.5×</span>
+        <span className="absolute right-0">1.8×+</span>
       </div>
     </div>
   )
