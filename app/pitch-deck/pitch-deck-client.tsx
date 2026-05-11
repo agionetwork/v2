@@ -345,7 +345,7 @@ function HowItWorks({ active }: { active: boolean }) {
     <>
       <div className="frame hiw-frame">
         <h2 className="slide-title" style={{ textAlign: "center" }}>
-          How <span className="accent">it</span> works
+          How <span className="accent">Agio Network</span> works
         </h2>
         <div className="hiw-flow">
           <svg
@@ -468,6 +468,7 @@ function HowItWorks({ active }: { active: boolean }) {
 
           <div className="hiw-agio">
             <div className="hiw-agio-name">Agio</div>
+            <div className="hiw-agio-fee">PROGRAM CHARGES A 1% FEE</div>
             <img src="/pitch-deck/agio-favicon.png" alt="Agio" />
           </div>
         </div>

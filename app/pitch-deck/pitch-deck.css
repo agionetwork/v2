@@ -374,6 +374,15 @@
   line-height: 1;
   text-align: center;
 }
+.hiw-agio-fee {
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  text-align: center;
+  text-transform: uppercase;
+}
 .hiw-label {
   font-family: var(--font-sans), "Inter", sans-serif;
   font-size: 40px;
