@@ -441,7 +441,8 @@ function HowItWorks({ active }: { active: boolean }) {
             </g>
           </svg>
 
-          <div className="hiw-node" style={{ left: 100, top: 180 }}>
+          <div className="hiw-node" style={{ left: "14.29%", top: "28.95%" }}>
+            <div className="hiw-label">BORROWER</div>
             <div className="hiw-avatar">
               <svg viewBox="0 0 24 24" fill="none" stroke="#4f7cff" strokeWidth={1.5}>
                 <rect x="5" y="7" width="14" height="12" rx="2" />
@@ -453,22 +454,21 @@ function HowItWorks({ active }: { active: boolean }) {
                 <line x1="19" y1="12" x2="21" y2="12" />
               </svg>
             </div>
-            <div className="hiw-label">BORROWER</div>
           </div>
 
-          <div className="hiw-node" style={{ right: 100, top: 180 }}>
+          <div className="hiw-node" style={{ left: "85.71%", top: "28.95%" }}>
+            <div className="hiw-label">LENDER</div>
             <div className="hiw-avatar lender-avatar">
               <svg viewBox="0 0 24 24" fill="none" stroke="#6b8fff" strokeWidth={1.5}>
                 <circle cx="12" cy="9" r="4" />
                 <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
               </svg>
             </div>
-            <div className="hiw-label">LENDER</div>
           </div>
 
           <div className="hiw-agio">
-            <img src="/pitch-deck/agio-favicon.png" alt="Agio" />
             <div className="hiw-agio-name">Agio</div>
+            <img src="/pitch-deck/agio-favicon.png" alt="Agio" />
           </div>
         </div>
       </div>
