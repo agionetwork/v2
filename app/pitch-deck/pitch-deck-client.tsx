@@ -467,8 +467,8 @@ function HowItWorks({ active }: { active: boolean }) {
           </div>
 
           <div className="hiw-agio">
-            <div className="hiw-agio-name">Agio</div>
             <img src="/pitch-deck/agio-favicon.png" alt="Agio" />
+            <div className="hiw-agio-name">Agio</div>
           </div>
         </div>
       </div>

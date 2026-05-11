@@ -347,7 +347,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   position: absolute;
   left: 50%;
   top: 68%;
@@ -358,9 +358,10 @@
   width: 200px;
   height: 200px;
   display: block;
-  object-fit: contain;
+  object-fit: scale-down;
 }
 .hiw-agio-name {
+  margin-top: -60px;
   color: var(--accent);
   font-family: var(--font-display), "Space Grotesk", sans-serif;
   font-size: 100px;
