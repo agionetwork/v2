@@ -738,12 +738,12 @@
   border: var(--glass-border);
   border-radius: var(--radius);
   box-shadow: var(--glass-shadow);
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  row-gap: 28px;
+  justify-items: center;
   min-width: 0;
   min-height: 440px;
-  align-items: center;
 }
 .gtm-col:nth-child(1) {
   border-top: 4px solid var(--accent);
@@ -779,11 +779,11 @@
   text-align: center;
 }
 .gtm-headline {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
+  min-height: 0;
 }
 .gtm-logos {
   display: flex;
@@ -824,11 +824,17 @@
   width: auto;
   max-width: 280px;
 }
+.gtm-logos .logo-pill {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 12px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-sizing: content-box;
+}
 .gtm-logos .logo-invert {
   filter: brightness(0) invert(1);
 }
 .gtm-goal {
-  margin-top: auto;
   width: 100%;
   padding: 24px 28px;
   background: var(--gradient-blue);

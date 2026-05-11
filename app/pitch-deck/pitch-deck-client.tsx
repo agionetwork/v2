@@ -571,7 +571,7 @@ function Competition() {
                 <th>Terms</th>
                 <th>Liquidation</th>
                 <th>Privacy</th>
-                <th></th>
+                <th>Social</th>
                 <th>Agent Friendly</th>
               </tr>
             </thead>
@@ -817,7 +817,7 @@ function GoToMarket() {
                 <img
                   src="/pitch-deck/logo-neobankless.png"
                   alt="Neobankless"
-                  className="logo-bare logo-wide"
+                  className="logo-wide logo-pill"
                 />
               </div>
             </div>
