@@ -652,7 +652,10 @@ function Competition() {
               </tr>
               <tr>
                 <td className="name">
-                  <span className="name-inner">Jupiter (Fluid + Rain.fi)</span>
+                  <span className="name-inner">
+                    Jupiter
+                    <span className="name-sub">(Rain.fi + Fluid)</span>
+                  </span>
                 </td>
                 <td>
                   <span className="chain-logo">
