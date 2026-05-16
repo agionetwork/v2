@@ -63,9 +63,9 @@ function validateConfig(config: Partial<AgentConfig>): string | null {
     return "borrowMinAmountUsd must be <= borrowMaxAmountUsd"
   }
 
-  // Collateral ratio ranges
-  if (config.lendMinCollateralRatio !== undefined && config.lendMinCollateralRatio < 150) {
-    return "lendMinCollateralRatio must be >= 150 (protocol minimum)"
+  // Collateral ratio ranges (protocol minimum is the 125% creation threshold)
+  if (config.lendMinCollateralRatio !== undefined && config.lendMinCollateralRatio < 125) {
+    return "lendMinCollateralRatio must be >= 125 (protocol creation minimum)"
   }
   if (config.lendMaxCollateralRatio !== undefined && config.lendMaxCollateralRatio > 500) {
     return "lendMaxCollateralRatio must be <= 500"
@@ -74,8 +74,8 @@ function validateConfig(config: Partial<AgentConfig>): string | null {
       && config.lendMinCollateralRatio > config.lendMaxCollateralRatio) {
     return "lendMinCollateralRatio must be <= lendMaxCollateralRatio"
   }
-  if (config.borrowMinCollateralRatio !== undefined && config.borrowMinCollateralRatio < 150) {
-    return "borrowMinCollateralRatio must be >= 150 (protocol minimum)"
+  if (config.borrowMinCollateralRatio !== undefined && config.borrowMinCollateralRatio < 125) {
+    return "borrowMinCollateralRatio must be >= 125 (protocol creation minimum)"
   }
   if (config.borrowMaxCollateralRatio !== undefined && config.borrowMaxCollateralRatio > 500) {
     return "borrowMaxCollateralRatio must be <= 500"
@@ -83,6 +83,14 @@ function validateConfig(config: Partial<AgentConfig>): string | null {
   if (config.borrowMinCollateralRatio !== undefined && config.borrowMaxCollateralRatio !== undefined
       && config.borrowMinCollateralRatio > config.borrowMaxCollateralRatio) {
     return "borrowMinCollateralRatio must be <= borrowMaxCollateralRatio"
+  }
+
+  // Health-factor settings (safety redesign)
+  if (config.lendMinHealthFactor !== undefined && config.lendMinHealthFactor < 1.1) {
+    return "lendMinHealthFactor must be >= 1.10 (foreclosure threshold)"
+  }
+  if (config.borrowAddCollateralThreshold !== undefined && config.borrowAddCollateralThreshold <= 1.15) {
+    return "borrowAddCollateralThreshold must be > 1.15 (above the warning zone)"
   }
 
   // Duration

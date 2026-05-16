@@ -19,6 +19,9 @@ export interface AgentConfig {
   lendAcceptedCollateral: string[]
   lendMinCollateralRatio: number // percentage (e.g. 150 = 150%)
   lendMaxCollateralRatio: number // percentage (e.g. 300 = 300%)
+  /** Agent won't accept loans whose initial health factor is below this
+   *  (e.g. 1.30). Health factor = collateral_value / debt_total. */
+  lendMinHealthFactor: number
   lendAutoForeclose: boolean
   lendAutoAcceptOffers: boolean
   lendAutoCreateOffers: boolean
@@ -41,6 +44,12 @@ export interface AgentConfig {
   /** Trigger when the collateral ratio falls below this %. Default 135 (above
    *  the protocol's 120 % foreclosure floor with a buffer). */
   borrowTopUpThresholdRatio: number
+  /** Health-factor level that triggers auto-add-collateral (must be > 1.15,
+   *  i.e. above the warning zone). Default 1.20. */
+  borrowAddCollateralThreshold: number
+  /** If true, the agent repays automatically when a loan enters the
+   *  warning zone (health factor < 1.15) instead of waiting for expiry. */
+  borrowAutoRepayOnWarning: boolean
   borrowAutoAcceptOffers: boolean
   borrowAutoCreateRequests: boolean
 
@@ -76,6 +85,7 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
   lendAcceptedCollateral: ["SOL"],
   lendMinCollateralRatio: 150,
   lendMaxCollateralRatio: 300,
+  lendMinHealthFactor: 1.3,
   lendAutoForeclose: true,
   lendAutoAcceptOffers: true,
   lendAutoCreateOffers: false,
@@ -93,6 +103,8 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
   borrowRepayBeforeHours: 1,
   borrowAutoTopUpCollateral: false,
   borrowTopUpThresholdRatio: 135,
+  borrowAddCollateralThreshold: 1.2,
+  borrowAutoRepayOnWarning: false,
   borrowAutoAcceptOffers: true,
   borrowAutoCreateRequests: false,
 

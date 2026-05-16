@@ -27,6 +27,15 @@ import { sanitizeError } from "@/lib/mcp/errors"
 import { calculateFee } from "@/lib/fees/fee-calculator"
 import { convertToUsd } from "@/lib/fees/price-oracle"
 import { fetchTokenPrices } from "@/lib/token-prices"
+import {
+  healthFactor,
+  healthZone,
+  foreclosureDistribution,
+  FORECLOSURE_THRESHOLD,
+  LIQUIDATION_FEE_BPS,
+  MAX_SWAP_SLIPPAGE_BPS,
+  SECONDS_PER_YEAR,
+} from "@/lib/loan-math"
 import { SECURITY_CONFIG } from "@/lib/security-config"
 import { PYTH_FEED_IDS } from "@/lib/token-prices"
 import { postPriceUpdatesForMints } from "@/lib/pyth-poster"
@@ -784,18 +793,44 @@ export function registerLendingTools(server: McpServer) {
   // --- foreclose-loan ---
   server.tool(
     "foreclose-loan",
-    "Foreclose an expired loan as lender. Seizes the collateral. Free — no additional fee.",
+    "Foreclose a loan. Eligible when the loan is undercollateralized (health factor < 1.10) or expired. Free — no additional fee.",
     {
       paymentProof: z.string().optional().describe("Base64-encoded signed USDC transfer transaction"),
       wallet: z.string().optional().describe("Your Solana wallet address (required on devnet free mode)"),
       apiKey: z.string().optional().describe("API key from create-agent (required on devnet free mode)"),
-      loanPublicKey: z.string().describe("The expired loan to foreclose"),
+      loanPublicKey: z.string().describe("The loan to foreclose (undercollateralized or expired)"),
     },
     async (args, extra) => {
       // Fetch loan before payment to compute proportional fee
       const loan = await fetchLoan(args.loanPublicKey)
       if (!loan) return jsonResult({ success: false, error: "Loan not found", errorCode: "LOAN_NOT_FOUND" })
       if (loan.status !== LoanStatus.Accepted) return jsonResult({ success: false, error: "Loan is not active", errorCode: "LOAN_NOT_ACTIVE" })
+
+      // Compute the live health factor from oracle prices.
+      const prices = await fetchTokenPrices()
+      const collateralPrice = prices[loan.collateralTokenSymbol] ?? 0
+      const debtPrice = prices[loan.debtTokenSymbol] ?? 0
+      const collateralValueUsd = loan.collateralAmountUi * collateralPrice
+      const principalUsd = loan.debtAmountUi * debtPrice
+      const now = Date.now() / 1000
+      const elapsedSeconds = loan.start ? Math.max(0, now - loan.start) : 0
+      const accruedInterestUsd =
+        (principalUsd * (loan.apy / 100) * elapsedSeconds) / SECONDS_PER_YEAR
+      const debtTotalUsd = principalUsd + accruedInterestUsd
+      const hf = healthFactor(collateralValueUsd, debtTotalUsd)
+      const zone = healthZone(hf)
+      const expired = !!loan.start && now >= loan.start + loan.duration
+      const undercollateralized = debtTotalUsd > 0 && hf < FORECLOSURE_THRESHOLD
+
+      if (!undercollateralized && !expired) {
+        return jsonResult({
+          success: false,
+          error: `Loan is not foreclosable: health factor ${hf.toFixed(2)} (zone ${zone}) is at/above the foreclosure threshold (${FORECLOSURE_THRESHOLD.toFixed(2)}) and the loan has not expired. A lender cannot foreclose a healthy, non-expired loan.`,
+          errorCode: "NOT_FORECLOSABLE",
+          healthFactor: Math.round(hf * 100) / 100,
+          healthZone: zone,
+        })
+      }
 
       return handlePaidAction(
         "foreclose-loan",
@@ -805,13 +840,20 @@ export function registerLendingTools(server: McpServer) {
           const agentPubkeyStr = await getAgentPublicKey(wallet)
           if (!agentPubkeyStr) throw new Error("Agent not found. Create one first with create-agent.")
 
-          if (loan.lender?.toLowerCase() !== agentPubkeyStr.toLowerCase()) {
-            throw new Error("Agent is not the lender of this loan")
-          }
+          const isLender = loan.lender?.toLowerCase() === agentPubkeyStr.toLowerCase()
 
-          const now = Date.now() / 1000
-          if (loan.start && now < loan.start + loan.duration) {
-            throw new Error("Loan has not expired yet")
+          // Time-based foreclosure is lender-only. Price-based (HF < 1.10)
+          // is permissionless once the on-chain swap+distribution upgrade
+          // ships; until then the deployed program still requires the
+          // lender + expiry, so surface a clear error instead of building
+          // a transaction that the program will reject.
+          if (undercollateralized && !expired) {
+            throw new Error(
+              `Loan is undercollateralized (health factor ${hf.toFixed(2)}) but the deployed program only supports lender-triggered foreclosure of expired loans. Price-based permissionless foreclosure activates with the on-chain safety upgrade.`,
+            )
+          }
+          if (!isLender) {
+            throw new Error("Agent is not the lender of this loan (expiry-based foreclosure is lender-only)")
           }
 
           const agentPk = new PublicKey(agentPubkeyStr)
@@ -838,9 +880,26 @@ export function registerLendingTools(server: McpServer) {
             }).catch(() => {})
           }
 
+          // Estimated fair distribution under the new model (lender ≤ debt,
+          // protocol 5% fee, borrower keeps the rest). The deployed program
+          // still seizes 100% of collateral until the on-chain upgrade —
+          // these figures are projections, not the executed split.
+          const dist = foreclosureDistribution(collateralValueUsd, debtTotalUsd)
+          const round2 = (n: number) => Math.round(n * 100) / 100
+
           return {
             txHash,
-            message: `Foreclosed loan: seized ${loan.collateralAmountUi} ${loan.collateralTokenSymbol} collateral`,
+            message: `Foreclosed loan (${expired ? "expired" : "undercollateralized"}): seized ${loan.collateralAmountUi} ${loan.collateralTokenSymbol} collateral`,
+            foreclosureType: expired ? "expired" : "undercollateralized",
+            healthFactorAtLiquidation: round2(hf),
+            estimatedDistribution: {
+              lender: { amount: round2(dist.lender), token: loan.debtTokenSymbol },
+              protocol: { amount: round2(dist.protocol), token: loan.debtTokenSymbol },
+              borrower: { amount: round2(dist.borrower), token: loan.debtTokenSymbol },
+              note: "Projected under the fair-distribution model. The currently deployed program seizes full collateral until the on-chain safety upgrade ships.",
+            },
+            liquidationFeePct: LIQUIDATION_FEE_BPS / 100,
+            maxSlippagePct: MAX_SWAP_SLIPPAGE_BPS / 100,
           }
         },
         extra,

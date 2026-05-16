@@ -1,10 +1,11 @@
 "use client"
 
 import {
-  RATIO_LIQUIDATION,
-  RATIO_STRESSED,
+  CREATION_THRESHOLD,
+  WARNING_THRESHOLD,
+  FORECLOSURE_THRESHOLD,
   safetyRatio,
-  safetyZone,
+  healthZone,
 } from "@/lib/loan-math"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -18,24 +19,25 @@ interface Props {
 }
 
 /**
- * Two-segment collateralization meter:
- *   start  (0%)   = 1.25× — liquidation boundary (LTV 80%)
- *   middle (50%)  = 1.5×  — stressed/safe boundary
- *   end    (100%) = 1.75×+ — comfortably safe
+ * Health-factor meter (separated-threshold model):
+ *   0%   = 1.10× — foreclosure boundary (liquidatable below this)
+ *   ~12% = 1.15× — warning (suggest add-collateral)
+ *   ~37% = 1.25× — creation minimum (green zone starts here)
+ *   100% = 1.50× — comfortable buffer
  *
- * Each half maps to the same 0.25× span, so the marker hits the middle
- * exactly when the loan crosses into the "safe" zone. Below 1.25× the
- * marker pins at the start and the zone label flips to "Liquidation risk".
+ * Ratio = collateral_value / debt_total_at_maturity.
  */
-const RATIO_BAR_END = 1.75
+const RATIO_BAR_START = FORECLOSURE_THRESHOLD // 1.10
+const RATIO_BAR_END = 1.5
+
 function ratioToBarPct(r: number): number {
-  if (r <= RATIO_LIQUIDATION) return 0
+  if (r <= RATIO_BAR_START) return 0
   if (r >= RATIO_BAR_END) return 100
-  if (r <= RATIO_STRESSED) {
-    return ((r - RATIO_LIQUIDATION) / (RATIO_STRESSED - RATIO_LIQUIDATION)) * 50
-  }
-  return 50 + ((r - RATIO_STRESSED) / (RATIO_BAR_END - RATIO_STRESSED)) * 50
+  return ((r - RATIO_BAR_START) / (RATIO_BAR_END - RATIO_BAR_START)) * 100
 }
+
+const WARNING_PCT = ratioToBarPct(WARNING_THRESHOLD) // 1.15
+const CREATION_PCT = ratioToBarPct(CREATION_THRESHOLD) // 1.25
 
 export function RiskZoneBar({
   collateralValueUsd,
@@ -45,15 +47,24 @@ export function RiskZoneBar({
   className,
 }: Props) {
   const ratio = safetyRatio(collateralValueUsd, principalUsd, apyBps, durationSeconds)
-  const zone = safetyZone(ratio)
+  const zone = healthZone(ratio)
   const markerPct = ratioToBarPct(ratio)
 
   const zoneLabel =
-    zone === "liquidation"
-      ? "Liquidation risk"
-      : zone === "stressed"
-        ? "Stressed"
-        : "Safe"
+    zone === "green"
+      ? "Safe"
+      : zone === "yellow"
+        ? "Warning"
+        : zone === "orange"
+          ? "Danger"
+          : "Liquidatable"
+
+  const zoneColor =
+    zone === "green"
+      ? "text-emerald-600 dark:text-emerald-500"
+      : zone === "yellow"
+        ? "text-yellow-600 dark:text-yellow-500"
+        : "text-red-600 dark:text-red-500"
 
   return (
     <div className={cn("space-y-1", className)}>
@@ -67,47 +78,57 @@ export function RiskZoneBar({
               </TooltipTrigger>
               <TooltipContent className="max-w-xs bg-transparent dark:bg-blue-950">
                 <p>
-                  How much room your collateral has before this loan auto-liquidates. Calculated from your collateral ratio against the 125% liquidation threshold, with worst-case interest accrued through maturity included. Higher is safer.
+                  Health factor = collateral value ÷ total debt (principal + worst-case interest through maturity). Loans open at ≥ 125%, enter the warning zone at 115%, and become foreclosable below 110%. Higher is safer.
                 </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-        <span className="font-medium tabular-nums text-red-600 dark:text-red-500">
+        <span className={cn("font-medium tabular-nums", zoneColor)}>
           {zoneLabel} · {(ratio * 100).toFixed(0)}%
         </span>
       </div>
       <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-emerald-500">
-        {/* 130% acceptance-floor tick (10% of bar) */}
+        {/* 115% warning tick */}
         <div
           className="absolute top-0 bottom-0 w-px bg-black/40 dark:bg-white/40"
-          style={{ left: "10%" }}
+          style={{ left: `${WARNING_PCT}%` }}
           aria-hidden
-          title="Acceptance floor (130%)"
+          title="Warning (115%)"
         />
-        {/* 150% creation-min / safe boundary tick at the midpoint */}
+        {/* 125% creation-minimum tick */}
         <div
           className="absolute top-0 bottom-0 w-px bg-black/40 dark:bg-white/40"
-          style={{ left: "50%" }}
+          style={{ left: `${CREATION_PCT}%` }}
           aria-hidden
+          title="Creation minimum (125%)"
         />
         {/* Live marker */}
         <div
           className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-3.5 w-1.5 rounded-sm bg-foreground shadow-md transition-[left] duration-200 ease-out"
           style={{ left: `${markerPct}%` }}
-          aria-label={`Current ratio ${(ratio * 100).toFixed(0)}%`}
+          aria-label={`Current health factor ${(ratio * 100).toFixed(0)}%`}
         />
       </div>
       <div className="relative h-8 text-[10px] text-muted-foreground tabular-nums">
         <div className="absolute left-0 top-0 flex flex-col items-start leading-tight text-red-500 font-medium">
-          <span>125%</span>
-          <span className="text-[9px]">Liquidation</span>
+          <span>110%</span>
+          <span className="text-[9px]">Foreclosure</span>
         </div>
-        <span className="absolute top-0" style={{ left: "14%", transform: "translateX(-50%)" }}>
-          130%
+        <div
+          className="absolute top-0 flex flex-col items-center leading-tight text-yellow-600 dark:text-yellow-500 font-medium"
+          style={{ left: `${WARNING_PCT}%`, transform: "translateX(-50%)" }}
+        >
+          <span>115%</span>
+          <span className="text-[9px]">Warning</span>
+        </div>
+        <span
+          className="absolute top-0"
+          style={{ left: `${CREATION_PCT}%`, transform: "translateX(-50%)" }}
+        >
+          125%
         </span>
-        <span className="absolute top-0 left-1/2 -translate-x-1/2">150%</span>
-        <span className="absolute top-0 right-0">175%+</span>
+        <span className="absolute top-0 right-0">150%+</span>
       </div>
     </div>
   )

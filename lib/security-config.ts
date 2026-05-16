@@ -37,8 +37,8 @@ export const SECURITY_CONFIG = {
     MAX_LOAN_TERM: 365,
     MIN_APY: 0,
     MAX_APY: Number(process.env.PROTOCOL_MAX_APY) || 200, // env override, default 200%
-    MIN_COLLATERAL_RATIO: Number(process.env.PROTOCOL_MIN_COLLATERAL_RATIO) || 150, // env override, default 150%
-    MIN_ACCEPT_COLLATERAL_RATIO: Number(process.env.PROTOCOL_MIN_ACCEPT_COLLATERAL_RATIO) || 130, // accept threshold, default 130%
+    MIN_COLLATERAL_RATIO: Number(process.env.PROTOCOL_MIN_COLLATERAL_RATIO) || 125, // creation threshold, default 125% (CREATION_THRESHOLD)
+    MIN_ACCEPT_COLLATERAL_RATIO: Number(process.env.PROTOCOL_MIN_ACCEPT_COLLATERAL_RATIO) || 125, // accept threshold, default 125% (matches creation per safety redesign)
     MAX_COLLATERAL_RATIO: 1000, // 1000%
     MIN_DEBT_USD: Number(process.env.PROTOCOL_MIN_DEBT_USD) || 1.0, // env override, default $1.00
   },

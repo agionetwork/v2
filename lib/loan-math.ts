@@ -9,11 +9,25 @@
  * Everything else in this file is a rearrangement of that inequality.
  */
 
-// 1.25 = 125% collateral/debt = LTV 80%. Matches DEFAULT_LIQUIDATION_THRESHOLD_BPS
-// in the Anchor program (12_500). Vaults created before the bump may still hold
-// 12_000 on-chain until an admin runs update_liquidation_threshold; the form's
-// safety hint will be slightly stricter than the deployed reality in that window.
-export const LIQUIDATION_THRESHOLD = 1.25
+// Separated loan-safety thresholds (game-theory compliant).
+//   CREATION    (1.25 / 125%) — minimum collateral to open a loan
+//   WARNING     (1.15 / 115%) — suggest add-collateral
+//   FORECLOSURE (1.10 / 110%) — liquidatable
+// All ratios are collateral_value_usd / debt_total_usd.
+export const CREATION_THRESHOLD = 1.25
+export const WARNING_THRESHOLD = 1.15
+export const FORECLOSURE_THRESHOLD = 1.1
+
+// On foreclosure the collateral is swapped to the debt token and split:
+// lender gets the debt, protocol takes a 5% fee, borrower keeps the rest.
+// The swap reverts if Jupiter slippage exceeds 5%.
+export const LIQUIDATION_FEE_BPS = 500
+export const MAX_SWAP_SLIPPAGE_BPS = 500
+
+// Back-compat: `LIQUIDATION_THRESHOLD` historically meant the creation floor
+// (minCollateralUsd uses it). Keep it pinned to the creation threshold so the
+// existing math and tests stay numerically identical.
+export const LIQUIDATION_THRESHOLD = CREATION_THRESHOLD
 export const SECONDS_PER_YEAR = 31_536_000
 
 // Protocol-wide APY ceiling. The on-chain `apy` field is u8, and the form
@@ -24,8 +38,11 @@ export const MAX_APY_BPS = MAX_APY_PCT * 100
 
 // Boundaries used by RiskZoneBar to color the meter.
 // Ratio = collateral_value / max_debt_at_maturity.
-export const RATIO_LIQUIDATION = LIQUIDATION_THRESHOLD // ≤ 1.2 → red
-export const RATIO_STRESSED = 1.5 // 1.2–1.5 → yellow, > 1.5 → green
+export const RATIO_LIQUIDATION = FORECLOSURE_THRESHOLD // < 1.10 → red
+export const RATIO_WARNING = WARNING_THRESHOLD // 1.10–1.15 → orange
+export const RATIO_CREATION = CREATION_THRESHOLD // 1.15–1.25 → yellow, ≥ 1.25 → green
+// Deprecated alias kept so older importers/tests keep compiling.
+export const RATIO_STRESSED = 1.5
 
 export function maxDebtUsd(
   principalUsd: number,
@@ -116,10 +133,97 @@ export function safetyRatio(
 
 export type SafetyZone = "safe" | "stressed" | "liquidation"
 
+/**
+ * @deprecated Three-state zone tied to the old single-threshold model.
+ * Use {@link healthZone} for the 125/115/110 model. Kept for back-compat.
+ */
 export function safetyZone(ratio: number): SafetyZone {
-  if (ratio < RATIO_LIQUIDATION) return "liquidation"
-  if (ratio < RATIO_STRESSED) return "stressed"
+  if (ratio < RATIO_STRESSED && ratio >= CREATION_THRESHOLD) return "stressed"
+  if (ratio < CREATION_THRESHOLD) return "liquidation"
   return "safe"
+}
+
+export type HealthZone = "green" | "yellow" | "orange" | "red"
+
+/**
+ * Health factor = collateral_value_usd / debt_total_usd.
+ * `debtTotalUsd` is principal + interest accrued for the period.
+ */
+export function healthFactor(collateralValueUsd: number, debtTotalUsd: number): number {
+  if (debtTotalUsd <= 0) return 0
+  return collateralValueUsd / debtTotalUsd
+}
+
+/**
+ * green  ≥ 1.25 (healthy, can create)
+ * yellow ≥ 1.15 (warning, suggest add-collateral)
+ * orange ≥ 1.10 (danger, approaching liquidation)
+ * red    < 1.10 (liquidatable)
+ */
+export function healthZone(hf: number): HealthZone {
+  if (hf >= CREATION_THRESHOLD) return "green"
+  if (hf >= WARNING_THRESHOLD) return "yellow"
+  if (hf >= FORECLOSURE_THRESHOLD) return "orange"
+  return "red"
+}
+
+/**
+ * % drop in collateral price that brings the loan down to `thresholdRatio`
+ * of its total debt. 0 means it's already at/under that line.
+ */
+export function calculateDropToThreshold(
+  collateralValueUsd: number,
+  debtTotalUsd: number,
+  thresholdRatio: number,
+): number {
+  if (collateralValueUsd <= 0) return 0
+  const thresholdValue = debtTotalUsd * thresholdRatio
+  if (collateralValueUsd <= thresholdValue) return 0
+  return ((collateralValueUsd - thresholdValue) / collateralValueUsd) * 100
+}
+
+/** % collateral-price drop until the loan enters the WARNING zone (115%). */
+export function priceDropToWarning(
+  collateralValueUsd: number,
+  principalUsd: number,
+  apyBps: number,
+  durationSeconds: number,
+): number {
+  return calculateDropToThreshold(
+    collateralValueUsd,
+    maxDebtUsd(principalUsd, apyBps, durationSeconds),
+    WARNING_THRESHOLD,
+  )
+}
+
+/** % collateral-price drop until the loan becomes FORECLOSABLE (110%). */
+export function priceDropToForeclosure(
+  collateralValueUsd: number,
+  principalUsd: number,
+  apyBps: number,
+  durationSeconds: number,
+): number {
+  return calculateDropToThreshold(
+    collateralValueUsd,
+    maxDebtUsd(principalUsd, apyBps, durationSeconds),
+    FORECLOSURE_THRESHOLD,
+  )
+}
+
+/**
+ * Estimated foreclosure distribution given the USD value recovered from
+ * swapping the collateral. lender ≤ debt_total (never profits); protocol
+ * takes up to 5% of debt from the excess; borrower keeps the remainder.
+ */
+export function foreclosureDistribution(
+  swapProceedsUsd: number,
+  debtTotalUsd: number,
+): { lender: number; protocol: number; borrower: number } {
+  const lender = Math.min(swapProceedsUsd, debtTotalUsd)
+  const feeCap = (debtTotalUsd * LIQUIDATION_FEE_BPS) / 10_000
+  const protocol = Math.min(feeCap, Math.max(0, swapProceedsUsd - lender))
+  const borrower = Math.max(0, swapProceedsUsd - lender - protocol)
+  return { lender, protocol, borrower }
 }
 
 /**

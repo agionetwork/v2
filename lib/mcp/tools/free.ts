@@ -23,7 +23,17 @@ import {
   isLoanSafe,
   maxApyBps,
   minCollateralUsd,
-  worstCasePriceDropPct,
+  maxDebtUsd,
+  healthFactor,
+  healthZone,
+  priceDropToWarning,
+  priceDropToForeclosure,
+  foreclosureDistribution,
+  CREATION_THRESHOLD,
+  WARNING_THRESHOLD,
+  FORECLOSURE_THRESHOLD,
+  LIQUIDATION_FEE_BPS,
+  MAX_SWAP_SLIPPAGE_BPS,
   MAX_APY_PCT,
 } from "@/lib/loan-math"
 import { SOLANA_CONFIG } from "@/config/solana"
@@ -1015,37 +1025,100 @@ export function registerFreeTools(server: McpServer) {
         const principalUsd = args.principalAmount * principalPrice
         const collateralValueUsd = args.collateralAmount * collateralPrice
 
+        const round2 = (n: number) => Math.round(n * 100) / 100
+        const pct = (n: number) => `${n.toFixed(1)}%`
+
+        // Total debt over the loan term (principal + worst-case interest).
+        const debtTotalUsd = maxDebtUsd(principalUsd, args.apyBps, args.durationSeconds)
+        const interestUsd = debtTotalUsd - principalUsd
+        const hf = healthFactor(collateralValueUsd, debtTotalUsd)
+        const zone = healthZone(hf)
+
         const safe = isLoanSafe(
           collateralValueUsd,
           principalUsd,
           args.apyBps,
           args.durationSeconds,
         )
-
         const ceiling = maxApyBps(collateralValueUsd, principalUsd, args.durationSeconds)
         const minColUsd = minCollateralUsd(principalUsd, args.apyBps, args.durationSeconds)
-        const dropPct = worstCasePriceDropPct(
-          collateralValueUsd,
-          principalUsd,
-          args.apyBps,
-          args.durationSeconds,
-        )
 
-        const reason = safe
-          ? undefined
-          : args.apyBps > ceiling
-            ? `APY exceeds the safe ceiling of ${ceiling} bps for the chosen collateral and duration.`
-            : `Collateral value ($${collateralValueUsd.toFixed(2)}) is below the required $${minColUsd.toFixed(2)}.`
+        // Rejection: collateral below the 125% creation floor.
+        if (!safe) {
+          const reason =
+            args.apyBps > ceiling
+              ? `APY ${args.apyBps} bps exceeds the safe ceiling of ${ceiling} bps for the chosen collateral and duration.`
+              : `Collateral value ($${collateralValueUsd.toFixed(2)}) is below the minimum required ($${minColUsd.toFixed(2)}) for loan creation. Minimum collateral ratio is ${(CREATION_THRESHOLD * 100).toFixed(0)}% of total debt (principal + interest).`
+          return jsonResult({
+            success: true,
+            isSafe: false,
+            healthFactor: round2(hf),
+            healthZone: zone,
+            reason,
+            required: {
+              minCollateralUsd: round2(minColUsd),
+              minCollateralAmount:
+                collateralPrice > 0 ? Number((minColUsd / collateralPrice).toFixed(6)) : 0,
+              currentCollateralUsd: round2(collateralValueUsd),
+              deficit: round2(Math.max(0, minColUsd - collateralValueUsd)),
+            },
+          })
+        }
+
+        // Estimate the foreclosure split using current collateral value as a
+        // proxy for swap proceeds (ignores live Jupiter slippage).
+        const dist = foreclosureDistribution(collateralValueUsd, debtTotalUsd)
 
         return jsonResult({
           success: true,
-          isSafe: safe,
-          maxApyBps: ceiling,
-          minCollateralUsd: minColUsd,
-          worstCasePriceDropPct: dropPct,
-          principalUsd,
-          collateralValueUsd,
-          ...(reason ? { reason } : {}),
+          isSafe: true,
+          healthFactor: round2(hf),
+          healthZone: zone,
+          debtTotal: {
+            principal: round2(principalUsd),
+            interest: round2(interestUsd),
+            total: round2(debtTotalUsd),
+          },
+          collateral: {
+            amount: args.collateralAmount,
+            token: args.collateralToken,
+            valueUsd: round2(collateralValueUsd),
+          },
+          thresholds: {
+            creation: {
+              ratio: CREATION_THRESHOLD,
+              valueUsd: round2(debtTotalUsd * CREATION_THRESHOLD),
+            },
+            warning: {
+              ratio: WARNING_THRESHOLD,
+              valueUsd: round2(debtTotalUsd * WARNING_THRESHOLD),
+            },
+            foreclosure: {
+              ratio: FORECLOSURE_THRESHOLD,
+              valueUsd: round2(debtTotalUsd * FORECLOSURE_THRESHOLD),
+            },
+          },
+          riskMetrics: {
+            priceDropToWarning: pct(
+              priceDropToWarning(collateralValueUsd, principalUsd, args.apyBps, args.durationSeconds),
+            ),
+            priceDropToForeclosure: pct(
+              priceDropToForeclosure(
+                collateralValueUsd,
+                principalUsd,
+                args.apyBps,
+                args.durationSeconds,
+              ),
+            ),
+            maxApyBps: ceiling,
+          },
+          liquidation: {
+            feePct: LIQUIDATION_FEE_BPS / 100,
+            maxSlippagePct: MAX_SWAP_SLIPPAGE_BPS / 100,
+            estimatedLenderReceives: round2(dist.lender),
+            estimatedBorrowerRefund: round2(dist.borrower),
+            estimatedProtocolFee: round2(dist.protocol),
+          },
         })
       } catch (err) {
         return jsonResult({

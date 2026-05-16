@@ -16,19 +16,23 @@ interface Props {
 }
 
 /**
- * Foreclosure threshold: < 125% (DEFAULT_LIQUIDATION_THRESHOLD = 12500 bps, LTV 80%).
- * Acceptance floor: 130% (offers can be created at 150-300%, accepted at >= 130%).
+ * Separated-threshold model (collateral % of total debt):
+ *   >= 125% → healthy   (creation minimum / green zone)
+ *   115-125% → caution  (warning zone — suggest add-collateral)
+ *   110-115% → at-risk  (danger — approaching liquidation)
+ *   < 110%   → foreclosure (liquidatable)
+ * Acceptance floor matches the creation minimum (125%).
  */
 function classify(ratio: number, isPending: boolean): LoanHealthStatus {
   if (!Number.isFinite(ratio) || ratio <= 0) return "unknown"
 
   if (isPending) {
-    return ratio >= 130 ? "pending-ok" : "pending-bad"
+    return ratio >= 125 ? "pending-ok" : "pending-bad"
   }
 
-  if (ratio >= 150) return "healthy"
-  if (ratio >= 130) return "caution"
-  if (ratio >= 125) return "at-risk"
+  if (ratio >= 125) return "healthy"
+  if (ratio >= 115) return "caution"
+  if (ratio >= 110) return "at-risk"
   return "foreclosure"
 }
 
@@ -53,12 +57,12 @@ const STYLES: Record<LoanHealthStatus, string> = {
 }
 
 const TOOLTIPS: Record<LoanHealthStatus, string> = {
-  healthy: "At or above 150%. Comfortable buffer over the foreclosure threshold (125%, LTV 80%).",
-  caution: "Between 130% and 150%. Above the acceptance floor but watch oracle moves.",
-  "at-risk": "Between 125% and 130%. Add collateral or repay before the price moves further.",
-  foreclosure: "Below 125% (LTV 80%). Lender can foreclose at any time. Add collateral immediately.",
-  "pending-ok": "At or above the 130% acceptance floor. The offer is acceptable.",
-  "pending-bad": "Below the 130% acceptance floor. The offer cannot be accepted as-is.",
+  healthy: "At or above 125%. Meets the creation minimum with a healthy buffer over the 110% foreclosure line.",
+  caution: "Between 115% and 125% (warning zone). Above foreclosure but consider adding collateral.",
+  "at-risk": "Between 110% and 115% (danger zone). Add collateral or repay before the price moves further.",
+  foreclosure: "Below 110%. Liquidatable — anyone can foreclose. Add collateral immediately.",
+  "pending-ok": "At or above the 125% creation minimum. The offer is acceptable.",
+  "pending-bad": "Below the 125% creation minimum. The offer cannot be accepted as-is.",
   unknown: "Oracle prices unavailable, ratio not computable.",
 }
 
@@ -105,24 +109,22 @@ export function LoanHealthBadge({ ratio, isPending = false, className, compact =
  * loan looks the same color across creation and the dashboard modal.
  *
  * Scale (in collateral % terms):
- *   start  (0%)   = 125% collateral — liquidation boundary (LTV 80%)
- *   middle (50%)  = 150% collateral — stressed/safe boundary
- *   end    (100%) = 175%+ collateral — comfortably safe
- *
- * Both halves cover the same 25-point span, so the marker sits exactly in
- * the middle when the loan crosses into safe territory.
+ *   start  (0%)   = 110% — foreclosure boundary (liquidatable below)
+ *   ~12%          = 115% — warning
+ *   ~37%          = 125% — creation minimum (green zone starts)
+ *   end    (100%) = 150%+ — comfortable buffer
  */
-const PCT_LIQUIDATION = 125
-const PCT_STRESSED = 150
-const PCT_BAR_END = 175
+const PCT_FORECLOSURE = 110
+const PCT_WARNING = 115
+const PCT_CREATION = 125
+const PCT_BAR_END = 150
 function pctToBarPos(pct: number): number {
-  if (pct <= PCT_LIQUIDATION) return 0
+  if (pct <= PCT_FORECLOSURE) return 0
   if (pct >= PCT_BAR_END) return 100
-  if (pct <= PCT_STRESSED) {
-    return ((pct - PCT_LIQUIDATION) / (PCT_STRESSED - PCT_LIQUIDATION)) * 50
-  }
-  return 50 + ((pct - PCT_STRESSED) / (PCT_BAR_END - PCT_STRESSED)) * 50
+  return ((pct - PCT_FORECLOSURE) / (PCT_BAR_END - PCT_FORECLOSURE)) * 100
 }
+const WARNING_BAR_POS = pctToBarPos(PCT_WARNING)
+const CREATION_BAR_POS = pctToBarPos(PCT_CREATION)
 
 export function LoanHealthBar({ ratio, isPending = false, className }: Props) {
   const status = classify(ratio, isPending)
@@ -138,34 +140,47 @@ export function LoanHealthBar({ ratio, isPending = false, className }: Props) {
         <span className={cn("rounded-full border px-2.5 py-0.5 text-xs font-medium", styles)}>{LABELS[status]}</span>
       </div>
       <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-emerald-500">
-        {/* 130% acceptance-floor tick (10% of bar) */}
+        {/* 115% warning tick */}
         <div
           className="absolute top-0 bottom-0 w-px bg-black/40 dark:bg-white/40"
-          style={{ left: "10%" }}
+          style={{ left: `${WARNING_BAR_POS}%` }}
           aria-hidden
-          title="Acceptance floor (130%)"
+          title="Warning (115%)"
         />
-        {/* 150% boundary tick at the midpoint */}
+        {/* 125% creation-minimum tick */}
         <div
           className="absolute top-0 bottom-0 w-px bg-black/40 dark:bg-white/40"
-          style={{ left: "50%" }}
+          style={{ left: `${CREATION_BAR_POS}%` }}
           aria-hidden
+          title="Creation minimum (125%)"
         />
         {safe > 0 && (
           <div
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-3.5 w-1.5 rounded-sm bg-foreground shadow-md transition-[left] duration-200 ease-out"
             style={{ left: `${markerPct}%` }}
-            aria-label={`Current ratio ${safe.toFixed(1)}%`}
+            aria-label={`Current health factor ${safe.toFixed(1)}%`}
           />
         )}
       </div>
-      <div className="relative h-3.5 text-[10px] text-muted-foreground tabular-nums">
-        <span className="absolute left-0 text-red-500 font-medium">125% Liquidation</span>
-        <span className="absolute" style={{ left: "10%", transform: "translateX(-50%)" }}>
-          130%
+      <div className="relative h-8 text-[10px] text-muted-foreground tabular-nums">
+        <div className="absolute left-0 top-0 flex flex-col items-start leading-tight text-red-500 font-medium">
+          <span>110%</span>
+          <span className="text-[9px]">Foreclosure</span>
+        </div>
+        <div
+          className="absolute top-0 flex flex-col items-center leading-tight text-yellow-600 dark:text-yellow-500 font-medium"
+          style={{ left: `${WARNING_BAR_POS}%`, transform: "translateX(-50%)" }}
+        >
+          <span>115%</span>
+          <span className="text-[9px]">Warning</span>
+        </div>
+        <span
+          className="absolute top-0"
+          style={{ left: `${CREATION_BAR_POS}%`, transform: "translateX(-50%)" }}
+        >
+          125%
         </span>
-        <span className="absolute left-1/2 -translate-x-1/2">150%</span>
-        <span className="absolute right-0">175%+</span>
+        <span className="absolute top-0 right-0">150%+</span>
       </div>
     </div>
   )
