@@ -645,7 +645,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                   </Label>
                   <Input
                     type="number"
-                    min={150}
+                    min={125}
                     max={300}
                     step={5}
                     value={collateralPercentage}
@@ -653,7 +653,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                       const v = Number(e.target.value)
                       if (!isNaN(v)) handleCollateralPercentageChange(v)
                     }}
-                    onBlur={() => handleCollateralPercentageChange(Math.min(300, Math.max(150, collateralPercentage)))}
+                    onBlur={() => handleCollateralPercentageChange(Math.min(300, Math.max(125, collateralPercentage)))}
                     className="w-16 h-6 text-sm text-center px-1 bg-transparent dark:bg-transparent text-black dark:text-white border-gray-300 dark:border-gray-600"
                   />
                   <span className="text-sm font-medium text-foreground">%</span>
@@ -670,7 +670,7 @@ export function LoanCreationForm({ mode }: LoanCreationFormProps) {
                 </div>
                 <Slider
                   id="collateral-percentage"
-                  min={150}
+                  min={125}
                   max={300}
                   step={5}
                   value={[collateralPercentage]}
