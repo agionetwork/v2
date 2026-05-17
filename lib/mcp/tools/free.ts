@@ -29,6 +29,12 @@ import {
   priceDropToWarning,
   priceDropToForeclosure,
   foreclosureDistribution,
+  liquidationProbabilityPct,
+  riskLevel,
+  safetyDays,
+  recommendedAdditionalCollateral,
+  dailyVolatility,
+  GREEN_THRESHOLD,
   CREATION_THRESHOLD,
   WARNING_THRESHOLD,
   FORECLOSURE_THRESHOLD,
@@ -1069,11 +1075,60 @@ export function registerFreeTools(server: McpServer) {
         // proxy for swap proceeds (ignores live Jupiter slippage).
         const dist = foreclosureDistribution(collateralValueUsd, debtTotalUsd)
 
+        // Liquidation probability over the loan horizon.
+        const durationDays = args.durationSeconds / 86400
+        const probPct = liquidationProbabilityPct(
+          collateralValueUsd,
+          debtTotalUsd,
+          durationDays,
+          args.collateralToken,
+        )
+        const probRound = Math.round(probPct * 10) / 10
+        const level = riskLevel(probPct)
+        const sDays = Math.round(
+          safetyDays(collateralValueUsd, debtTotalUsd, durationDays, args.collateralToken) * 10,
+        ) / 10
+        const rec = recommendedAdditionalCollateral(
+          collateralValueUsd,
+          debtTotalUsd,
+          durationDays,
+          args.collateralToken,
+          collateralPrice,
+          15,
+        )
+        const sigmaDailyPct = (dailyVolatility(args.collateralToken) * 100).toFixed(1)
+        const description =
+          probPct < 5
+            ? `Very low liquidation risk (<5%) over ${Math.round(durationDays)} days.`
+            : `~${Math.round(probPct)}% chance of liquidation in ${Math.round(durationDays)} days based on ${args.collateralToken} historical volatility.`
+        const recommendation = rec
+          ? `Add ${rec.amount} ${args.collateralToken} to reduce risk below 15%.`
+          : "No additional collateral needed — risk is already low."
+
+        // Collateral needed to reach the green (150%) zone.
+        const greenValueUsd = debtTotalUsd * GREEN_THRESHOLD
+        const greenCollateralNeeded =
+          collateralPrice > 0 ? Number((greenValueUsd / collateralPrice).toFixed(4)) : 0
+        const healthZoneNote =
+          zone === "green"
+            ? "In the green zone — strong safety margin."
+            : `Loan ${zone === "yellow" ? "created" : "is"} in the ${zone} zone. Reach green (150%) with ${greenCollateralNeeded} ${args.collateralToken} total collateral.`
+
         return jsonResult({
           success: true,
           isSafe: true,
           healthFactor: round2(hf),
           healthZone: zone,
+          healthZoneNote,
+          liquidationProbability: {
+            percent: probRound,
+            riskLevel: level,
+            safetyDays: sDays,
+            basedOn: `${args.collateralToken} historical volatility (σ=${sigmaDailyPct}%/day)`,
+            description,
+            recommendation,
+            recommendedAdditional: rec,
+          },
           debtTotal: {
             principal: round2(principalUsd),
             interest: round2(interestUsd),
@@ -1085,6 +1140,11 @@ export function registerFreeTools(server: McpServer) {
             valueUsd: round2(collateralValueUsd),
           },
           thresholds: {
+            green: {
+              ratio: GREEN_THRESHOLD,
+              valueUsd: round2(debtTotalUsd * GREEN_THRESHOLD),
+              collateralNeeded: greenCollateralNeeded,
+            },
             creation: {
               ratio: CREATION_THRESHOLD,
               valueUsd: round2(debtTotalUsd * CREATION_THRESHOLD),
@@ -1110,6 +1170,7 @@ export function registerFreeTools(server: McpServer) {
                 args.durationSeconds,
               ),
             ),
+            tokenVolatility: `${sigmaDailyPct}% daily`,
             maxApyBps: ceiling,
           },
           liquidation: {

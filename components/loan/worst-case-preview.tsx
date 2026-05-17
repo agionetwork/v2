@@ -1,6 +1,11 @@
 "use client"
 
-import { priceDropToWarning, priceDropToForeclosure } from "@/lib/loan-math"
+import {
+  maxDebtUsd,
+  liquidationProbabilityPct,
+  safetyDays,
+  recommendedAdditionalCollateral,
+} from "@/lib/loan-math"
 import { cn } from "@/lib/utils"
 
 interface Props {
@@ -9,14 +14,14 @@ interface Props {
   apyBps: number
   durationSeconds: number
   collateralSymbol: string
+  collateralPriceUsd?: number
   className?: string
 }
 
 /**
- * One-line italic preview of how far the collateral price can fall before the
- * loan enters the warning zone (115%) and before it becomes foreclosable
- * (110%). Uses the same helpers the validator/MCP use, so the headroom shown
- * matches what the protocol enforces.
+ * One-line preview of the real liquidation probability for the chosen
+ * parameters, with a concrete add-collateral recommendation. Uses the same
+ * model the MCP preview-loan-safety tool returns.
  */
 export function WorstCasePreview({
   collateralValueUsd,
@@ -24,42 +29,53 @@ export function WorstCasePreview({
   apyBps,
   durationSeconds,
   collateralSymbol,
+  collateralPriceUsd,
   className,
 }: Props) {
   if (principalUsd <= 0 || collateralValueUsd <= 0) return null
 
-  const warnDrop = priceDropToWarning(
+  const debtTotalUsd = maxDebtUsd(principalUsd, apyBps, durationSeconds)
+  const durationDays = durationSeconds / 86400
+  const prob = liquidationProbabilityPct(
     collateralValueUsd,
-    principalUsd,
-    apyBps,
-    durationSeconds,
+    debtTotalUsd,
+    durationDays,
+    collateralSymbol,
   )
-  const forecloseDrop = priceDropToForeclosure(
+  const sDays = safetyDays(collateralValueUsd, debtTotalUsd, durationDays, collateralSymbol)
+  const price = collateralPriceUsd ?? 0
+  const rec = recommendedAdditionalCollateral(
     collateralValueUsd,
-    principalUsd,
-    apyBps,
-    durationSeconds,
+    debtTotalUsd,
+    durationDays,
+    collateralSymbol,
+    price,
+    15,
   )
+  const addAmount = rec?.amount
+  const days = Math.round(durationDays)
+  const p = Math.round(prob)
 
-  if (forecloseDrop <= 0) {
-    return (
-      <p className={cn("mt-2 text-xs italic text-red-500", className)}>
-        At current settings, this loan is already foreclosable (health factor below 110%).
-      </p>
-    )
+  let phrase: string
+  let tone: string
+  if (prob < 5) {
+    phrase = `Very low liquidation risk (<5%). Your collateral has a strong margin.`
+    tone = "text-emerald-600 dark:text-emerald-500"
+  } else if (prob < 15) {
+    phrase = `Low risk (~${p}%). Comfortable margin for the ${days}-day duration.`
+    tone = "text-emerald-600 dark:text-emerald-500"
+  } else if (prob < 30) {
+    phrase = `Moderate risk (~${p}%).${addAmount ? ` Consider adding ${addAmount} ${collateralSymbol} to reduce below 15%.` : ""}`
+    tone = "text-yellow-600 dark:text-yellow-500"
+  } else if (prob < 50) {
+    phrase = `⚠ High risk (~${p}%). ${collateralSymbol} volatility may trigger liquidation within ~${Math.round(sDays)} days.${addAmount ? ` Add ${addAmount} ${collateralSymbol} for a safer position.` : ""}`
+    tone = "text-orange-600 dark:text-orange-500"
+  } else {
+    phrase = `⚠ Critical risk (~${p}%). Very likely to be liquidated before the deadline.${addAmount ? ` Add ${addAmount} ${collateralSymbol} or reduce the duration.` : ""}`
+    tone = "text-red-600 dark:text-red-500"
   }
 
   return (
-    <p className={cn("mt-2 text-xs italic text-muted-foreground dark:text-white", className)}>
-      If {collateralSymbol} drops{" "}
-      <span className="font-medium not-italic text-yellow-600 dark:text-yellow-500">
-        {warnDrop.toFixed(1)}%
-      </span>{" "}
-      it enters the warning zone;{" "}
-      <span className="font-medium not-italic text-red-600 dark:text-red-500">
-        {forecloseDrop.toFixed(1)}%
-      </span>{" "}
-      and it becomes foreclosable.
-    </p>
+    <p className={cn("mt-2 text-xs italic", tone, className)}>{phrase}</p>
   )
 }

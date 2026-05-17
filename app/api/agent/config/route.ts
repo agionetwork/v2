@@ -92,6 +92,22 @@ function validateConfig(config: Partial<AgentConfig>): string | null {
   if (config.borrowAddCollateralThreshold !== undefined && config.borrowAddCollateralThreshold <= 1.15) {
     return "borrowAddCollateralThreshold must be > 1.15 (above the warning zone)"
   }
+  if (config.lendMaxAcceptableLiquidationProb !== undefined
+      && (config.lendMaxAcceptableLiquidationProb < 0 || config.lendMaxAcceptableLiquidationProb > 100)) {
+    return "lendMaxAcceptableLiquidationProb must be 0-100 (%)"
+  }
+  if (config.borrowAutoPartialRepayThreshold !== undefined
+      && (config.borrowAutoPartialRepayThreshold < 0 || config.borrowAutoPartialRepayThreshold > 100)) {
+    return "borrowAutoPartialRepayThreshold must be 0-100 (%)"
+  }
+  if (config.borrowPartialRepayPercent !== undefined
+      && (config.borrowPartialRepayPercent < 1 || config.borrowPartialRepayPercent > 100)) {
+    return "borrowPartialRepayPercent must be 1-100 (%)"
+  }
+  if (config.borrowTargetZone !== undefined
+      && !["green", "yellow", "orange"].includes(config.borrowTargetZone as string)) {
+    return "borrowTargetZone must be one of: green, yellow, orange"
+  }
 
   // Duration
   if (config.lendMaxDuration !== undefined && (config.lendMaxDuration < 1 || config.lendMaxDuration > 365)) {

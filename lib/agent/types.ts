@@ -22,6 +22,9 @@ export interface AgentConfig {
   /** Agent won't accept loans whose initial health factor is below this
    *  (e.g. 1.30). Health factor = collateral_value / debt_total. */
   lendMinHealthFactor: number
+  /** Agent won't accept loans whose modelled liquidation probability (%)
+   *  exceeds this, e.g. 25. */
+  lendMaxAcceptableLiquidationProb: number
   lendAutoForeclose: boolean
   lendAutoAcceptOffers: boolean
   lendAutoCreateOffers: boolean
@@ -50,6 +53,14 @@ export interface AgentConfig {
   /** If true, the agent repays automatically when a loan enters the
    *  warning zone (health factor < 1.15) instead of waiting for expiry. */
   borrowAutoRepayOnWarning: boolean
+  /** Health zone the agent targets when creating borrow requests. */
+  borrowTargetZone: "green" | "yellow" | "orange"
+  /** If modelled liquidation probability (%) exceeds this, the agent
+   *  auto-partial-repays to de-risk. e.g. 40. */
+  borrowAutoPartialRepayThreshold: number
+  /** How much of the remaining principal to pay down on an auto partial
+   *  repay (percentage, e.g. 25 = 25%). */
+  borrowPartialRepayPercent: number
   borrowAutoAcceptOffers: boolean
   borrowAutoCreateRequests: boolean
 
@@ -86,6 +97,7 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
   lendMinCollateralRatio: 150,
   lendMaxCollateralRatio: 300,
   lendMinHealthFactor: 1.3,
+  lendMaxAcceptableLiquidationProb: 25,
   lendAutoForeclose: true,
   lendAutoAcceptOffers: true,
   lendAutoCreateOffers: false,
@@ -105,6 +117,9 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
   borrowTopUpThresholdRatio: 135,
   borrowAddCollateralThreshold: 1.2,
   borrowAutoRepayOnWarning: false,
+  borrowTargetZone: "yellow",
+  borrowAutoPartialRepayThreshold: 40,
+  borrowPartialRepayPercent: 25,
   borrowAutoAcceptOffers: true,
   borrowAutoCreateRequests: false,
 
