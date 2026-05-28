@@ -7,6 +7,40 @@ import "@/lib/buffer-polyfill";
 
 import { createContext, useContext, useState, ReactNode } from "react";
 import { rateLimitedStorage } from '@/lib/secure-storage';
+import { getWallets } from '@wallet-standard/app';
+
+// Wallet Standard fallback: modern wallets (Phantom, Solflare, Backpack)
+// register via the Wallet Standard registry. The legacy `window.solana`
+// global is missing or unreliable when (a) multiple extensions are
+// installed (whoever wins `window.solana` may not be the one the user
+// clicked), or (b) a newer wallet build only ships the standard interface.
+// We try the standard registry whenever legacy detection fails.
+const STANDARD_NAME: Record<string, string[]> = {
+  phantom: ['Phantom'],
+  solflare: ['Solflare'],
+  backpack: ['Backpack'],
+};
+
+async function tryStandardConnect(walletProvider: string): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const wanted = STANDARD_NAME[walletProvider];
+    if (!wanted) return null;
+    const { get } = getWallets();
+    const candidate = get().find((w) =>
+      wanted.some((n) => w.name.toLowerCase() === n.toLowerCase()),
+    );
+    if (!candidate) return null;
+    const features = (candidate as any).features ?? {};
+    const connectFeature = features['standard:connect'];
+    if (!connectFeature?.connect) return null;
+    const res = await connectFeature.connect();
+    const address = res?.accounts?.[0]?.address;
+    return typeof address === 'string' && address.length > 0 ? address : null;
+  } catch {
+    return null;
+  }
+}
 
 interface WalletContextType {
   isConnected: boolean;
@@ -56,7 +90,7 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
 
       switch (walletProvider) {
         case 'phantom':
-          // Check for Phantom wallet
+          // Check for Phantom wallet (legacy global)
           if (typeof (window as any).solana !== 'undefined' && (window as any).solana.isPhantom) {
             wallet = (window as any).solana;
 
@@ -68,12 +102,17 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
               publicKey = phantomResp.publicKey.toString();
             }
           } else {
-            throw new Error('Phantom wallet not found. Please install Phantom wallet extension from https://phantom.app/');
+            const fromStandard = await tryStandardConnect('phantom');
+            if (fromStandard) {
+              publicKey = fromStandard;
+            } else {
+              throw new Error('Phantom wallet not found. Please install Phantom wallet extension from https://phantom.app/');
+            }
           }
           break;
 
         case 'solflare':
-          // Check for Solflare wallet
+          // Check for Solflare wallet (legacy global)
           if (typeof (window as any).solflare !== 'undefined') {
             wallet = (window as any).solflare;
 
@@ -95,12 +134,17 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
               publicKey = typeof pk?.toString === 'function' ? pk.toString() : '';
             }
           } else {
-            throw new Error('Solflare wallet not found. Please install Solflare wallet extension from https://solflare.com/');
+            const fromStandard = await tryStandardConnect('solflare');
+            if (fromStandard) {
+              publicKey = fromStandard;
+            } else {
+              throw new Error('Solflare wallet not found. Please install Solflare wallet extension from https://solflare.com/');
+            }
           }
           break;
 
         case 'backpack':
-          // Check for Backpack wallet
+          // Check for Backpack wallet (legacy global)
           if (typeof (window as any).backpack !== 'undefined' && ((window as any).backpack.isBackpack || (window as any).backpack.isXnft)) {
             wallet = (window as any).backpack;
 
@@ -111,12 +155,21 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
               publicKey = backpackResp.publicKey.toString();
             }
           } else {
-            throw new Error('Backpack wallet not found. Please install Backpack wallet extension from https://backpack.app/');
+            const fromStandard = await tryStandardConnect('backpack');
+            if (fromStandard) {
+              publicKey = fromStandard;
+            } else {
+              throw new Error('Backpack wallet not found. Please install Backpack wallet extension from https://backpack.app/');
+            }
           }
           break;
 
         default:
           throw new Error('Unsupported wallet provider');
+      }
+
+      if (!publicKey) {
+        throw new Error('Could not retrieve wallet public key — please try again.');
       }
 
       // Store connection info securely
