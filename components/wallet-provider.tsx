@@ -27,7 +27,7 @@ async function tryStandardConnect(walletProvider: string): Promise<string | null
     const wanted = STANDARD_NAME[walletProvider];
     if (!wanted) return null;
     const { get } = getWallets();
-    const candidate = get().find((w) =>
+    const candidate = get().find((w: { name: string }) =>
       wanted.some((n) => w.name.toLowerCase() === n.toLowerCase()),
     );
     if (!candidate) return null;

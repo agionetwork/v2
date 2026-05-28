@@ -73,6 +73,7 @@
     "@tailwindcss/typography": "^0.5.13",
     "@upstash/qstash": "^2.9.0",
     "@upstash/redis": "^1.36.2",
+    "@wallet-standard/app": "^1.1.0",
     "autoprefixer": "^10.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.0.0",
