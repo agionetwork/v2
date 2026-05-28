@@ -3,6 +3,7 @@
 import { useContext, useMemo, useState, useEffect, useCallback } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { LoansContext } from '@/components/loans-provider'
+import { useWalletContext } from '@/components/wallet-provider'
 
 // Re-export shared types and functions from loan-utils so existing client
 // imports (`from '@/hooks/useLoans'`) keep working without changes.
@@ -24,6 +25,18 @@ export function useLoans() {
   // gate myWalletsReady on it so consumers don't render the unfiltered
   // marketplace before the user's wallet info is even known.
   const { publicKey, connecting } = useWallet()
+  // The header uses a custom WalletProvider that stores the connected
+  // address in sessionStorage and is the source of truth for "who's
+  // logged in". A WalletSyncBridge mirrors it into the wallet-adapter
+  // (used for signing), but that sync has a ~100 ms race AND silently
+  // no-ops for wallets whose adapter package isn't registered in the
+  // dashboard's WalletProvider (only Phantom is wired today). Filtering
+  // is read-only and only needs an address, so we fall back to the
+  // custom address whenever the adapter publicKey is still null —
+  // dashboards then show the user's loans immediately on connect,
+  // regardless of which wallet they use.
+  const { address: customAddress } = useWalletContext()
+  const effectiveAddress: string | null = publicKey?.toBase58() ?? customAddress ?? null
 
   // Resolve agent wallet (Privy wallet) so agent-created loans show as user's own
   const [agentWallet, setAgentWallet] = useState<string | null>(null)
@@ -38,7 +51,7 @@ export function useLoans() {
   const [stealthsResolved, setStealthsResolved] = useState(false)
 
   useEffect(() => {
-    if (!publicKey) {
+    if (!effectiveAddress) {
       setAgentWallet(null)
       setStealthWallets([])
       setAgentResolved(true)
@@ -47,7 +60,7 @@ export function useLoans() {
     }
     setAgentResolved(false)
     setStealthsResolved(false)
-    const wallet = publicKey.toBase58()
+    const wallet = effectiveAddress
     let cancelled = false
 
     fetch(`/api/agent/public-key?wallet=${wallet}`)
@@ -77,13 +90,13 @@ export function useLoans() {
       })
 
     return () => { cancelled = true }
-  }, [publicKey])
+  }, [effectiveAddress])
 
   // Adapter still attaching → wait. No wallet → ready immediately
   // (no filtering needed). Wallet attached → wait for both flag fetches.
   const myWalletsReady = connecting
     ? false
-    : !publicKey
+    : !effectiveAddress
       ? true
       : agentResolved && stealthsResolved
 
@@ -97,29 +110,28 @@ export function useLoans() {
 
   // Check if an address belongs to the current user (owner wallet, agent wallet, or any of their stealths)
   const isMyWallet = useCallback((addr: string | null) => {
-    if (!publicKey || !addr) return false
-    const pk = publicKey.toBase58()
-    if (addr === pk) return true
+    if (!effectiveAddress || !addr) return false
+    if (addr === effectiveAddress) return true
     if (agentWallet !== null && addr === agentWallet) return true
     if (stealthSet.has(addr)) return true
     return false
-  }, [publicKey, agentWallet, stealthSet])
+  }, [effectiveAddress, agentWallet, stealthSet])
 
   // Filter helpers — match owner, agent, and stealth wallets
   const myBorrowedLoans = useMemo(() => {
-    if (!publicKey) return []
+    if (!effectiveAddress) return []
     return loans.filter(l => isMyWallet(l.borrower))
-  }, [loans, publicKey, isMyWallet])
+  }, [loans, effectiveAddress, isMyWallet])
 
   const myLentLoans = useMemo(() => {
-    if (!publicKey) return []
+    if (!effectiveAddress) return []
     return loans.filter(l => isMyWallet(l.lender))
-  }, [loans, publicKey, isMyWallet])
+  }, [loans, effectiveAddress, isMyWallet])
 
   const myLoans = useMemo(() => {
-    if (!publicKey) return []
+    if (!effectiveAddress) return []
     return loans.filter(l => isMyWallet(l.borrower) || isMyWallet(l.lender))
-  }, [loans, publicKey, isMyWallet])
+  }, [loans, effectiveAddress, isMyWallet])
 
   const activeLoans = useMemo(() =>
     loans.filter(l => l.status === LoanStatus.Accepted),
