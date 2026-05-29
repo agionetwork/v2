@@ -81,12 +81,26 @@ export function WalletConnectModal({ isOpen, setIsOpen }: WalletConnectModalProp
       if (error.message && error.message.includes("User rejected")) {
         toast.error(`Connection to ${walletType} was rejected by user`)
       } else if (error?.code === 'WALLET_NOT_FOUND' || error?.name === 'WalletNotFoundError') {
-        toast.error(`${WALLET_CONFIGS[walletType]?.name || walletType} wallet not detected. Please install it to continue.`)
-        // Open wallet website
-        const walletUrl = WALLET_CONFIGS[walletType]?.url || 'https://phantom.app/'
-        setTimeout(() => {
-          window.open(walletUrl, '_blank')
-        }, 2000)
+        const walletName = WALLET_CONFIGS[walletType]?.name || walletType
+        // If we already detected OTHER wallets in the browser, the
+        // extension is most likely installed but blocked by another
+        // wallet's lockdown (MetaMask SES is the most common offender).
+        // Steer the user to the working option instead of telling them
+        // to install something they already have.
+        if (extraDetected.length > 0) {
+          const detectedNames = extraDetected.map((w) => w.name).join(', ')
+          toast.error(
+            `${walletName} didn't respond. It may be blocked by another extension (e.g. MetaMask's lockdown). Try ${detectedNames} above, or disable conflicting extensions and reload.`,
+            { duration: 8000 },
+          )
+        } else {
+          toast.error(`${walletName} wallet not detected. Please install it to continue.`)
+          // Open wallet website
+          const walletUrl = WALLET_CONFIGS[walletType]?.url || 'https://phantom.app/'
+          setTimeout(() => {
+            window.open(walletUrl, '_blank')
+          }, 2000)
+        }
       } else {
         toast.error(`Failed to connect to ${WALLET_CONFIGS[walletType]?.name || walletType}. ${error.message || 'Please try again.'}`)
       }
@@ -195,8 +209,21 @@ export function WalletConnectModal({ isOpen, setIsOpen }: WalletConnectModalProp
                 </Button>
               ))}
             </div>
+            {/* Conflict hint: when we detected at least one wallet via
+                Wallet Standard but the user expected the static ones to
+                work, the most common reason is an extension (typically
+                MetaMask) locking the page down before Phantom / Solflare
+                / Backpack inject. */}
+            {extraDetected.length > 0 && (
+              <p className="mt-4 text-[11px] leading-snug text-muted-foreground">
+                Don&apos;t see your wallet here? Another extension (e.g. MetaMask) may be
+                blocking it from registering. Use a wallet from the
+                <span className="font-medium"> Detected </span>
+                section above, or disable conflicting extensions and reload.
+              </p>
+            )}
           </div>
-          
+
         </div>
       </DialogContent>
     </Dialog>

@@ -62,10 +62,12 @@ function findStandardWallet(walletProvider: string): any | null {
 
 // Wait for the wallet to register itself (race on click before the
 // extension's `wallet-standard:register-wallet` event fired). Re-pokes
-// `app-ready` once mid-wait in case the wallet missed the initial one.
+// `app-ready` several times across the wait so a slow-injecting wallet
+// (or one that missed an earlier signal due to extension conflicts) has
+// multiple chances to register.
 async function waitForStandardWallet(
   walletProvider: string,
-  timeoutMs = 2000,
+  timeoutMs = 5000,
 ): Promise<any | null> {
   pokeAppReady();
   const found = findStandardWallet(walletProvider);
@@ -76,6 +78,7 @@ async function waitForStandardWallet(
       if (settled) return;
       settled = true;
       try { off?.(); } catch { /* ignore */ }
+      pokes.forEach((id) => clearTimeout(id));
       resolve(val);
     };
     let off: (() => void) | undefined;
@@ -86,7 +89,13 @@ async function waitForStandardWallet(
         if (w) finish(w);
       });
     } catch { /* ignore */ }
-    setTimeout(() => { pokeAppReady(); }, Math.min(400, timeoutMs / 2));
+    // Multiple `app-ready` re-pokes across the wait window — wallets
+    // that injected late and missed the first one still see one.
+    const pokes: ReturnType<typeof setTimeout>[] = [];
+    for (const at of [200, 500, 1200, 2500, 3800]) {
+      if (at >= timeoutMs) continue;
+      pokes.push(setTimeout(() => pokeAppReady(), at));
+    }
     setTimeout(() => finish(findStandardWallet(walletProvider)), timeoutMs);
   });
 }
