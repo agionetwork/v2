@@ -9,29 +9,68 @@ import { createContext, useContext, useState, ReactNode } from "react";
 import { rateLimitedStorage } from '@/lib/secure-storage';
 import { getWallets } from '@wallet-standard/app';
 
-// Wallet Standard fallback: modern wallets (Phantom, Solflare, Backpack)
-// register via the Wallet Standard registry. The legacy `window.solana`
-// global is missing or unreliable when (a) multiple extensions are
-// installed (whoever wins `window.solana` may not be the one the user
-// clicked), or (b) a newer wallet build only ships the standard interface.
-// We try the standard registry whenever legacy detection fails.
+// Wallet Standard detection: modern wallets (Phantom, Solflare, Backpack)
+// register via window events (`wallet-standard:register-wallet`). The
+// legacy `window.solana` global is unreliable when (a) multiple
+// extensions are installed (whoever wins `window.solana` may not be the
+// one the user clicked), or (b) a newer build skips the legacy global.
+// We prefer the standard registry and use legacy only as a fallback.
 const STANDARD_NAME: Record<string, string[]> = {
-  phantom: ['Phantom'],
-  solflare: ['Solflare'],
-  backpack: ['Backpack'],
+  phantom: ['phantom'],
+  solflare: ['solflare'],
+  backpack: ['backpack'],
 };
 
-async function tryStandardConnect(walletProvider: string): Promise<string | null> {
+function findStandardWallet(walletProvider: string): any | null {
   if (typeof window === 'undefined') return null;
+  const wanted = STANDARD_NAME[walletProvider];
+  if (!wanted) return null;
   try {
-    const wanted = STANDARD_NAME[walletProvider];
-    if (!wanted) return null;
     const { get } = getWallets();
-    const candidate = get().find((w: { name: string }) =>
-      wanted.some((n) => w.name.toLowerCase() === n.toLowerCase()),
+    return (
+      get().find((w: any) => {
+        const name = String(w?.name ?? '').toLowerCase();
+        return wanted.some((n) => name.includes(n));
+      }) ?? null
     );
-    if (!candidate) return null;
-    const features = (candidate as any).features ?? {};
+  } catch {
+    return null;
+  }
+}
+
+// Wait briefly for the wallet to register itself (race on click before
+// the extension's `wallet-standard:register-wallet` event fired).
+async function waitForStandardWallet(
+  walletProvider: string,
+  timeoutMs = 800,
+): Promise<any | null> {
+  const found = findStandardWallet(walletProvider);
+  if (found) return found;
+  return new Promise<any | null>((resolve) => {
+    let settled = false;
+    const finish = (val: any | null) => {
+      if (settled) return;
+      settled = true;
+      try { off?.(); } catch { /* ignore */ }
+      resolve(val);
+    };
+    let off: (() => void) | undefined;
+    try {
+      const { on } = getWallets();
+      off = on('register', () => {
+        const w = findStandardWallet(walletProvider);
+        if (w) finish(w);
+      });
+    } catch { /* ignore */ }
+    setTimeout(() => finish(findStandardWallet(walletProvider)), timeoutMs);
+  });
+}
+
+async function tryStandardConnect(walletProvider: string): Promise<string | null> {
+  const candidate = await waitForStandardWallet(walletProvider);
+  if (!candidate) return null;
+  try {
+    const features = candidate.features ?? {};
     const connectFeature = features['standard:connect'];
     if (!connectFeature?.connect) return null;
     const res = await connectFeature.connect();
@@ -40,6 +79,13 @@ async function tryStandardConnect(walletProvider: string): Promise<string | null
   } catch {
     return null;
   }
+}
+
+// Structured error so the UI can tell "wallet missing" apart from other
+// failures whose message happens to contain "not found".
+class WalletNotFoundError extends Error {
+  code = 'WALLET_NOT_FOUND' as const;
+  constructor(message: string) { super(message); this.name = 'WalletNotFoundError'; }
 }
 
 interface WalletContextType {
@@ -88,84 +134,69 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
       let wallet: any = null;
       let publicKey: string = '';
 
-      switch (walletProvider) {
-        case 'phantom':
-          // Check for Phantom wallet (legacy global)
-          if (typeof (window as any).solana !== 'undefined' && (window as any).solana.isPhantom) {
-            wallet = (window as any).solana;
-
-            // Check if already connected
-            if (wallet.isConnected) {
-              publicKey = wallet.publicKey.toString();
+      // Try Wallet Standard first (more reliable across builds + survives
+      // window.solana hijacking by other extensions). Fall back to legacy
+      // globals only if no standard wallet registers in time.
+      const fromStandard = await tryStandardConnect(walletProvider);
+      if (fromStandard) {
+        publicKey = fromStandard;
+      } else {
+        switch (walletProvider) {
+          case 'phantom':
+            if (typeof (window as any).solana !== 'undefined' && (window as any).solana.isPhantom) {
+              wallet = (window as any).solana;
+              if (wallet.isConnected) {
+                publicKey = wallet.publicKey.toString();
+              } else {
+                const phantomResp = await wallet.connect();
+                publicKey = phantomResp.publicKey.toString();
+              }
             } else {
-              const phantomResp = await wallet.connect();
-              publicKey = phantomResp.publicKey.toString();
+              throw new WalletNotFoundError('Phantom wallet not found. Please install Phantom wallet extension from https://phantom.app/');
             }
-          } else {
-            const fromStandard = await tryStandardConnect('phantom');
-            if (fromStandard) {
-              publicKey = fromStandard;
-            } else {
-              throw new Error('Phantom wallet not found. Please install Phantom wallet extension from https://phantom.app/');
-            }
-          }
-          break;
+            break;
 
-        case 'solflare':
-          // Check for Solflare wallet (legacy global)
-          if (typeof (window as any).solflare !== 'undefined') {
-            wallet = (window as any).solflare;
-
-            if (wallet.isConnected) {
-              publicKey = wallet.publicKey.toString();
+          case 'solflare':
+            if (typeof (window as any).solflare !== 'undefined') {
+              wallet = (window as any).solflare;
+              if (wallet.isConnected) {
+                publicKey = wallet.publicKey.toString();
+              } else {
+                const solflareResp = await wallet.connect();
+                const pk = (wallet.publicKey || solflareResp?.publicKey);
+                publicKey = typeof pk?.toString === 'function' ? pk.toString() : '';
+              }
+            } else if (typeof (window as any).solana !== 'undefined' && (window as any).solana.isSolflare) {
+              wallet = (window as any).solana;
+              if (wallet.isConnected) {
+                publicKey = wallet.publicKey.toString();
+              } else {
+                const solflareResp = await wallet.connect();
+                const pk = (wallet.publicKey || solflareResp?.publicKey);
+                publicKey = typeof pk?.toString === 'function' ? pk.toString() : '';
+              }
             } else {
-              const solflareResp = await wallet.connect();
-              const pk = (wallet.publicKey || solflareResp?.publicKey);
-              publicKey = typeof pk?.toString === 'function' ? pk.toString() : '';
+              throw new WalletNotFoundError('Solflare wallet not found. Please install Solflare wallet extension from https://solflare.com/');
             }
-          } else if (typeof (window as any).solana !== 'undefined' && (window as any).solana.isSolflare) {
-            wallet = (window as any).solana;
+            break;
 
-            if (wallet.isConnected) {
-              publicKey = wallet.publicKey.toString();
+          case 'backpack':
+            if (typeof (window as any).backpack !== 'undefined' && ((window as any).backpack.isBackpack || (window as any).backpack.isXnft)) {
+              wallet = (window as any).backpack;
+              if (wallet.isConnected) {
+                publicKey = wallet.publicKey.toString();
+              } else {
+                const backpackResp = await wallet.connect();
+                publicKey = backpackResp.publicKey.toString();
+              }
             } else {
-              const solflareResp = await wallet.connect();
-              const pk = (wallet.publicKey || solflareResp?.publicKey);
-              publicKey = typeof pk?.toString === 'function' ? pk.toString() : '';
+              throw new WalletNotFoundError('Backpack wallet not found. Please install Backpack wallet extension from https://backpack.app/');
             }
-          } else {
-            const fromStandard = await tryStandardConnect('solflare');
-            if (fromStandard) {
-              publicKey = fromStandard;
-            } else {
-              throw new Error('Solflare wallet not found. Please install Solflare wallet extension from https://solflare.com/');
-            }
-          }
-          break;
+            break;
 
-        case 'backpack':
-          // Check for Backpack wallet (legacy global)
-          if (typeof (window as any).backpack !== 'undefined' && ((window as any).backpack.isBackpack || (window as any).backpack.isXnft)) {
-            wallet = (window as any).backpack;
-
-            if (wallet.isConnected) {
-              publicKey = wallet.publicKey.toString();
-            } else {
-              const backpackResp = await wallet.connect();
-              publicKey = backpackResp.publicKey.toString();
-            }
-          } else {
-            const fromStandard = await tryStandardConnect('backpack');
-            if (fromStandard) {
-              publicKey = fromStandard;
-            } else {
-              throw new Error('Backpack wallet not found. Please install Backpack wallet extension from https://backpack.app/');
-            }
-          }
-          break;
-
-        default:
-          throw new Error('Unsupported wallet provider');
+          default:
+            throw new Error('Unsupported wallet provider');
+        }
       }
 
       if (!publicKey) {

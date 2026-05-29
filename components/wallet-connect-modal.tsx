@@ -49,7 +49,7 @@ export function WalletConnectModal({ isOpen, setIsOpen }: WalletConnectModalProp
       // Handle specific errors
       if (error.message && error.message.includes("User rejected")) {
         toast.error(`Connection to ${walletType} was rejected by user`)
-      } else if (error.message && error.message.includes("not found")) {
+      } else if (error?.code === 'WALLET_NOT_FOUND' || error?.name === 'WalletNotFoundError') {
         toast.error(`${WALLET_CONFIGS[walletType]?.name || walletType} wallet not detected. Please install it to continue.`)
         // Open wallet website
         const walletUrl = WALLET_CONFIGS[walletType]?.url || 'https://phantom.app/'
