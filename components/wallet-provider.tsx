@@ -8,6 +8,19 @@ import "@/lib/buffer-polyfill";
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { rateLimitedStorage } from '@/lib/secure-storage';
 import { getWallets } from '@wallet-standard/app';
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
+import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare';
+import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
+
+// The official adapters know about every detection edge case for their
+// wallet (legacy globals, dedicated namespaces, Wallet Standard, …).
+// Lazily instantiated so importing this module doesn't run any
+// per-adapter init that might race with extension content scripts.
+const adapterFactory: Record<'phantom' | 'solflare' | 'backpack', () => any> = {
+  phantom: () => new PhantomWalletAdapter(),
+  solflare: () => new SolflareWalletAdapter(),
+  backpack: () => new BackpackWalletAdapter(),
+};
 
 // Wallets to look for, with substring matches against the Wallet Standard
 // registry name AND every legacy window global location each wallet
@@ -311,25 +324,46 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
       let publicKey: string = '';
       let storedProvider: string = walletProvider;
 
-      // Poll BOTH paths (legacy globals + Wallet Standard registry) in
-      // parallel for up to 3.5 s. Whichever sees the wallet first wins.
-      // This is robust against extensions that inject late, register
-      // under unusual names, or only ship one of the two interfaces.
       if (walletProvider !== 'phantom' && walletProvider !== 'solflare' && walletProvider !== 'backpack') {
         throw new Error('Unsupported wallet provider');
       }
       const kind: WalletKind = walletProvider;
-      const detected = await detectWallet(kind);
-      if (detected) {
-        const pk = detected.type === 'legacy'
-          ? await connectLegacy(detected.wallet)
-          : await connectStandardWallet(detected.wallet);
+
+      // Primary path: use the wallet's OFFICIAL @solana/wallet-adapter
+      // package. These adapters handle every detection corner case the
+      // wallet's own team has seen in production (legacy global vs
+      // dedicated namespace vs Wallet Standard registry vs late
+      // injection). They are the same code path Jupiter / Tensor use.
+      try {
+        const adapter = adapterFactory[kind]();
+        await adapter.connect();
+        const pk = adapter.publicKey?.toBase58?.();
         if (pk) {
           publicKey = pk;
-          // If we connected through Wallet Standard, persist the actual
-          // wallet name so disconnect routes back through standard.
-          if (detected.type === 'standard') {
-            storedProvider = `standard:${String(detected.wallet?.name ?? walletProvider)}`;
+        }
+      } catch (adapterErr: any) {
+        // Adapter failed (NotReady, WalletConnectionError, etc.). Fall
+        // back to our own polling detection — covers exotic edge cases
+        // the official adapter version we depend on may not yet know.
+        console.debug('[agio][wallet] official adapter failed, falling back to polling:', adapterErr?.message ?? adapterErr);
+        const detected = await detectWallet(kind);
+        if (detected) {
+          const pk = detected.type === 'legacy'
+            ? await connectLegacy(detected.wallet)
+            : await connectStandardWallet(detected.wallet);
+          if (pk) {
+            publicKey = pk;
+            if (detected.type === 'standard') {
+              storedProvider = `standard:${String(detected.wallet?.name ?? walletProvider)}`;
+            }
+          }
+        }
+        if (!publicKey) {
+          // Re-throw user-rejection errors verbatim so the modal can
+          // distinguish them from "not installed".
+          const msg = String(adapterErr?.message ?? '');
+          if (msg.toLowerCase().includes('user rejected') || msg.toLowerCase().includes('rejected')) {
+            throw adapterErr;
           }
         }
       }
