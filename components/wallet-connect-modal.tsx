@@ -32,6 +32,15 @@ export function WalletConnectModal({ isOpen, setIsOpen }: WalletConnectModalProp
   const extraDetected = detectedWallets.filter(
     (w) => !staticNames.has(w.name.toLowerCase()),
   )
+
+  // MetaMask in the registry but no Solana-native wallet → almost
+  // always means MetaMask's SES lockdown content script crashed the
+  // other wallets' inpage injection. Surface a clear troubleshooting
+  // card so users aren't told "install Phantom" when they already have it.
+  const metamaskDetected = detectedWallets.some((w) =>
+    w.name.toLowerCase().includes('metamask'),
+  )
+  const showConflictHelp = metamaskDetected && extraDetected.length === detectedWallets.length
   
   // Mount component only on client-side to avoid hydration errors
   useEffect(() => {
@@ -136,6 +145,40 @@ export function WalletConnectModal({ isOpen, setIsOpen }: WalletConnectModalProp
               </div>
             </div>
           </div>
+
+          {/* Conflict troubleshooting — surfaced when MetaMask is the
+              only wallet registering. Its SES lockdown content script
+              breaks Phantom / Solflare / Backpack inpage injection on
+              page load, leaving them undetectable until disabled. */}
+          {showConflictHelp && (
+            <div className="mx-6 mt-6 rounded-lg border-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-4 text-sm">
+              <p className="font-semibold text-amber-900 dark:text-amber-200 mb-2">
+                Phantom / Solflare / Backpack not showing up?
+              </p>
+              <p className="text-amber-900/90 dark:text-amber-100/90 mb-2">
+                MetaMask is installed and its security lockdown is preventing other Solana wallets from initialising on this page.{' '}
+                <a
+                  href="https://github.com/MetaMask/metamask-extension/issues/14964"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Known issue
+                </a>
+                . Pick one:
+              </p>
+              <ul className="list-disc pl-5 space-y-1 text-amber-900/90 dark:text-amber-100/90">
+                <li>
+                  <span className="font-medium">Use MetaMask</span> from the Detected section below — it works for Solana via Snaps.
+                </li>
+                <li>
+                  <span className="font-medium">Disable MetaMask temporarily:</span> paste{' '}
+                  <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900/60 rounded font-mono text-[12px]">chrome://extensions</code>{' '}
+                  in the address bar, toggle MetaMask off, and hard-refresh this page.
+                </li>
+              </ul>
+            </div>
+          )}
 
           {/* Detected wallets (Wallet Standard) — auto-discovered from
               the browser. Covers MetaMask Snaps Solana and any other
