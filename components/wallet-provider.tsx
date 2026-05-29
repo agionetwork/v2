@@ -9,50 +9,63 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { rateLimitedStorage } from '@/lib/secure-storage';
 import { getWallets } from '@wallet-standard/app';
 
-// Wallet Standard detection: modern wallets (Phantom, Solflare, Backpack)
-// register via window events (`wallet-standard:register-wallet`). The
-// legacy `window.solana` global is unreliable when (a) multiple
-// extensions are installed (whoever wins `window.solana` may not be the
-// one the user clicked), or (b) a newer build skips the legacy global
-// in favour of a dedicated namespace like `window.phantom.solana`.
-// We prefer the standard registry and use legacy only as a fallback.
-const STANDARD_NAME: Record<string, string[]> = {
-  phantom: ['phantom'],
-  solflare: ['solflare'],
-  backpack: ['backpack'],
+// Wallets to look for, with substring matches against the Wallet Standard
+// registry name AND every legacy window global location each wallet
+// historically injects into. Polling both at once gives us the fastest
+// possible "I see it" signal.
+type WalletKind = 'phantom' | 'solflare' | 'backpack';
+
+interface WalletLocator {
+  /** Names we accept when scanning the Wallet Standard registry. */
+  standardNames: string[];
+  /** Sync probes against legacy window globals. Returns the wallet object
+   *  if found, or null. Many wallets inject into more than one location
+   *  to maintain back-compat — we check every known one. */
+  legacy: () => any | null;
+}
+
+const WALLET_LOCATORS: Record<WalletKind, WalletLocator> = {
+  phantom: {
+    standardNames: ['phantom'],
+    legacy: () => {
+      const w = window as any;
+      // Newer Phantom builds inject in `window.phantom.solana` first,
+      // then mirror to `window.solana`. Older ones only set window.solana.
+      if (w.phantom?.solana?.isPhantom) return w.phantom.solana;
+      if (w.solana?.isPhantom) return w.solana;
+      return null;
+    },
+  },
+  solflare: {
+    standardNames: ['solflare'],
+    legacy: () => {
+      const w = window as any;
+      if (w.solflare?.isSolflare) return w.solflare;
+      if (w.solflare) return w.solflare;
+      if (w.solana?.isSolflare) return w.solana;
+      return null;
+    },
+  },
+  backpack: {
+    standardNames: ['backpack'],
+    legacy: () => {
+      const w = window as any;
+      if (w.backpack?.isBackpack || w.backpack?.isXnft) return w.backpack;
+      if (w.xnft?.solana) return w.xnft.solana;
+      return null;
+    },
+  },
 };
 
-// Some wallets only register on the `wallet-standard:app-ready` window
-// event. We dispatch it once at module load AND on each attempt so a
-// late-loading extension still sees a fresh ready signal.
-function pokeAppReady(): void {
-  if (typeof window === 'undefined') return;
-  try {
-    // The spec event is `wallet-standard:app-ready`; wallets dispatch
-    // `wallet-standard:register-wallet` in response. `getWallets()` from
-    // `@wallet-standard/app` wires the listener; importing it is enough
-    // — but we also dispatch the event directly in case the registry
-    // initialised before any wallet got to inject.
-    window.dispatchEvent(new Event('wallet-standard:app-ready'));
-  } catch { /* ignore */ }
-}
-
-// Initialise the registry as soon as this module loads so the
-// `app-ready` signal fires before the user clicks anything.
-if (typeof window !== 'undefined') {
-  try { getWallets(); pokeAppReady(); } catch { /* ignore */ }
-}
-
-function findStandardWallet(walletProvider: string): any | null {
+function findStandardWallet(kind: WalletKind): any | null {
   if (typeof window === 'undefined') return null;
-  const wanted = STANDARD_NAME[walletProvider];
-  if (!wanted) return null;
+  const { standardNames } = WALLET_LOCATORS[kind];
   try {
     const { get } = getWallets();
     return (
       get().find((w: any) => {
         const name = String(w?.name ?? '').toLowerCase();
-        return wanted.some((n) => name.includes(n));
+        return standardNames.some((n) => name.includes(n));
       }) ?? null
     );
   } catch {
@@ -60,51 +73,61 @@ function findStandardWallet(walletProvider: string): any | null {
   }
 }
 
-// Wait for the wallet to register itself (race on click before the
-// extension's `wallet-standard:register-wallet` event fired). Re-pokes
-// `app-ready` several times across the wait so a slow-injecting wallet
-// (or one that missed an earlier signal due to extension conflicts) has
-// multiple chances to register.
-async function waitForStandardWallet(
-  walletProvider: string,
-  timeoutMs = 5000,
-): Promise<any | null> {
-  pokeAppReady();
-  const found = findStandardWallet(walletProvider);
-  if (found) return found;
-  return new Promise<any | null>((resolve) => {
-    let settled = false;
-    const finish = (val: any | null) => {
-      if (settled) return;
-      settled = true;
-      try { off?.(); } catch { /* ignore */ }
-      pokes.forEach((id) => clearTimeout(id));
-      resolve(val);
-    };
-    let off: (() => void) | undefined;
-    try {
-      const { on } = getWallets();
-      off = on('register', () => {
-        const w = findStandardWallet(walletProvider);
-        if (w) finish(w);
-      });
-    } catch { /* ignore */ }
-    // Multiple `app-ready` re-pokes across the wait window — wallets
-    // that injected late and missed the first one still see one.
-    const pokes: ReturnType<typeof setTimeout>[] = [];
-    for (const at of [200, 500, 1200, 2500, 3800]) {
-      if (at >= timeoutMs) continue;
-      pokes.push(setTimeout(() => pokeAppReady(), at));
-    }
-    setTimeout(() => finish(findStandardWallet(walletProvider)), timeoutMs);
-  });
+type DetectedWalletHandle =
+  | { type: 'legacy'; wallet: any }
+  | { type: 'standard'; wallet: any };
+
+/**
+ * Poll BOTH detection paths (legacy globals + Wallet Standard registry)
+ * every 100 ms until one of them sees the wallet, or the timeout elapses.
+ * Polling beats event-listening here because some wallets inject lazily
+ * (after `document_idle` or even after a user-visible interaction) and we
+ * have no reliable single signal to wait on.
+ */
+async function detectWallet(
+  kind: WalletKind,
+  timeoutMs = 3500,
+): Promise<DetectedWalletHandle | null> {
+  if (typeof window === 'undefined') return null;
+  const { legacy } = WALLET_LOCATORS[kind];
+
+  const tryOnce = (): DetectedWalletHandle | null => {
+    const legacyHit = legacy();
+    if (legacyHit) return { type: 'legacy', wallet: legacyHit };
+    const standardHit = findStandardWallet(kind);
+    if (standardHit) return { type: 'standard', wallet: standardHit };
+    return null;
+  };
+
+  const immediate = tryOnce();
+  if (immediate) return immediate;
+
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await new Promise<void>((r) => setTimeout(r, 100));
+    const hit = tryOnce();
+    if (hit) return hit;
+  }
+  return null;
 }
 
-async function tryStandardConnect(walletProvider: string): Promise<string | null> {
-  const candidate = await waitForStandardWallet(walletProvider);
-  if (!candidate) return null;
+async function connectLegacy(legacyWallet: any): Promise<string | null> {
   try {
-    const features = candidate.features ?? {};
+    if (legacyWallet.isConnected && legacyWallet.publicKey) {
+      return legacyWallet.publicKey.toString();
+    }
+    const resp = await legacyWallet.connect();
+    const pk = legacyWallet.publicKey ?? resp?.publicKey;
+    if (!pk) return null;
+    return typeof pk?.toString === 'function' ? pk.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+async function connectStandardWallet(standardWallet: any): Promise<string | null> {
+  try {
+    const features = standardWallet.features ?? {};
     const connectFeature = features['standard:connect'];
     if (!connectFeature?.connect) return null;
     const res = await connectFeature.connect();
@@ -115,22 +138,27 @@ async function tryStandardConnect(walletProvider: string): Promise<string | null
   }
 }
 
-// Visibility helper: dumps everything we tried in console.debug so the
-// "wallet not detected" path is debuggable from devtools without ever
-// surfacing addresses or sensitive data.
-function diagnoseDetection(walletProvider: string): void {
+// Visibility helper: dumps full registry contents (names) and which
+// legacy globals are present, so a "wallet not detected" report can be
+// triaged from the user's devtools console.
+function diagnoseDetection(kind: WalletKind): void {
   if (typeof window === 'undefined') return;
   try {
-    const { get } = getWallets();
-    const standardNames = get().map((w: any) => String(w?.name ?? ''));
+    const standardNames: string[] = (() => {
+      try {
+        return getWallets().get().map((w: any) => String(w?.name ?? ''));
+      } catch { return []; }
+    })();
     const w = window as any;
-    console.debug('[agio][wallet] detection failed for', walletProvider, {
+    console.debug('[agio][wallet] detection failed for', kind, {
       standardRegistry: standardNames,
       windowSolana: !!w.solana,
       windowSolanaIsPhantom: !!w.solana?.isPhantom,
+      windowSolanaIsSolflare: !!w.solana?.isSolflare,
       windowPhantomSolana: !!w.phantom?.solana,
       windowSolflare: !!w.solflare,
       windowBackpack: !!w.backpack,
+      windowXnft: !!w.xnft,
     });
   } catch (e) {
     console.debug('[agio][wallet] diagnose error', e);
@@ -214,9 +242,6 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
       } catch { /* ignore */ }
     };
     refresh();
-    // Re-poke `app-ready` so late-loading extensions register and we pick
-    // them up on the `register` callback below.
-    pokeAppReady();
     let offReg: (() => void) | undefined;
     let offUnreg: (() => void) | undefined;
     try {
@@ -224,10 +249,17 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
       offReg = on('register', refresh);
       offUnreg = on('unregister', refresh);
     } catch { /* ignore */ }
+    // Periodic re-scan as a safety net for extensions that inject very
+    // late (after `document_idle` + some interaction tick). Cheap.
+    const interval = setInterval(refresh, 500);
+    // Stop polling once we have something so we don't spam getWallets().
+    const stopPolling = setTimeout(() => clearInterval(interval), 8000);
     return () => {
       cancelled = true;
       try { offReg?.(); } catch { /* ignore */ }
       try { offUnreg?.(); } catch { /* ignore */ }
+      clearInterval(interval);
+      clearTimeout(stopPolling);
     };
   }, []);
 
@@ -276,94 +308,55 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
         return;
       }
 
-      let wallet: any = null;
       let publicKey: string = '';
+      let storedProvider: string = walletProvider;
 
-      // Try Wallet Standard first (more reliable across builds + survives
-      // window.solana hijacking by other extensions). Fall back to legacy
-      // globals only if no standard wallet registers in time.
-      const fromStandard = await tryStandardConnect(walletProvider);
-      if (fromStandard) {
-        publicKey = fromStandard;
-      } else {
-        switch (walletProvider) {
-          case 'phantom': {
-            // Phantom injects in BOTH `window.solana` (legacy) and
-            // `window.phantom.solana` (dedicated namespace). Newer
-            // builds may only ship the dedicated one.
-            const w = window as any;
-            const phantomLegacy = w.solana?.isPhantom ? w.solana : null;
-            const phantomNamespace = w.phantom?.solana?.isPhantom ? w.phantom.solana : null;
-            wallet = phantomLegacy ?? phantomNamespace;
-            if (wallet) {
-              if (wallet.isConnected) {
-                publicKey = wallet.publicKey.toString();
-              } else {
-                const phantomResp = await wallet.connect();
-                publicKey = phantomResp.publicKey.toString();
-              }
-            } else {
-              diagnoseDetection('phantom');
-              throw new WalletNotFoundError('Phantom wallet not found. Please install Phantom wallet extension from https://phantom.app/');
-            }
-            break;
+      // Poll BOTH paths (legacy globals + Wallet Standard registry) in
+      // parallel for up to 3.5 s. Whichever sees the wallet first wins.
+      // This is robust against extensions that inject late, register
+      // under unusual names, or only ship one of the two interfaces.
+      if (walletProvider !== 'phantom' && walletProvider !== 'solflare' && walletProvider !== 'backpack') {
+        throw new Error('Unsupported wallet provider');
+      }
+      const kind: WalletKind = walletProvider;
+      const detected = await detectWallet(kind);
+      if (detected) {
+        const pk = detected.type === 'legacy'
+          ? await connectLegacy(detected.wallet)
+          : await connectStandardWallet(detected.wallet);
+        if (pk) {
+          publicKey = pk;
+          // If we connected through Wallet Standard, persist the actual
+          // wallet name so disconnect routes back through standard.
+          if (detected.type === 'standard') {
+            storedProvider = `standard:${String(detected.wallet?.name ?? walletProvider)}`;
           }
-
-          case 'solflare':
-            if (typeof (window as any).solflare !== 'undefined') {
-              wallet = (window as any).solflare;
-              if (wallet.isConnected) {
-                publicKey = wallet.publicKey.toString();
-              } else {
-                const solflareResp = await wallet.connect();
-                const pk = (wallet.publicKey || solflareResp?.publicKey);
-                publicKey = typeof pk?.toString === 'function' ? pk.toString() : '';
-              }
-            } else if (typeof (window as any).solana !== 'undefined' && (window as any).solana.isSolflare) {
-              wallet = (window as any).solana;
-              if (wallet.isConnected) {
-                publicKey = wallet.publicKey.toString();
-              } else {
-                const solflareResp = await wallet.connect();
-                const pk = (wallet.publicKey || solflareResp?.publicKey);
-                publicKey = typeof pk?.toString === 'function' ? pk.toString() : '';
-              }
-            } else {
-              diagnoseDetection('solflare');
-              throw new WalletNotFoundError('Solflare wallet not found. Please install Solflare wallet extension from https://solflare.com/');
-            }
-            break;
-
-          case 'backpack':
-            if (typeof (window as any).backpack !== 'undefined' && ((window as any).backpack.isBackpack || (window as any).backpack.isXnft)) {
-              wallet = (window as any).backpack;
-              if (wallet.isConnected) {
-                publicKey = wallet.publicKey.toString();
-              } else {
-                const backpackResp = await wallet.connect();
-                publicKey = backpackResp.publicKey.toString();
-              }
-            } else {
-              diagnoseDetection('backpack');
-              throw new WalletNotFoundError('Backpack wallet not found. Please install Backpack wallet extension from https://backpack.app/');
-            }
-            break;
-
-          default:
-            throw new Error('Unsupported wallet provider');
         }
       }
 
       if (!publicKey) {
-        throw new Error('Could not retrieve wallet public key — please try again.');
+        diagnoseDetection(kind);
+        const installUrls: Record<WalletKind, string> = {
+          phantom: 'https://phantom.app/',
+          solflare: 'https://solflare.com/',
+          backpack: 'https://backpack.app/',
+        };
+        const label: Record<WalletKind, string> = {
+          phantom: 'Phantom',
+          solflare: 'Solflare',
+          backpack: 'Backpack',
+        };
+        throw new WalletNotFoundError(
+          `${label[kind]} wallet not found. Please install it from ${installUrls[kind]}`,
+        );
       }
 
       // Store connection info securely
       await rateLimitedStorage.setItem('walletAddress', publicKey);
-      await rateLimitedStorage.setItem('walletProvider', walletProvider);
+      await rateLimitedStorage.setItem('walletProvider', storedProvider);
 
       setAddress(publicKey);
-      setProvider(walletProvider);
+      setProvider(storedProvider);
       setIsConnected(true);
 
       // Award the +10 social-point connect bonus on first connect (server-side
