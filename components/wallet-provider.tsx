@@ -13,13 +13,35 @@ import { getWallets } from '@wallet-standard/app';
 // register via window events (`wallet-standard:register-wallet`). The
 // legacy `window.solana` global is unreliable when (a) multiple
 // extensions are installed (whoever wins `window.solana` may not be the
-// one the user clicked), or (b) a newer build skips the legacy global.
+// one the user clicked), or (b) a newer build skips the legacy global
+// in favour of a dedicated namespace like `window.phantom.solana`.
 // We prefer the standard registry and use legacy only as a fallback.
 const STANDARD_NAME: Record<string, string[]> = {
   phantom: ['phantom'],
   solflare: ['solflare'],
   backpack: ['backpack'],
 };
+
+// Some wallets only register on the `wallet-standard:app-ready` window
+// event. We dispatch it once at module load AND on each attempt so a
+// late-loading extension still sees a fresh ready signal.
+function pokeAppReady(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    // The spec event is `wallet-standard:app-ready`; wallets dispatch
+    // `wallet-standard:register-wallet` in response. `getWallets()` from
+    // `@wallet-standard/app` wires the listener; importing it is enough
+    // — but we also dispatch the event directly in case the registry
+    // initialised before any wallet got to inject.
+    window.dispatchEvent(new Event('wallet-standard:app-ready'));
+  } catch { /* ignore */ }
+}
+
+// Initialise the registry as soon as this module loads so the
+// `app-ready` signal fires before the user clicks anything.
+if (typeof window !== 'undefined') {
+  try { getWallets(); pokeAppReady(); } catch { /* ignore */ }
+}
 
 function findStandardWallet(walletProvider: string): any | null {
   if (typeof window === 'undefined') return null;
@@ -38,12 +60,14 @@ function findStandardWallet(walletProvider: string): any | null {
   }
 }
 
-// Wait briefly for the wallet to register itself (race on click before
-// the extension's `wallet-standard:register-wallet` event fired).
+// Wait for the wallet to register itself (race on click before the
+// extension's `wallet-standard:register-wallet` event fired). Re-pokes
+// `app-ready` once mid-wait in case the wallet missed the initial one.
 async function waitForStandardWallet(
   walletProvider: string,
-  timeoutMs = 800,
+  timeoutMs = 2000,
 ): Promise<any | null> {
+  pokeAppReady();
   const found = findStandardWallet(walletProvider);
   if (found) return found;
   return new Promise<any | null>((resolve) => {
@@ -62,6 +86,7 @@ async function waitForStandardWallet(
         if (w) finish(w);
       });
     } catch { /* ignore */ }
+    setTimeout(() => { pokeAppReady(); }, Math.min(400, timeoutMs / 2));
     setTimeout(() => finish(findStandardWallet(walletProvider)), timeoutMs);
   });
 }
@@ -78,6 +103,28 @@ async function tryStandardConnect(walletProvider: string): Promise<string | null
     return typeof address === 'string' && address.length > 0 ? address : null;
   } catch {
     return null;
+  }
+}
+
+// Visibility helper: dumps everything we tried in console.debug so the
+// "wallet not detected" path is debuggable from devtools without ever
+// surfacing addresses or sensitive data.
+function diagnoseDetection(walletProvider: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const { get } = getWallets();
+    const standardNames = get().map((w: any) => String(w?.name ?? ''));
+    const w = window as any;
+    console.debug('[agio][wallet] detection failed for', walletProvider, {
+      standardRegistry: standardNames,
+      windowSolana: !!w.solana,
+      windowSolanaIsPhantom: !!w.solana?.isPhantom,
+      windowPhantomSolana: !!w.phantom?.solana,
+      windowSolflare: !!w.solflare,
+      windowBackpack: !!w.backpack,
+    });
+  } catch (e) {
+    console.debug('[agio][wallet] diagnose error', e);
   }
 }
 
@@ -142,9 +189,15 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
         publicKey = fromStandard;
       } else {
         switch (walletProvider) {
-          case 'phantom':
-            if (typeof (window as any).solana !== 'undefined' && (window as any).solana.isPhantom) {
-              wallet = (window as any).solana;
+          case 'phantom': {
+            // Phantom injects in BOTH `window.solana` (legacy) and
+            // `window.phantom.solana` (dedicated namespace). Newer
+            // builds may only ship the dedicated one.
+            const w = window as any;
+            const phantomLegacy = w.solana?.isPhantom ? w.solana : null;
+            const phantomNamespace = w.phantom?.solana?.isPhantom ? w.phantom.solana : null;
+            wallet = phantomLegacy ?? phantomNamespace;
+            if (wallet) {
               if (wallet.isConnected) {
                 publicKey = wallet.publicKey.toString();
               } else {
@@ -152,9 +205,11 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
                 publicKey = phantomResp.publicKey.toString();
               }
             } else {
+              diagnoseDetection('phantom');
               throw new WalletNotFoundError('Phantom wallet not found. Please install Phantom wallet extension from https://phantom.app/');
             }
             break;
+          }
 
           case 'solflare':
             if (typeof (window as any).solflare !== 'undefined') {
@@ -176,6 +231,7 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
                 publicKey = typeof pk?.toString === 'function' ? pk.toString() : '';
               }
             } else {
+              diagnoseDetection('solflare');
               throw new WalletNotFoundError('Solflare wallet not found. Please install Solflare wallet extension from https://solflare.com/');
             }
             break;
@@ -190,6 +246,7 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
                 publicKey = backpackResp.publicKey.toString();
               }
             } else {
+              diagnoseDetection('backpack');
               throw new WalletNotFoundError('Backpack wallet not found. Please install Backpack wallet extension from https://backpack.app/');
             }
             break;
