@@ -5,7 +5,7 @@
 // Must run in the client bundle, hence imported here (a "use client" module).
 import "@/lib/buffer-polyfill";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { rateLimitedStorage } from '@/lib/secure-storage';
 import { getWallets } from '@wallet-standard/app';
 
@@ -135,10 +135,23 @@ class WalletNotFoundError extends Error {
   constructor(message: string) { super(message); this.name = 'WalletNotFoundError'; }
 }
 
+// Minimal shape we expose for auto-detected Wallet Standard wallets so
+// the UI can render an icon + name button without leaking the standard
+// internals into components.
+export interface DetectedWallet {
+  name: string;
+  icon?: string;
+}
+
 interface WalletContextType {
   isConnected: boolean;
   address: string | null;
   provider: string | null;
+  /** Any Wallet Standard wallet the browser exposes (MetaMask Snaps,
+   *  Phantom, Solflare, Backpack, …). Updated live as wallets register. */
+  detectedWallets: DetectedWallet[];
+  /** Connect via the Wallet Standard registry by the wallet's name. */
+  connectStandard: (walletName: string) => Promise<void>;
   connect: (provider: string) => Promise<void>;
   disconnect: () => Promise<void>;
 }
@@ -147,6 +160,8 @@ const WalletContext = createContext<WalletContextType>({
   isConnected: false,
   address: null,
   provider: null,
+  detectedWallets: [],
+  connectStandard: async () => {},
   connect: async () => {},
   disconnect: async () => {},
 });
@@ -171,6 +186,80 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
   });
   const [address, setAddress] = useState<string | null>(() => getStoredWalletState().address);
   const [provider, setProvider] = useState<string | null>(() => getStoredWalletState().provider);
+  const [detectedWallets, setDetectedWallets] = useState<DetectedWallet[]>([]);
+
+  // Subscribe to the Wallet Standard registry so the modal can show
+  // whatever wallets the user actually has (MetaMask Snaps Solana,
+  // Phantom, Solflare, Backpack, …) and offer them with one click.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let cancelled = false;
+    const refresh = () => {
+      try {
+        const { get } = getWallets();
+        const list: DetectedWallet[] = get().map((w: any) => ({
+          name: String(w?.name ?? ''),
+          icon: typeof w?.icon === 'string' ? w.icon : undefined,
+        }));
+        if (!cancelled) setDetectedWallets(list);
+      } catch { /* ignore */ }
+    };
+    refresh();
+    // Re-poke `app-ready` so late-loading extensions register and we pick
+    // them up on the `register` callback below.
+    pokeAppReady();
+    let offReg: (() => void) | undefined;
+    let offUnreg: (() => void) | undefined;
+    try {
+      const { on } = getWallets();
+      offReg = on('register', refresh);
+      offUnreg = on('unregister', refresh);
+    } catch { /* ignore */ }
+    return () => {
+      cancelled = true;
+      try { offReg?.(); } catch { /* ignore */ }
+      try { offUnreg?.(); } catch { /* ignore */ }
+    };
+  }, []);
+
+  // Generic Wallet Standard connect by the wallet's exact name.
+  const connectStandard = async (walletName: string) => {
+    try {
+      if (typeof window === 'undefined') return;
+      const { get } = getWallets();
+      const target = get().find(
+        (w: any) => String(w?.name ?? '').toLowerCase() === walletName.toLowerCase(),
+      );
+      if (!target) {
+        throw new WalletNotFoundError(`${walletName} wallet is no longer available.`);
+      }
+      const connectFeature = (target as any).features?.['standard:connect'];
+      if (!connectFeature?.connect) {
+        throw new Error(`${walletName} does not support standard:connect.`);
+      }
+      const res = await connectFeature.connect();
+      const publicKey = res?.accounts?.[0]?.address;
+      if (!publicKey) {
+        throw new Error(`${walletName} returned no account.`);
+      }
+      await rateLimitedStorage.setItem('walletAddress', publicKey);
+      await rateLimitedStorage.setItem('walletProvider', `standard:${target.name}`);
+      setAddress(publicKey);
+      setProvider(`standard:${target.name}`);
+      setIsConnected(true);
+      try {
+        fetch('/api/social-points/connect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wallet: publicKey }),
+        }).catch(() => {});
+      } catch { /* ignore */ }
+    } catch (error) {
+      console.error('Error connecting wallet (standard):', error);
+      if (error instanceof Error) throw error;
+      throw new Error('Unknown wallet connection error');
+    }
+  };
 
   const connect = async (walletProvider: string) => {
     try {
@@ -295,7 +384,19 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
   const disconnect = async () => {
     // Disconnect from wallet if possible
     try {
-      if (provider === 'phantom' && typeof (window as any).solana !== 'undefined') {
+      if (provider && provider.startsWith('standard:')) {
+        const walletName = provider.slice('standard:'.length);
+        try {
+          const { get } = getWallets();
+          const target = get().find(
+            (w: any) => String(w?.name ?? '').toLowerCase() === walletName.toLowerCase(),
+          );
+          const disconnectFeature = (target as any)?.features?.['standard:disconnect'];
+          if (disconnectFeature?.disconnect) {
+            await disconnectFeature.disconnect();
+          }
+        } catch { /* ignore */ }
+      } else if (provider === 'phantom' && typeof (window as any).solana !== 'undefined') {
         const wallet = (window as any).solana;
         if (wallet.isConnected) {
           await wallet.disconnect();
@@ -333,6 +434,8 @@ function WalletProviderInternal({ children }: { children: ReactNode }) {
         isConnected,
         address,
         provider,
+        detectedWallets,
+        connectStandard,
         connect,
         disconnect,
       }}
