@@ -72,6 +72,7 @@ export async function middleware(request: NextRequest) {
     `img-src 'self' data: https: chrome-extension: moz-extension:`,
     `connect-src 'self' chrome-extension: moz-extension: https://hermes.pyth.network https://api.coingecko.com https://api.devnet.solana.com https://api.mainnet-beta.solana.com https://api.testnet.solana.com https://*.helius-rpc.com wss://*.helius-rpc.com wss://api.devnet.solana.com wss://api.mainnet-beta.solana.com wss://api.testnet.solana.com https://alerts-api.dial.to https://dialectapi.to`,
     `font-src 'self' https://fonts.gstatic.com`,
+    `frame-src 'self' chrome-extension: moz-extension: https://*.solflare.com https://*.walletconnect.com`,
     `object-src 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,
